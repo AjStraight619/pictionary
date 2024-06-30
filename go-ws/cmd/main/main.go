@@ -15,21 +15,27 @@ import (
 )
 
 func main() {
-	err := godotenv.Load("/Users/alex/projects/webapps/pictionary-final/.env")
-
-	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+	env := os.Getenv("ENV")
+	if env == "" {
+		env = "development" // default to development if not set
 	}
+
+	if env == "development" {
+		err := godotenv.Load("/Users/alex/projects/webapps/pictionary-final/.env")
+		if err != nil {
+			log.Printf("No .env file found: %v", err)
+		}
+	}
+
+	log.Printf("Running in %s mode", env)
 
 	connStr := os.Getenv("DATABASE_URL")
 	database, err := db.GetDB(connStr)
-
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	games, err := db.GetGames(database)
-
 	if err != nil {
 		log.Fatalf("Error getting games: %v", err)
 	}
@@ -72,6 +78,10 @@ func main() {
 		log.Printf("Room %s: client connected with userId: %s", roomId, userId)
 	})
 
-	http.ListenAndServe(":8000", r)
-
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000" // Default to port 8000 in development
+	}
+	log.Printf("Listening on port %s", port)
+	http.ListenAndServe(":"+port, r)
 }
