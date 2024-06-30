@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id        String       @id @default(uuid())
+  username  String       @unique
+  email     String       @unique
+  games     GamePlayer[]
+  guesses   Guess[]
+  rounds    Round[]    
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  
+}
+
+model Game {
+  id             String       @id @default(uuid())
+  name           String
+  isOpen         Boolean
+  status         GameStatus
+  rounds         Round[]
+  players        GamePlayer[]
+  currentRound   Int
+  currentDrawerId String? 
+  newTurn        Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model GamePlayer {
+  id          String  @id @default(uuid())
+  player      Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId    String
+  game        Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId      String
+  username    String
+  score       Int     @default(0)
+  isLeader    Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Round {
+  id        String   @id @default(uuid())
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId    String
+  drawer    Player   @relation(fields: [drawerId], references: [id], onDelete: Cascade)
+  drawerId  String
+  word      String
+  guesses   Guess[]
+  timer     Int @default(80)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Guess {
+  id        String   @id @default(uuid())
+  round     Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  roundId   String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId  String
+  guess     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum GameStatus {
+  WAITING
+  IN_PROGRESS
+  FINISHED
+}
