@@ -13,13 +13,14 @@ export const useCustomWebSocket = ({
   messageType,
   options = {}, // Default to an empty object if no options are provided
 }: UseCustomWebSocketProps) => {
+  const wsUrl = process.env.REACT_APP_WEBSOCKET_URL;
   const {
     sendMessage,
     lastMessage,
     readyState,
     sendJsonMessage,
     getWebSocket,
-  } = useWebSocket(`ws://localhost:8000/ws/${roomId}?userId=${userId}`, {
+  } = useWebSocket(`${wsUrl}/${roomId}?userId=${userId}`, {
     ...options,
 
     share: true,
