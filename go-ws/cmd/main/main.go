@@ -17,7 +17,7 @@ import (
 func main() {
 	env := os.Getenv("ENV")
 	if env == "" {
-		env = "development" // default to development if not set
+		env = "development"
 	}
 
 	if env == "development" {
@@ -80,7 +80,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8000" // Default to port 8000 in development
+		port = "8000"
 	}
 	log.Printf("Listening on port %s", port)
 	http.ListenAndServe(":"+port, r)

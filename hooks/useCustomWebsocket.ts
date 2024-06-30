@@ -7,20 +7,24 @@ type UseCustomWebSocketProps = {
   options?: Options;
 };
 
+const WSURL =
+  process.env.NODE_ENV === "development"
+    ? "ws://localhost:8000/ws"
+    : process.env.NEXT_PUBLIC_WEBSOCKET_URL;
+
 export const useCustomWebSocket = ({
   roomId,
   userId,
   messageType,
   options = {}, // Default to an empty object if no options are provided
 }: UseCustomWebSocketProps) => {
-  const wsUrl = process.env.REACT_APP_WEBSOCKET_URL;
   const {
     sendMessage,
     lastMessage,
     readyState,
     sendJsonMessage,
     getWebSocket,
-  } = useWebSocket(`${wsUrl}/${roomId}?userId=${userId}`, {
+  } = useWebSocket(`${WSURL}/${roomId}?userId=${userId}`, {
     ...options,
 
     share: true,
