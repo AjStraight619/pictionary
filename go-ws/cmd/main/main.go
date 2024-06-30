@@ -83,5 +83,5 @@ func main() {
 		port = "8080"
 	}
 	log.Printf("Listening on port %s", port)
-	http.ListenAndServe(":"+port, r)
+	http.ListenAndServe(":8080", r)
 }
