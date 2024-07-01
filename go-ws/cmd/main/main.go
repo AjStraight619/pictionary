@@ -30,6 +30,9 @@ func main() {
 	log.Printf("Running in %s mode", env)
 
 	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		log.Fatalf("DATABASE_URL environment variable is not set")
+	}
 	database, err := db.GetDB(connStr)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -84,5 +87,4 @@ func main() {
 	}
 	log.Printf("Listening on port %s", port)
 	http.ListenAndServe(":"+port, r)
-
 }
