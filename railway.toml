@@ -1,0 +1,8 @@
+[build]
+command = "cd go-ws && go build -o ../main ./cmd/main/main.go"
+
+[start]
+command = "./main"
+
+[env]
+  ENV = "production"
