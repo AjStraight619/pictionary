@@ -121,7 +121,7 @@ export default function Toolbar({
   }, [isFillActiveRef]);
 
   return (
-    <div className="fixed bottom-10 -translate-x-1/2 left-1/2 p-2 rounded-md shadow-xl bg-white flex items-center justify-center h-16">
+    <div className="fixed bottom-20 -translate-x-1/4 left-1/4 p-2 rounded-md shadow-xl bg-white flex items-center justify-center h-16">
       {toolbarButtons.map((btn, idx) => (
         <ToolbarButton
           key={idx}

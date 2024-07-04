@@ -39,7 +39,6 @@ func (c *Client) readMessages() {
 			log.Println("Error reading message:", err)
 			return
 		}
-		log.Println("Message received: ", string(message))
 
 		// Check if the message is a custom "ping" message
 		if string(message) == "ping" {
@@ -74,10 +73,8 @@ func (c *Client) readMessages() {
 			log.Println("Stopping timer: ", timerData.TimerType)
 			c.hub.stopTimer(timerData.TimerType)
 		case "chat":
-			log.Println("Received chat message, broadcasting")
 			c.hub.broadcast <- message
 		default:
-			log.Println("Received default message, broadcasting")
 			c.hub.broadcast <- message
 		}
 	}
@@ -99,7 +96,7 @@ func (c *Client) writeMessages() {
 				log.Println("Error writing message: ", err)
 				return
 			}
-			log.Println("Sending message: ", string(message))
+
 		case <-c.ping:
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Println("Error writing ping message: ", err)

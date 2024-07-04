@@ -50,7 +50,7 @@ func (h *Hub) Run() {
 			h.mu.Unlock()
 		case message := <-h.broadcast:
 			h.mu.Lock()
-			log.Printf("Broadcasting message: %s", string(message))
+
 			for client := range h.clients {
 				select {
 				case client.send <- message:
