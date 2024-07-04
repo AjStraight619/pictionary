@@ -34,7 +34,7 @@ export default function WordList({
   );
 
   useEffect(() => {
-    setWordList(getRandomWords("", 3));
+    setWordList(getRandomWords("Random", 3));
   }, []);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -44,7 +44,7 @@ export default function WordList({
   const { sendJsonMessage, lastMessage } = useCustomWebSocket({
     roomId,
     userId,
-    messageType: "countdown",
+    messageType: "select_word_countdown",
   });
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function WordList({
   }, [newTurn, sendJsonMessage]);
 
   const getNewWords = () => {
-    setWordList(getRandomWords("", 3));
+    setWordList(getRandomWords("Random", 3));
   };
 
   const handleSelectedWord = async (formData: FormData) => {

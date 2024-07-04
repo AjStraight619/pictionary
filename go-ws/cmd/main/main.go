@@ -86,5 +86,5 @@ func main() {
 		port = "8000"
 	}
 	log.Printf("Listening on port %s", port)
-	http.ListenAndServe(":"+port, r)
+	http.ListenAndServe("0.0.0.0:"+port, r)
 }

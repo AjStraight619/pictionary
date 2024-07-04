@@ -20,7 +20,7 @@ export default function WordDisplay({
 }: WordDisplayProps) {
   const { word } = useWord();
   const currentDrawingUser = players.find((p) => p.id === currentDrawerId);
-  const splitWord = word.split("");
+  const splitWord = word?.split("");
   const { session } = useSession();
   const isCurrentDrawingUser = currentDrawingUser?.id === userId;
 
@@ -48,7 +48,7 @@ export default function WordDisplay({
           <span>Guess This:</span>
         )}
       </p>
-      {splitWord.map((ch, idx) => (
+      {splitWord?.map((ch, idx) => (
         <div
           className="text-3xl flex flex-col items-center justify-center -space-y-5"
           key={idx}
@@ -57,7 +57,7 @@ export default function WordDisplay({
           <span>{ch !== " " ? <span>__</span> : " "}</span>
         </div>
       ))}
-      <div className="self-end ml-2">{splitWord.length}</div>
+      <div className="self-end ml-2">{splitWord?.length}</div>
     </div>
   );
 }

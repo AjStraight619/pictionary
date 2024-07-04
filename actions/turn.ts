@@ -44,6 +44,6 @@ export async function startNewTurn(gameId: string) {
   } catch (err) {
     console.error("Something went wrong starting a new turn: ", err);
   } finally {
-    revalidatePath("/room/[roomId]");
+    revalidatePath("/room/[roomId]", "page");
   }
 }

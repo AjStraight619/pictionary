@@ -8,6 +8,8 @@ import Link from "next/link";
 export default function Nav() {
   const pathname = usePathname();
   if (pathname.includes("room")) return null;
+  const isOnSignInPage = pathname.includes("sign-in");
+  const isOnSignUpPage = pathname.includes("sign-up");
   return (
     <div className="fixed top-0 h-16 bg-opacity-90 bg-gray-50 w-full">
       <div className="h-full flex items-center justify-between px-2 container">
@@ -16,15 +18,19 @@ export default function Nav() {
             Pictionary With Friends
           </h1>
         </Link>
+        {!isOnSignUpPage && (
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+        )}
 
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
-        <SignedOut>
-          <Button asChild>
-            <SignInButton>Sign In</SignInButton>
-          </Button>
-        </SignedOut>
+        {!isOnSignInPage && (
+          <SignedOut>
+            <Button asChild>
+              <SignInButton>Sign In</SignInButton>
+            </Button>
+          </SignedOut>
+        )}
       </div>
     </div>
   );

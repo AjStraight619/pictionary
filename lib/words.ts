@@ -3,19 +3,24 @@ export type WordsListType = {
 };
 
 export const getRandomWords = (
-  category?: string,
-  count: number = 1
+  category: string = "Random",
+  count: number = 3
 ): string[] => {
-  if (!category) {
-    category = "Random";
-  }
   if (wordsList[category]) {
     const categoryWords = wordsList[category];
-    const shuffledWords = categoryWords.sort(() => Math.random() - 0.5);
+    const shuffledWords = shuffleArray(categoryWords);
     return shuffledWords.slice(0, count);
   } else {
     throw new Error("Category not found or undefined");
   }
+};
+
+const shuffleArray = (array: string[]): string[] => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
 };
 
 const wordsList: WordsListType = {

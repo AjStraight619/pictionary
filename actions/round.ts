@@ -24,7 +24,6 @@ export async function startNewRound(gameId: string) {
 
     console.log("First drawer: ", firstDrawer);
 
-    // Verify the drawerId exists in the Player table
     const drawerExists = await db.player.findUnique({
       where: { id: firstDrawer.playerId },
     });
@@ -33,22 +32,23 @@ export async function startNewRound(gameId: string) {
       throw new Error("Drawer not found");
     }
 
-    await db.round.create({
-      data: {
-        gameId: game.id,
-        drawerId: firstDrawer.playerId,
-        word: "",
-      },
-    });
-
-    await db.game.update({
-      where: { id: game.id },
-      data: {
-        currentDrawerId: firstDrawer.playerId,
-        currentRound: game.currentRound + 1,
-        newTurn: true,
-      },
-    });
+    await Promise.all([
+      db.round.create({
+        data: {
+          gameId: game.id,
+          drawerId: firstDrawer.playerId,
+          word: "",
+        },
+      }),
+      db.game.update({
+        where: { id: game.id },
+        data: {
+          currentDrawerId: firstDrawer.playerId,
+          currentRound: game.currentRound + 1,
+          newTurn: true,
+        },
+      }),
+    ]);
   } catch (err) {
     console.error("Error: ", err);
   } finally {

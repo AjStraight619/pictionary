@@ -38,6 +38,6 @@ export async function setWordForRound(
     // Handle the error as needed, such as throwing it again or returning a specific response
     throw new Error("Failed to set word for round.");
   } finally {
-    revalidatePath("/room/[roomId]");
+    revalidatePath("/room/[roomId]", "page");
   }
 }
