@@ -14,6 +14,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// /Users/alex/projects/webapps/pictionary-final/
 func main() {
 	env := os.Getenv("ENV")
 	if env == "" {
@@ -85,6 +86,5 @@ func main() {
 	if port == "" {
 		port = "8000"
 	}
-	log.Printf("Listening on port %s", port)
 	http.ListenAndServe("0.0.0.0:"+port, r)
 }

@@ -10,7 +10,7 @@ type UseCustomWebSocketProps = {
 const WSURL =
   process.env.NODE_ENV === "development"
     ? "ws://localhost:8000/ws"
-    : process.env.NEXT_PUBLIC_WEBSOCKET_URL;
+    : process.env.WS_URL!;
 
 export const useCustomWebSocket = ({
   roomId,
