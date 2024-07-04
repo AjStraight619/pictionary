@@ -7,10 +7,12 @@ type UseCustomWebSocketProps = {
   options?: Options;
 };
 
-const WSURL =
-  process.env.NODE_ENV === "development"
-    ? "ws://localhost:8000/ws"
-    : process.env.WS_URL!;
+// const WSURL =
+//   process.env.NODE_ENV === "development"
+//     ? "ws://localhost:8000/ws"
+//     : process.env.WS_URL!;
+
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL!;
 
 export const useCustomWebSocket = ({
   roomId,
@@ -18,14 +20,13 @@ export const useCustomWebSocket = ({
   messageType,
   options = {}, // Default to an empty object if no options are provided
 }: UseCustomWebSocketProps) => {
-  console.log("RoomId: ", roomId);
   const {
     sendMessage,
     lastMessage,
     readyState,
     sendJsonMessage,
     getWebSocket,
-  } = useWebSocket(`${WSURL}/${roomId}?userId=${userId}`, {
+  } = useWebSocket(`${WS_URL}/${roomId}?userId=${userId}`, {
     ...options,
 
     share: true,
