@@ -18,6 +18,7 @@ export const useCustomWebSocket = ({
   messageType,
   options = {}, // Default to an empty object if no options are provided
 }: UseCustomWebSocketProps) => {
+  console.log("RoomId: ", roomId);
   const {
     sendMessage,
     lastMessage,
