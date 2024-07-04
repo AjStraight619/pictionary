@@ -37,7 +37,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning={true}>
       <body
         className={cn(
-          "min-h-screen bg-background font-bangers antialiased",
+          "min-h-screen bg-background font-bangers antialiased tracking-widest",
           bangers.variable,
           fontSans.variable,
           fontRoboto.variable

@@ -210,18 +210,6 @@ export const handleCanvasMouseMove = ({
 }: CanvasMouseMove) => {
   if (!selectedToolRef.current) return;
 
-  // if (selectedObjectsRef.current && selectedObjectsRef.current.length > 1) {
-  //   console.log("In bounding rect logic mouse move");
-  //   selectedObjectsRef.current.forEach((obj) => {
-  //     const objBoundingRect = obj.getBoundingRect();
-  //     console.log("Object:", obj);
-  //     console.log("Position:", {
-  //       left: objBoundingRect.left,
-  //       top: objBoundingRect.top,
-  //     });
-  //   });
-  // }
-
   const pointer = canvas.getPointer(options.e);
   const point = new fabric.Point(pointer.x, pointer.y);
 
@@ -295,51 +283,6 @@ export const handleCanvasObjectsMoving = ({
       }
     }
   });
-
-  // const activeObject = options.target as CustomFabricObjectShape;
-
-  // console.log("active object type: ", activeObject.type);
-
-  // if (!activeObject) return;
-
-  // const objects = canvas.getActiveObjects() as CustomFabricObjectShape[];
-  // if (objects.length > 1 && activeObject.type === "activeSelection") {
-  //   const activeObjectBoundingRect = activeObject.getBoundingRect();
-  //   const deltaX = activeObjectBoundingRect.left - activeObject.left;
-  //   const deltaY = activeObjectBoundingRect.top - activeObject.top;
-
-  //   objects.forEach((obj) => {
-  //     if (obj === activeObject) return; // Skip the active selection itself
-
-  //     const newLeft = obj.left + deltaX;
-  //     const newTop = obj.top + deltaY;
-
-  //     console.log("Object:", obj);
-  //     console.log("New Position:", {
-  //       left: newLeft,
-  //       top: newTop,
-  //     });
-
-  //     sendDrawingData({
-  //       type: obj.type as CustomFabricObjectShapeType,
-  //       id: obj.id,
-  //       shapeData: { ...obj.toObject(), left: newLeft, top: newTop },
-  //     });
-  //   });
-
-  // // If a single object is being moved
-  // const objBoundingRect = activeObject.getBoundingRect();
-  // console.log("Active Object Position:", {
-  //   left: objBoundingRect.left,
-  //   top: objBoundingRect.top,
-  // });
-
-  // sendDrawingData({
-  //   type: activeObject.type as CustomFabricObjectShapeType,
-  //   id: activeObject.id,
-  //   shapeData: { ...activeObject.toObject() },
-  // });
-  // }
 };
 
 export const handleSelectionChange = ({
@@ -358,24 +301,6 @@ export const handleSelectionAndInitialPosition = (
     CustomFabricObjectShape[] | undefined
   >
 ) => {
-  // handleSelectionChange({
-  //   options,
-  //   selectedObjectsRef,
-  // });
-
   storeInitialPositions(options.selected as CustomFabricObjectShape[]);
   console.log("options selected: ", options.selected);
-  // console.log("options target: ", options.target);
-  // // Also set initial position for active selection
-  // console.log("options selected: ", options.selected);
-
-  // if (options.selected && options.selected.length > 0) {
-  //   options.selected.forEach((obj) => {
-  //     const customObj = obj as CustomFabricObjectShape;
-  //     console.log("Handling selection and initial position for:", customObj);
-  //     if (customObj.setInitialPosition) {
-  //       customObj.setInitialPosition();
-  //     }
-  //   });
-  // }
 };

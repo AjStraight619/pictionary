@@ -18,6 +18,7 @@ export default function Nav() {
             Pictionary With Friends
           </h1>
         </Link>
+
         {!isOnSignUpPage && (
           <SignedIn>
             <UserButton />

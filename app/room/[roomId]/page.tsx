@@ -69,12 +69,15 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
             roomId={roomId}
           />
         </div>
-        <WordDisplay
-          userId={user.id}
-          roomId={roomId}
-          currentDrawerId={game.currentDrawerId}
-          players={game.players}
-        />
+        {currentWord && (
+          <WordDisplay
+            userId={user.id}
+            roomId={roomId}
+            currentDrawerId={game.currentDrawerId}
+            players={game.players}
+          />
+        )}
+
         <div className="flex flex-row gap-x-2 w-full h-[calc(100vh-20rem-10rem)] pb-2">
           <div className="flex-1 h-full">
             <DrawerCanvas userId={user.id} roomId={roomId} />

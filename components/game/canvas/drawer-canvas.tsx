@@ -49,12 +49,7 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
   const { sendJsonMessage } = useCustomWebSocket({ roomId, userId });
   const renderRef = useRef(0);
 
-  useEffect(() => {
-    console.log("canvas component re rendered: ", renderRef.current++);
-  });
-
   const sendDrawingData = useThrottledCallback((drawingData: DrawingData2) => {
-    console.log("Pencil drawing data : ", drawingData);
     sendJsonMessage({ type: "drawing", data: drawingData });
   }, 16);
 
@@ -164,7 +159,6 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
     });
 
     canvas.on("object:modified", (options) => {
-      console.log("object modified...");
       eventHandler(options);
     });
     canvas.on("object:moving", eventHandler);
