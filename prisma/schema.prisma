@@ -28,6 +28,8 @@ model Game {
   players        GamePlayer[]
   currentRound   Int
   currentDrawerId String? 
+  maxRounds       Int @default(8)
+  maxPlayers      Int @default(6)
   newTurn        Boolean      @default(false)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt

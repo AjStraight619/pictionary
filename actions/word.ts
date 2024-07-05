@@ -35,9 +35,7 @@ export async function setWordForRound(
     ]);
   } catch (error) {
     console.error("Error setting word for round: ", error);
-    // Handle the error as needed, such as throwing it again or returning a specific response
-    throw new Error("Failed to set word for round.");
   } finally {
-    revalidatePath("/room/[roomId]", "page");
+    revalidatePath(`/room/${gameId}`, "page");
   }
 }

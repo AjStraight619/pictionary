@@ -35,6 +35,7 @@ func (h *Hub) Run() {
 			h.mu.Lock()
 			if _, exists := h.clients[client]; exists {
 				log.Printf("Client already registered: %v", client.userId)
+				h.mu.Unlock()
 			} else {
 				h.clients[client] = true
 				h.mu.Unlock()
@@ -50,7 +51,6 @@ func (h *Hub) Run() {
 			h.mu.Unlock()
 		case message := <-h.broadcast:
 			h.mu.Lock()
-
 			for client := range h.clients {
 				select {
 				case client.send <- message:

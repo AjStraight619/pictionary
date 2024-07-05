@@ -9,11 +9,15 @@ import { currentUser } from "@clerk/nextjs/server";
 import dynamic from "next/dynamic";
 import { notFound, redirect } from "next/navigation";
 
-// Getting hydration error on this component
 const DynamicWordList = dynamic(
   () => import("@/components/game/word/word-list"),
   { ssr: false }
 );
+const DynamicPreGameLobby = dynamic(
+  () => import("@/components/game/lobby/pre-game-lobby"),
+  { ssr: false }
+);
+
 type RoomPageProps = {
   params: {
     roomId: string;
@@ -61,6 +65,11 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
             gameId={game.id}
             currentWord={currentWord}
           />
+          <DynamicPreGameLobby
+            gameId={game.id}
+            players={game.players}
+            gameStatus={game.status}
+          />
           <Chat players={game.players} userId={user.id} roomId={roomId} />
           <DynamicWordList
             newTurn={game.newTurn}
@@ -77,7 +86,6 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
             players={game.players}
           />
         )}
-
         <div className="flex flex-row gap-x-2 w-full h-[calc(100vh-20rem-10rem)] pb-2">
           <div className="flex-1 h-full">
             <DrawerCanvas userId={user.id} roomId={roomId} />

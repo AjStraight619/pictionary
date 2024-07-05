@@ -64,6 +64,32 @@ export async function createGame(values: z.infer<typeof createRoomSchema>) {
   }
 }
 
+type StartGameData = {
+  gameId: string;
+  maxPlayers: string;
+  maxRounds: string;
+};
+
+export async function startGame(formData: FormData) {
+  const data = Object.fromEntries(formData) as StartGameData;
+  const { gameId, maxPlayers, maxRounds } = data;
+  try {
+  } catch (err) {
+  } finally {
+    revalidatePath(`/room/${gameId}`, "page");
+  }
+
+  await db.game.update({
+    where: {
+      id: gameId,
+    },
+    data: {
+      maxPlayers: Number(maxPlayers),
+      maxRounds: Number(maxRounds),
+    },
+  });
+}
+
 export async function joinGame(gameId: string) {
   const user = await currentUser();
   if (!user || !user.id) redirect("/sign-in");
@@ -117,7 +143,7 @@ export async function joinGame(gameId: string) {
       error: "Something went wrong",
     };
   } finally {
-    revalidatePath("/room/[roomId]", "page");
+    revalidatePath(`/room/${gameId}`, "page");
   }
 }
 
@@ -153,62 +179,6 @@ export async function proceedGame(gameId: string) {
   } catch (err) {
     console.error("error: ", err);
   } finally {
-    revalidatePath("/room/[roomId]", "page");
+    revalidatePath(`/room/${gameId}`, "page");
   }
 }
-
-// export async function initializeGame(
-//   roomId: string,
-//   playerId: string,
-//   username: string
-// ) {
-//   const game = await db.game.create({
-//     data: {
-//       status: "WAITING",
-//       currentRound: 0,
-//       players: {
-//         create: {
-//           playerId: playerId,
-//           score: 0,
-//           isLeader: true,
-//           username: username,
-//         },
-//       },
-//       rounds: {
-//         create: {
-//           drawerId: playerId,
-//           word: "",
-//         },
-//       },
-//     },
-//     include: {
-//       players: true,
-//       rounds: true,
-//     },
-//   });
-
-//   return game;
-// }
-
-// export async function addPlayerToGame(
-//   gameId: string,
-//   playerId: string,
-//   username: string
-// ) {
-//   await db.gamePlayer.create({
-//     data: {
-//       gameId: gameId,
-//       playerId: playerId,
-//       username: username,
-//       score: 0,
-//       isLeader: false,
-//     },
-//   });
-
-//   const updatedGame = await db.game.findUnique({
-//     where: { id: gameId },
-//     include: { players: true, rounds: true },
-//   });
-
-//   return updatedGame;
-// }

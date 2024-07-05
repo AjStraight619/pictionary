@@ -28,13 +28,11 @@ export default function Lobby({
   currentWord,
 }: LobbyProps) {
   const handleStartNewRound = async (formData: FormData) => {
-    "use server";
     const gameId = formData.get("gameId") as string;
     await startNewRound(gameId);
   };
 
   const handleProceedGame = async (formData: FormData) => {
-    "use server";
     const gameId = formData.get("gameId") as string;
     await proceedGame(gameId);
   };
@@ -53,8 +51,6 @@ export default function Lobby({
           }}
         >
           <div className="flex items-center gap-x-2">
-            {/* <Button type="submit">New Round</Button> */}
-            {/* <WordDisplay players={players} currentDrawerId={currentDrawerId} /> */}
             <div>{currentRound} / 8</div>
           </div>
         </form>
