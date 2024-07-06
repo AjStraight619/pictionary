@@ -59,7 +59,7 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
         data: freeHandData,
       });
     },
-    16
+    10
   );
 
   const sendCompressedDrawingData = useThrottledCallback(() => {}, 16);
