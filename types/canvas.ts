@@ -45,7 +45,7 @@ export type CanvasMouseMove = {
   selectedShapeRef: React.MutableRefObject<fabric.Object | null>;
   pathDataRef: React.MutableRefObject<fabric.Point[]>;
   shapeRef: any;
-  sendDrawingData: (drawingData: DrawingData2) => void;
+  sendFreeHandData: (freeHandData: any) => void;
   selectedObjectsRef: React.MutableRefObject<fabric.Object[] | undefined>;
   lastUsedColorRef: React.MutableRefObject<string>;
   lastUsedStrokeWidthRef: React.MutableRefObject<number>;

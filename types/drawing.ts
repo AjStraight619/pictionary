@@ -59,3 +59,10 @@ export type ModifyShape = {
   value: any;
   activeObjectRef: React.MutableRefObject<fabric.Object | null>;
 };
+
+export type FreeHandDrawingData = {
+  type: Tool.pencil;
+  stroke: string;
+  strokeWidth: number;
+  path: Uint8Array;
+};

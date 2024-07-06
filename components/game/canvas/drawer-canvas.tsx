@@ -14,7 +14,7 @@ import {
 import Toolbar from "../toolbar";
 import { Tool } from "@/types/canvas";
 import { useThrottledCallback } from "use-debounce";
-import { DrawingData } from "@/types/drawing";
+import { DrawingData, FreeHandDrawingData } from "@/types/drawing";
 import { useCustomWebSocket } from "@/hooks/useCustomWebsocket";
 import { DrawingData2 } from "@/types/shape";
 import { CustomFabricObjectShape } from "@/lib/customFabricObjects";
@@ -50,23 +50,17 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
   const { sendJsonMessage } = useCustomWebSocket({ roomId, userId });
   const renderRef = useRef(0);
 
-  const sendDrawingData = useThrottledCallback((drawingData: DrawingData2) => {
-    console.log("Drawing data: ", drawingData);
-    if (drawingData.type === "pencil") {
-      const compressedData = compressMessage(drawingData);
+  const sendFreeHandData = useThrottledCallback(
+    (freeHandData: FreeHandDrawingData) => {
+      console.log("Freehand data: ", freeHandData);
       sendJsonMessage({
         type: "drawing",
         compressed: true,
-        data: compressedData,
+        data: freeHandData,
       });
-    } else {
-      sendJsonMessage({
-        type: "drawing",
-        compressed: false,
-        data: drawingData,
-      });
-    }
-  }, 16);
+    },
+    16
+  );
 
   const sendCompressedDrawingData = useThrottledCallback(() => {}, 16);
 
@@ -123,7 +117,6 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
 
     const eventHandler = (options: IEvent) => {
       const obj = options.target as CustomFabricObjectShape;
-
       handleObjectChange(obj, sendJsonMessage);
     };
 
@@ -171,7 +164,7 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
         selectedShapeRef,
         lastUsedColorRef,
         selectedObjectsRef,
-        sendDrawingData,
+        sendFreeHandData,
         lastUsedStrokeWidthRef,
       });
     });
@@ -217,7 +210,7 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
         });
       });
     };
-  }, [canvasRef, sendDrawingDataSVG, sendDrawingData, sendJsonMessage]);
+  }, [canvasRef, sendDrawingDataSVG, sendFreeHandData, sendJsonMessage]);
 
   return (
     <>

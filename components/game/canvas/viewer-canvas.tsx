@@ -4,10 +4,17 @@ import { useCustomWebSocket } from "@/hooks/useCustomWebsocket";
 import { convertPathDataToSvgPathString, decompressMessage } from "@/lib/utils";
 import { CustomPath } from "@/lib/customFabricObjects";
 import { handleWebSocketMessage } from "@/lib/viewer-canvas";
+import { FreeHandDrawingData } from "@/types/drawing";
 
 export type ViewerCanvasTestProps = {
   roomId: string;
   userId: string;
+};
+
+export type PencilDraft = {
+  path: string;
+  strokeWidth: number;
+  stroke: string;
 };
 
 export default function ViewerCanvas({
@@ -17,7 +24,7 @@ export default function ViewerCanvas({
   const svgContainerRef = useRef<SVGSVGElement>(null);
   const svgElementsMap = useRef<Map<string, SVGElement>>(new Map());
 
-  const [pencilDraft, setPencilDraft] = useState<CustomPath | null>(null);
+  const [pencilDraft, setPencilDraft] = useState<PencilDraft | null>(null);
 
   const { lastMessage } = useCustomWebSocket({
     roomId,
@@ -53,28 +60,14 @@ export default function ViewerCanvas({
 
   useEffect(() => {
     if (lastMessage) {
-      const parsedMessage = JSON.parse(lastMessage.data);
-      if (parsedMessage.compressed) {
-        console.log("Message is compressed...");
-        const decompressedMessage = decompressMessage(parsedMessage.data);
-        handleWebSocketMessage({
-          lastMessage: { ...lastMessage, data: decompressedMessage },
-          svgContainerRef,
-          svgElementsMap,
-          setPencilDraft,
-          clearSvgContainer,
-          deleteObjectById,
-        });
-      } else {
-        handleWebSocketMessage({
-          lastMessage,
-          svgContainerRef,
-          svgElementsMap,
-          setPencilDraft,
-          clearSvgContainer,
-          deleteObjectById,
-        });
-      }
+      handleWebSocketMessage({
+        lastMessage,
+        svgContainerRef,
+        svgElementsMap,
+        setPencilDraft,
+        clearSvgContainer,
+        deleteObjectById,
+      });
     }
   }, [lastMessage]);
 
@@ -82,9 +75,10 @@ export default function ViewerCanvas({
     <svg ref={svgContainerRef} className="w-full h-full rounded-md bg-gray-50">
       {pencilDraft?.path && pencilDraft.path.length > 0 && (
         <path
-          d={convertPathDataToSvgPathString(
-            pencilDraft?.path as unknown as (string | number)[][]
-          )}
+          // d={convertPathDataToSvgPathString(
+          //   pencilDraft?.path as unknown as (string | number)[][]
+          // )}
+          d={pencilDraft.path}
           strokeWidth={pencilDraft?.strokeWidth}
           stroke={pencilDraft?.stroke}
           fill="none"

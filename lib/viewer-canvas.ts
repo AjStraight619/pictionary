@@ -1,11 +1,14 @@
 import React from "react";
 import { CustomPath } from "@/lib/customFabricObjects";
+import { decompressMessage } from "./utils";
+import { FreeHandDrawingData } from "@/types/drawing";
+import { PencilDraft } from "@/components/game/canvas/viewer-canvas";
 
 type HandleWebSocketMessageParams = {
   lastMessage: MessageEvent<any>;
   svgContainerRef: React.MutableRefObject<SVGSVGElement | null>;
   svgElementsMap: React.MutableRefObject<Map<string, SVGElement>>;
-  setPencilDraft: React.Dispatch<React.SetStateAction<CustomPath | null>>;
+  setPencilDraft: React.Dispatch<React.SetStateAction<PencilDraft | null>>;
   clearSvgContainer: () => void;
   deleteObjectById: (id: string) => void;
 };
@@ -23,8 +26,17 @@ export const handleWebSocketMessage = ({
     const { id, svg } = parsedData.data;
 
     if (parsedData.data.type === "pencil") {
-      setPencilDraft(parsedData.data.shapeData);
-      return;
+      if (parsedData.compressed) {
+        setPencilDraft({
+          stroke: parsedData.data.stroke,
+          strokeWidth: parsedData.data.strokeWidth,
+          path: decompressMessage(parsedData.data.path),
+        });
+        return;
+      } else {
+        console.log("non decompressed path: ", parsedData.data.path);
+        return;
+      }
     }
 
     if (parsedData.data.shapeType === "path") {
