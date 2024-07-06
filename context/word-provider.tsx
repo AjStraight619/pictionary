@@ -22,7 +22,6 @@ export default function WordProvider({
 }: WordProviderProps) {
   const updateWord = async (formData: FormData) => {
     const roundId = formData.get("roundId") as string;
-    console.log("RoundId: ", roundId);
     const word = formData.get("word") as string;
     await setWordForRound(gameId, roundId, word);
   };

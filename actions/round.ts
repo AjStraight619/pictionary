@@ -52,6 +52,6 @@ export async function startNewRound(gameId: string) {
   } catch (err) {
     console.error("Error: ", err);
   } finally {
-    revalidatePath(`/room/${gameId}`, "page");
+    revalidatePath(`/room/${gameId}`);
   }
 }

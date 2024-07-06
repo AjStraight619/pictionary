@@ -28,5 +28,5 @@ export const createRoomSchema = z.object({
     .max(12, {
       message: "Room name cannot exceed 12 characters",
     }),
-  isOpen: z.boolean(),
+  isOpen: z.boolean().default(false),
 });

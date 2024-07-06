@@ -6,16 +6,16 @@ export const getRandomWords = (
   category: string = "Random",
   count: number = 3
 ): string[] => {
-  if (wordsList[category]) {
-    const categoryWords = wordsList[category];
-    const shuffledWords = shuffleArray(categoryWords);
-    return shuffledWords.slice(0, count);
-  } else {
-    throw new Error("Category not found or undefined");
+  const words = wordsList[category];
+  if (!words) {
+    return ["Something went wrong"];
   }
+
+  const shuffledWords = shuffleArray(words);
+  return shuffledWords.slice(0, count);
 };
 
-const shuffleArray = (array: string[]): string[] => {
+const shuffleArray = (array: string[]) => {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];

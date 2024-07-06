@@ -29,6 +29,7 @@ import SubmitButton from "../ui/submit-button";
 import { createGame } from "@/actions/game";
 import { Loader2 } from "lucide-react";
 import { useSession } from "@clerk/nextjs";
+import { Checkbox } from "../ui/checkbox";
 
 export default function CreateRoom() {
   const [error, setError] = useState("");
@@ -41,7 +42,7 @@ export default function CreateRoom() {
     resolver: zodResolver(createRoomSchema),
     defaultValues: {
       roomname: "",
-      isOpen: true,
+      isOpen: false,
     },
   });
 
@@ -104,8 +105,15 @@ export default function CreateRoom() {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Joinable</FormLabel>
-                  <FormControl></FormControl>
+                  <div className="flex items-center">
+                    <FormLabel className="mr-2">Joinable</FormLabel>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </div>
                   <FormDescription>
                     Allow the room to be joinable
                   </FormDescription>

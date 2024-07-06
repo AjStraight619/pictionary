@@ -28,12 +28,19 @@ export default function WordList({
   roomId,
   userId,
 }: WordListProps) {
+  const { pending } = useFormStatus();
+  const renderRef = useRef(0);
   const [wordList, setWordList] = useState<string[]>([]);
   const [selectCountdown, setSelectCountdown] = useState<number | undefined>(
     undefined
   );
 
   useEffect(() => {
+    console.log("Word lists component re rendered: ", renderRef.current++);
+  });
+
+  useEffect(() => {
+    console.log("words list Component mounted");
     setWordList(getRandomWords("Random", 3));
   }, []);
 
@@ -52,20 +59,21 @@ export default function WordList({
       const msg = JSON.parse(lastMessage.data);
       if (msg.data.time === 0 && inputRef.current) {
         inputRef.current.click();
-        setSelectCountdown(30);
       }
       setSelectCountdown(msg.data.time);
     }
   }, [lastMessage]);
 
   useEffect(() => {
-    sendJsonMessage({
-      type: "countdown",
-      data: {
-        time: 30,
-        timerType: "select_word_countdown",
-      },
-    });
+    if (newTurn) {
+      sendJsonMessage({
+        type: "countdown",
+        data: {
+          time: 30,
+          timerType: "select_word_countdown",
+        },
+      });
+    }
   }, [newTurn, sendJsonMessage]);
 
   const getNewWords = () => {
@@ -73,12 +81,14 @@ export default function WordList({
   };
 
   const handleSelectedWord = async (formData: FormData) => {
-    const selectedWord = formData.get("word");
     formData.append("roundId", roundId);
-
     await updateWord(formData);
-    console.log("Selected word: ", selectedWord);
-    setSelectCountdown(30);
+    sendJsonMessage({
+      type: "stop_timer",
+      data: {
+        timerType: "select_word_countdown",
+      },
+    });
   };
 
   return (
@@ -98,7 +108,7 @@ export default function WordList({
           <ul className="flex flex-row items-center justify-evenly text-lg">
             {wordList.map((word, idx) => (
               <li key={idx}>
-                <WordSelect inputRef={inputRef} word={word} />
+                <WordSelect pending={pending} inputRef={inputRef} word={word} />
               </li>
             ))}
           </ul>

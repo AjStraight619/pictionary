@@ -1,6 +1,4 @@
-// actions/game.ts
 "use server";
-
 import { db } from "@/lib/db";
 import { createRoomSchema } from "@/lib/schemas";
 import { currentUser } from "@clerk/nextjs/server";
@@ -9,6 +7,8 @@ import { z } from "zod";
 import { startNewRound } from "./round";
 import { startNewTurn } from "./turn";
 import { revalidatePath } from "next/cache";
+import { GamePlayer } from "@prisma/client";
+import { StartGameData } from "@/types/game";
 
 export async function createGame(values: z.infer<typeof createRoomSchema>) {
   const validatedValues = createRoomSchema.safeParse(values);
@@ -31,6 +31,8 @@ export async function createGame(values: z.infer<typeof createRoomSchema>) {
   }
 
   const { isOpen, roomname } = validatedValues.data;
+
+  console.log("isOpen: ", isOpen);
 
   try {
     const newGame = await db.game.create({
@@ -61,33 +63,42 @@ export async function createGame(values: z.infer<typeof createRoomSchema>) {
     return {
       error: "Something went wrong",
     };
+  } finally {
+    revalidatePath("/", "page");
   }
 }
 
-type StartGameData = {
-  gameId: string;
-  maxPlayers: string;
-  maxRounds: string;
-};
-
 export async function startGame(formData: FormData) {
-  const data = Object.fromEntries(formData) as StartGameData;
-  const { gameId, maxPlayers, maxRounds } = data;
-  try {
-  } catch (err) {
-  } finally {
-    revalidatePath(`/room/${gameId}`, "page");
+  const data = Object.fromEntries(formData) as unknown as StartGameData;
+  const { gameId, maxPlayers, maxRounds, leader } = data;
+  console.log("Data: ", data);
+  console.log("Type of maxPlayers: ", typeof maxPlayers);
+  const parsedLeader = JSON.parse(leader) as GamePlayer;
+  console.log("Parsed leader: ", parsedLeader);
+  if (!parsedLeader) {
+    return { failure: "No valid leader in game" };
   }
-
-  await db.game.update({
-    where: {
-      id: gameId,
-    },
-    data: {
-      maxPlayers: Number(maxPlayers),
-      maxRounds: Number(maxRounds),
-    },
-  });
+  try {
+    await Promise.all([
+      db.game.update({
+        where: {
+          id: gameId,
+        },
+        data: {
+          maxPlayers: parseInt(maxPlayers),
+          maxRounds: parseInt(maxRounds),
+          status: "IN_PROGRESS",
+          currentDrawerId: parsedLeader.playerId,
+        },
+      }),
+      startNewRound(gameId),
+    ]);
+    console.log("Started game.....");
+  } catch (err) {
+    console.error("Error: ", err);
+  } finally {
+    revalidatePath(`/room/${gameId}`);
+  }
 }
 
 export async function joinGame(gameId: string) {
@@ -143,7 +154,7 @@ export async function joinGame(gameId: string) {
       error: "Something went wrong",
     };
   } finally {
-    revalidatePath(`/room/${gameId}`, "page");
+    revalidatePath(`/room/${gameId}`);
   }
 }
 
@@ -165,20 +176,19 @@ export async function proceedGame(gameId: string) {
     }
 
     const currentDrawerIndex = game.players.findIndex(
-      (player) => player.id === game.currentDrawerId
+      (player) => player.playerId === game.currentDrawerId
     );
 
     const nextDrawerIndex = (currentDrawerIndex + 1) % game.players.length;
 
     if (nextDrawerIndex === 0 && currentDrawerIndex !== -1) {
-      await startNewRound(gameId);
-      await startNewTurn(gameId);
+      await Promise.all([startNewRound(gameId), startNewTurn(gameId)]);
     } else {
       await startNewTurn(gameId);
     }
   } catch (err) {
     console.error("error: ", err);
   } finally {
-    revalidatePath(`/room/${gameId}`, "page");
+    revalidatePath(`/room/${gameId}`);
   }
 }

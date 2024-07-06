@@ -2,7 +2,7 @@ import useWebSocket, { Options } from "react-use-websocket";
 
 type UseCustomWebSocketProps = {
   roomId: string;
-  userId: string;
+  userId?: string;
   messageType?: string;
   options?: Options;
 };

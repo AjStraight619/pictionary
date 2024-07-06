@@ -1,6 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-
-const db = new PrismaClient();
+const db = require("./dbtest");
 
 async function seedPlayers() {
   // Fetch the first game (or create one if necessary)

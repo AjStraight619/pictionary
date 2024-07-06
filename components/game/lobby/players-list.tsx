@@ -94,13 +94,6 @@ export default function PlayersList({
   currentDrawerId,
 }: PlayersListProps) {
   const allPlayers = [...players];
-  const renderRef = useRef(0);
-
-  console.log("Current drawer id: ", currentDrawerId);
-
-  useEffect(() => {
-    console.log("player list component re rendered: ", renderRef.current++);
-  });
 
   return (
     <>
@@ -139,7 +132,9 @@ export default function PlayersList({
                   >
                     <div className="flex items-center gap-x-2">
                       <span className="font-semibold">{p.username}</span>
-                      {currentDrawerId === p.id && <PencilIcon fill="orange" />}
+                      {currentDrawerId === p.playerId && (
+                        <PencilIcon fill="orange" />
+                      )}
                     </div>
                     {showScore && <span className="text-black">{p.score}</span>}
                   </div>

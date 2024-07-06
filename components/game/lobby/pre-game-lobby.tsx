@@ -19,24 +19,31 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import SubmitButton2 from "@/components/ui/submit-button2";
 import { wait } from "@/lib/utils";
+import { startGame } from "@/actions/game";
 
 type PreGameLobbyProps = {
   players: GamePlayer[];
   gameStatus: GameStatus;
   gameId: string;
+  userId: string;
 };
 
 export default function PreGameLobby({
   players,
   gameStatus,
+  gameId,
+  userId,
 }: PreGameLobbyProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(
     gameStatus === GameStatus.WAITING
   );
 
   useEffect(() => {
+    console.log("Game status changed..: ", gameStatus);
     setIsDialogOpen(gameStatus === GameStatus.WAITING);
   }, [gameStatus]);
+
+  const leader = players.find((p) => p.isLeader && p.playerId === userId);
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -54,7 +61,7 @@ export default function PreGameLobby({
             currentDrawerId={null}
           />
           <Separator />
-          <GameRules />
+          <GameRules gameId={gameId} leader={leader} />
         </div>
       </DialogContent>
     </Dialog>
@@ -63,23 +70,32 @@ export default function PreGameLobby({
 
 type TimerOptions = "80" | "100" | "120";
 type MaxPlayers = "2" | "3" | "4" | "5" | "6";
+type MaxRounds = "8" | "10" | "12";
 
 type GameRulesType = {
   timer: TimerOptions;
   maxPlayers: MaxPlayers;
+  maxRounds: MaxRounds;
 };
 
-function GameRules() {
+type GameRulesProps = {
+  gameId: string;
+  leader: GamePlayer | undefined;
+};
+
+function GameRules({ gameId, leader }: GameRulesProps) {
   const [gameRules, setGameRules] = useState<GameRulesType>({
     timer: "80",
     maxPlayers: "6",
+    maxRounds: "8",
   });
 
   const handleUpdateGameRules = async (formData: FormData) => {
     formData.append("timer", String(gameRules.timer));
     formData.append("maxPlayers", String(gameRules.maxPlayers));
-    await wait(5000);
-    console.log("Form Data: ", Object.fromEntries(formData));
+    formData.append("gameId", gameId);
+    formData.append("leader", JSON.stringify(leader));
+    await startGame(formData);
   };
 
   return (
@@ -94,6 +110,7 @@ function GameRules() {
             Round Timer:
           </Label>
           <Select
+            disabled={!leader}
             name="timer"
             value={gameRules.timer}
             onValueChange={(v) =>
@@ -103,7 +120,7 @@ function GameRules() {
               }))
             }
           >
-            <SelectTrigger className="">
+            <SelectTrigger>
               <SelectValue placeholder="80" />
             </SelectTrigger>
             <SelectContent>
@@ -114,10 +131,11 @@ function GameRules() {
           </Select>
         </div>
         <div className="flex flex-col space-y-2">
-          <Label className="text-lg font-roboto" htmlFor="maxPlayers">
+          <Label className="text-lg font-roboto" htmlFor="maxRounds">
             Max Players:
           </Label>
           <Select
+            disabled={!leader}
             name="maxPlayers"
             value={gameRules.maxPlayers}
             onValueChange={(v) =>
@@ -127,7 +145,7 @@ function GameRules() {
               }))
             }
           >
-            <SelectTrigger className="">
+            <SelectTrigger>
               <SelectValue placeholder="6" />
             </SelectTrigger>
             <SelectContent>
@@ -136,6 +154,31 @@ function GameRules() {
               <SelectItem value="4">4</SelectItem>
               <SelectItem value="5">5</SelectItem>
               <SelectItem value="6">6</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col space-y-2">
+          <Label className="text-lg font-roboto" htmlFor="maxPlayers">
+            Rounds:
+          </Label>
+          <Select
+            disabled={!leader}
+            name="maxRounds"
+            value={gameRules.maxRounds}
+            onValueChange={(v) =>
+              setGameRules((prevGameRules) => ({
+                ...prevGameRules,
+                maxRounds: v as MaxRounds,
+              }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="8" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="8">8</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="12">12</SelectItem>
             </SelectContent>
           </Select>
         </div>

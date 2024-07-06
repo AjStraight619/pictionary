@@ -21,7 +21,6 @@ export default function WordDisplay({
   const { word } = useWord();
   const currentDrawingUser = players.find((p) => p.id === currentDrawerId);
   const splitWord = word?.split("");
-  const { session } = useSession();
   const isCurrentDrawingUser = currentDrawingUser?.id === userId;
 
   const { lastMessage } = useCustomWebSocket({
@@ -33,6 +32,7 @@ export default function WordDisplay({
   // TODO: Depending on the timer and length of word start showing characters of the word at certain intervals
   useEffect(() => {
     if (lastMessage) {
+      const message = JSON.parse(lastMessage.data);
     }
   }, [lastMessage]);
 

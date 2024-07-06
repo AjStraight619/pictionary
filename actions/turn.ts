@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+
 import { revalidatePath } from "next/cache";
 
 export async function startNewTurn(gameId: string) {
@@ -18,7 +19,7 @@ export async function startNewTurn(gameId: string) {
 
     const players = game.players;
     const currentDrawerIndex = players.findIndex(
-      (player) => player.id === game.currentDrawerId
+      (player) => player.playerId === game.currentDrawerId
     );
 
     // Determine the next drawer index
@@ -30,6 +31,8 @@ export async function startNewTurn(gameId: string) {
     }
 
     const nextDrawer = players[nextDrawerIndex];
+
+    console.log("Next drawer (startNewRound): ", nextDrawer);
 
     // Update the game with the next drawer and set newTurn to true
     await db.game.update({
@@ -44,6 +47,6 @@ export async function startNewTurn(gameId: string) {
   } catch (err) {
     console.error("Something went wrong starting a new turn: ", err);
   } finally {
-    revalidatePath(`/room/${gameId}`, "page");
+    revalidatePath(`/room/${gameId}`);
   }
 }

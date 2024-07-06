@@ -22,3 +22,7 @@ func DeleteGame(db *gorm.DB, gameID string) error {
 	result := db.Table("Game").Where("id = ?", gameID).Delete(&SimpleGame{})
 	return result.Error
 }
+
+// func CheckPlayerCount(db *gorm.DB) error {
+// 	if err := db.Table("Game").Find(&games)
+// }

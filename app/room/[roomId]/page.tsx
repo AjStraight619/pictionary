@@ -47,10 +47,13 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
   const game = await getGame(roomId);
 
   if (!game) notFound();
+  console.log("Game status: ", game.status);
 
   const currentRoundIndex = game.currentRound;
   const currentRound = game.rounds[currentRoundIndex - 1];
   const currentWord = currentRound?.word;
+
+  console.log("Current word: ", currentWord);
 
   return (
     <WordProvider word={currentWord} gameId={game.id}>
@@ -69,6 +72,7 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
             gameId={game.id}
             players={game.players}
             gameStatus={game.status}
+            userId={user.id}
           />
           <Chat players={game.players} userId={user.id} roomId={roomId} />
           <DynamicWordList

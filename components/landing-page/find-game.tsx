@@ -16,6 +16,7 @@ const getOpenGames = async () => {
   const openGames = await db.game.findMany({
     where: {
       isOpen: true,
+      status: "WAITING",
     },
     select: {
       id: true,
@@ -36,10 +37,8 @@ const getOpenGames = async () => {
 };
 
 export default async function FindGame() {
-  // TODO: Implement this later
-
   const openGames = await getOpenGames();
-
+  console.log("Open Games: ", openGames);
   const joinInviteLink = async (formData: FormData) => {
     "use server";
     const inviteLink = formData.get("inviteLink");

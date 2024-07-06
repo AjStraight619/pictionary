@@ -9,6 +9,9 @@ export async function setWordForRound(
   roundId: string,
   word: string
 ) {
+  console.log("gameId: ", gameId);
+  console.log("word: ", word);
+  console.log("RoundId: ", roundId);
   try {
     const [existingRound] = await Promise.all([
       db.round.findUnique({
@@ -36,6 +39,6 @@ export async function setWordForRound(
   } catch (error) {
     console.error("Error setting word for round: ", error);
   } finally {
-    revalidatePath(`/room/${gameId}`, "page");
+    revalidatePath(`/room/${gameId}`);
   }
 }

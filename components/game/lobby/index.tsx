@@ -27,16 +27,7 @@ export default function Lobby({
   gameId,
   currentWord,
 }: LobbyProps) {
-  const handleStartNewRound = async (formData: FormData) => {
-    const gameId = formData.get("gameId") as string;
-    await startNewRound(gameId);
-  };
-
-  const handleProceedGame = async (formData: FormData) => {
-    const gameId = formData.get("gameId") as string;
-    await proceedGame(gameId);
-  };
-
+  console.log("Current drawer id in Lobby: ", currentDrawerId);
   return (
     <Card className="h-full w-full">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -44,10 +35,10 @@ export default function Lobby({
         {/* <div>{showTimer && <Timer />}</div> */}
         <div>{currentWord}</div>
         <form
-          action={async (formData) => {
+          action={async () => {
             "use server";
-            formData.append("gameId", gameId as string);
-            await handleStartNewRound(formData);
+
+            await startNewRound(gameId as string);
           }}
         >
           <div className="flex items-center gap-x-2">
@@ -56,10 +47,9 @@ export default function Lobby({
         </form>
 
         <form
-          action={async (formData) => {
+          action={async () => {
             "use server";
-            formData.append("gameId", gameId as string);
-            await handleProceedGame(formData);
+            await proceedGame(gameId as string);
           }}
         >
           <Button type="submit">Proceed Game</Button>
