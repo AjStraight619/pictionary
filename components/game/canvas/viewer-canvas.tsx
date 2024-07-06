@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { useCustomWebSocket } from "@/hooks/useCustomWebsocket";
-import { convertPathDataToSvgPathString } from "@/lib/utils";
+import { convertPathDataToSvgPathString, decompressMessage } from "@/lib/utils";
 import { CustomPath } from "@/lib/customFabricObjects";
 import { handleWebSocketMessage } from "@/lib/viewer-canvas";
 
@@ -52,15 +52,29 @@ export default function ViewerCanvas({
   };
 
   useEffect(() => {
-    if (lastMessage && svgContainerRef.current) {
-      handleWebSocketMessage({
-        lastMessage,
-        svgContainerRef,
-        svgElementsMap,
-        setPencilDraft,
-        clearSvgContainer,
-        deleteObjectById,
-      });
+    if (lastMessage) {
+      const parsedMessage = JSON.parse(lastMessage.data);
+      if (parsedMessage.compressed) {
+        console.log("Message is compressed...");
+        const decompressedMessage = decompressMessage(parsedMessage.data);
+        handleWebSocketMessage({
+          lastMessage: { ...lastMessage, data: decompressedMessage },
+          svgContainerRef,
+          svgElementsMap,
+          setPencilDraft,
+          clearSvgContainer,
+          deleteObjectById,
+        });
+      } else {
+        handleWebSocketMessage({
+          lastMessage,
+          svgContainerRef,
+          svgElementsMap,
+          setPencilDraft,
+          clearSvgContainer,
+          deleteObjectById,
+        });
+      }
     }
   }, [lastMessage]);
 

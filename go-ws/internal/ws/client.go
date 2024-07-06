@@ -9,8 +9,9 @@ import (
 )
 
 type Message struct {
-	Type string          `json:"type"`
-	Data json.RawMessage `json:"data"`
+	Type       string          `json:"type"`
+	Compressed bool            `json:"compressed,omitempty"`
+	Data       json.RawMessage `json:"data"`
 }
 
 type TimerData struct {

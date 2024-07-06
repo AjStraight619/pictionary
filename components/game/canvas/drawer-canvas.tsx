@@ -20,6 +20,7 @@ import { DrawingData2 } from "@/types/shape";
 import { CustomFabricObjectShape } from "@/lib/customFabricObjects";
 import { IEvent } from "fabric/fabric-impl";
 import { handleKeyDown } from "@/lib/keyevents";
+import { compressMessage } from "@/lib/utils";
 
 type State = DrawingData[];
 type Action =
@@ -51,13 +52,29 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
 
   const sendDrawingData = useThrottledCallback((drawingData: DrawingData2) => {
     console.log("Drawing data: ", drawingData);
-    sendJsonMessage({ type: "drawing", data: drawingData });
-  }, 25);
+    if (drawingData.type === "pencil") {
+      const compressedData = compressMessage(drawingData);
+      sendJsonMessage({
+        type: "drawing",
+        compressed: true,
+        data: compressedData,
+      });
+    } else {
+      sendJsonMessage({
+        type: "drawing",
+        compressed: false,
+        data: drawingData,
+      });
+    }
+  }, 16);
+
+  const sendCompressedDrawingData = useThrottledCallback(() => {}, 16);
 
   const sendDrawingDataSVG = useThrottledCallback(
     (id: string, svgData: string, shapeType?: string) => {
       sendJsonMessage({
         type: "drawing",
+        compressed: false,
         data: { id, shapeType, svg: svgData },
       });
     },

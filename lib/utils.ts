@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function compressMessage(message: WSMessage): Uint8Array {
+export function compressMessage(message: any): Uint8Array {
   const jsonString = JSON.stringify(message);
   return pako.deflate(jsonString);
 }
