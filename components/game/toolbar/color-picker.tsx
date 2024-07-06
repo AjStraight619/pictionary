@@ -25,7 +25,7 @@ export default function ColorPicker({
           <Palette color={lastUsedColorRef.current} size={20} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent className="w-fit">
         <HexColorPicker color={color} onChange={setColor} />
       </PopoverContent>
     </Popover>

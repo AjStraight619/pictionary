@@ -51,7 +51,7 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
 
   const sendDrawingData = useThrottledCallback((drawingData: DrawingData2) => {
     sendJsonMessage({ type: "drawing", data: drawingData });
-  }, 16);
+  }, 25);
 
   const sendDrawingDataSVG = useThrottledCallback(
     (id: string, svgData: string, shapeType?: string) => {

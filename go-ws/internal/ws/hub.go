@@ -50,7 +50,7 @@ func (h *Hub) Run() {
 			}
 			h.mu.Unlock()
 		case message := <-h.broadcast:
-			h.mu.Lock()
+			// h.mu.Lock()
 			for client := range h.clients {
 				select {
 				case client.send <- message:
@@ -61,7 +61,7 @@ func (h *Hub) Run() {
 					log.Printf("Failed to send to client, removed: %v", client.userId)
 				}
 			}
-			h.mu.Unlock()
+			// h.mu.Unlock()
 		case client := <-h.ping:
 			client.ping <- struct{}{}
 		}

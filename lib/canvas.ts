@@ -89,18 +89,7 @@ export const handleCanvasMouseDown = ({
       isDrawing.current = true;
       canvas.isDrawingMode = true;
       canvas.freeDrawingBrush.width = 5;
-      canvas.freeDrawingBrush.color = "black";
-
-      const pathString = `M${point.x},${point.y} L${point.x},${point.y}`;
-      // const fabricPath = new CustomPath(pathString);
-      // TODO: Adjust this so the user can simply draw dots on the screen, perhaps use a fabric circle and figure out how the strokeWidth matches when they continue drawing with pencil
-      // const freehandData: DrawingData2 = {
-      //   id: nanoid(),
-      //   type: "path",
-      //   shapeData: fabricPath,
-      // };
-
-      // sendDrawingData(freehandData);
+      canvas.freeDrawingBrush.color = lastUsedColorRef.current;
       return;
 
     case Tool.circle:
