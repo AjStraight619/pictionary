@@ -21,6 +21,7 @@ import {
   CustomTriangle,
 } from "./customFabricObjects";
 import { calculateNewPosition, storeInitialPositions } from "./utils";
+import { Point } from "fabric/fabric-impl";
 
 export const initializeFabricCanvas = ({
   canvasRef,
@@ -202,30 +203,39 @@ export const handleCanvasMouseMove = ({
   const pointer = canvas.getPointer(options.e);
   const point = new fabric.Point(pointer.x, pointer.y);
 
+  const distanceThreshold = 5; // Minimum distance between points to consider it significant
+
+  const calculateDistance = (p1: Point, p2: Point) => {
+    return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+  };
+
   if (selectedToolRef.current === Tool.pencil && isDrawing.current) {
-    pathDataRef.current.push(point);
-    canvas.freeDrawingBrush.color = lastUsedColorRef.current;
-    canvas.freeDrawingBrush.width = lastUsedStrokeWidthRef.current;
+    const lastPoint = pathDataRef.current[pathDataRef.current.length - 1];
 
-    // Create the path string in SVG format
-    const pathString = pathDataRef.current
-      .map((p, index) => `${index === 0 ? "M" : "L"}${p.x},${p.y}`)
-      .join(" ");
+    if (!lastPoint || calculateDistance(lastPoint, point) > distanceThreshold) {
+      pathDataRef.current.push(point);
+      canvas.freeDrawingBrush.color = lastUsedColorRef.current;
+      canvas.freeDrawingBrush.width = lastUsedStrokeWidthRef.current;
 
-    const fabricPath = new CustomPath(pathString);
+      // Create the path string in SVG format
+      const pathString = pathDataRef.current
+        .map((p, index) => `${index === 0 ? "M" : "L"}${p.x},${p.y}`)
+        .join(" ");
 
-    fabricPath.set({
-      stroke: lastUsedColorRef.current,
-      strokeWidth: lastUsedStrokeWidthRef.current,
-    });
+      const fabricPath = new CustomPath(pathString);
 
-    const freehandData: DrawingData2 = {
-      type: Tool.pencil,
-      shapeData: fabricPath,
-    };
+      fabricPath.set({
+        stroke: lastUsedColorRef.current,
+        strokeWidth: lastUsedStrokeWidthRef.current,
+      });
 
-    sendDrawingData(freehandData);
-    return;
+      const freehandData: DrawingData2 = {
+        type: Tool.pencil,
+        shapeData: fabricPath,
+      };
+
+      sendDrawingData(freehandData);
+    }
   }
 };
 

@@ -12,7 +12,7 @@ type Hub struct {
 	register   chan *Client
 	unregister chan *Client
 	timers     map[string]*timer
-	mu         sync.Mutex
+	mu         sync.RWMutex
 	ping       chan *Client
 }
 
@@ -33,35 +33,29 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.mu.Lock()
-			if _, exists := h.clients[client]; exists {
-				log.Printf("Client already registered: %v", client.userId)
-				h.mu.Unlock()
-			} else {
-				h.clients[client] = true
-				h.mu.Unlock()
-				log.Printf("Client registered: %v", client.userId)
-			}
+			h.clients[client] = true
+			h.mu.Unlock()
+			log.Printf("Client registered: %v", client.userId)
 		case client := <-h.unregister:
 			h.mu.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
-				log.Printf("Client unregistered: %v", client.userId)
 			}
 			h.mu.Unlock()
+			log.Printf("Client unregistered: %v", client.userId)
 		case message := <-h.broadcast:
-			// h.mu.Lock()
+			h.mu.RLock()
 			for client := range h.clients {
 				select {
 				case client.send <- message:
-					log.Printf("Sent to client: %v", client.userId)
 				default:
 					close(client.send)
 					delete(h.clients, client)
 					log.Printf("Failed to send to client, removed: %v", client.userId)
 				}
 			}
-			// h.mu.Unlock()
+			h.mu.RUnlock()
 		case client := <-h.ping:
 			client.ping <- struct{}{}
 		}
