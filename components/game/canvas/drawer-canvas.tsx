@@ -48,21 +48,17 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
   const isFillActiveRef = useRef<boolean>(false);
 
   const { sendJsonMessage } = useCustomWebSocket({ roomId, userId });
-  const renderRef = useRef(0);
 
   const sendFreeHandData = useThrottledCallback(
     (freeHandData: FreeHandDrawingData) => {
-      console.log("Freehand data: ", freeHandData);
       sendJsonMessage({
         type: "drawing",
         compressed: true,
         data: freeHandData,
       });
     },
-    10
+    5
   );
-
-  const sendCompressedDrawingData = useThrottledCallback(() => {}, 16);
 
   const sendDrawingDataSVG = useThrottledCallback(
     (id: string, svgData: string, shapeType?: string) => {

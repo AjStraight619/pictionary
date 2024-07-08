@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 
 type UseTimerOptions = {
-  sendJsonMessage: SendJsonMessage;
-  lastMessage: MessageEvent<any> | null;
+  sendJsonMessage?: SendJsonMessage;
+  lastMessage?: MessageEvent<any> | null;
   onShouldStopTimer?: (time: number | undefined) => boolean;
   timerType: string;
 };
@@ -29,13 +29,15 @@ export const useTimer = ({
 
   const startTimer = useCallback(
     (initialTime: number) => {
-      sendJsonMessage({
-        type: "start_timer",
-        data: {
-          time: initialTime,
-          timerType,
-        },
-      });
+      if (sendJsonMessage) {
+        sendJsonMessage({
+          type: "countdown",
+          data: {
+            time: initialTime,
+            timerType,
+          },
+        });
+      }
     },
     [sendJsonMessage, timerType]
   );

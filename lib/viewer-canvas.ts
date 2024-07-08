@@ -25,18 +25,13 @@ export const handleWebSocketMessage = ({
     const parsedData = JSON.parse(lastMessage.data);
     const { id, svg } = parsedData.data;
 
-    if (parsedData.data.type === "pencil") {
-      if (parsedData.compressed) {
-        setPencilDraft({
-          stroke: parsedData.data.stroke,
-          strokeWidth: parsedData.data.strokeWidth,
-          path: decompressMessage(parsedData.data.path),
-        });
-        return;
-      } else {
-        console.log("non decompressed path: ", parsedData.data.path);
-        return;
-      }
+    if (parsedData.data.type === "pencil" && parsedData.compressed) {
+      setPencilDraft({
+        stroke: parsedData.data.stroke,
+        strokeWidth: parsedData.data.strokeWidth,
+        path: decompressMessage(parsedData.data.path),
+      });
+      return;
     }
 
     if (parsedData.data.shapeType === "path") {

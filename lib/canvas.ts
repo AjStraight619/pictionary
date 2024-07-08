@@ -206,6 +206,7 @@ export const handleCanvasMouseMove = ({
 
   const distanceThreshold = 5;
 
+  // Utility function to calculate distance between two points
   const calculateDistance = (p1: Point, p2: Point) => {
     return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
   };
@@ -224,6 +225,7 @@ export const handleCanvasMouseMove = ({
         .map((p, index) => `${index === 0 ? "M" : "L"}${p.x},${p.y}`)
         .join(" ");
 
+      // Create the freehand drawing data object
       const freeHandData: FreeHandDrawingData = {
         type: Tool.pencil,
         stroke: lastUsedColorRef.current,
@@ -266,8 +268,6 @@ export const handleCanvasObjectsMoving = ({
       const newPosition = calculateNewPosition(obj, activeSelection);
       if (newPosition) {
         const { newLeft, newTop } = newPosition;
-        console.log("New Position:", { newLeft, newTop });
-
         sendDrawingData({
           type: obj.type as CustomFabricObjectShapeType,
           id: obj.id,

@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -17,6 +18,19 @@ type Message struct {
 type TimerData struct {
 	Time      int    `json:"time"`
 	TimerType string `json:"timerType"`
+}
+
+type ChatMessageData struct {
+	Id        string `json:"id"`
+	Username  string `json:"username"`
+	Message   string `json:"message"`
+	IsCorrect bool   `json:"isCorrect"`
+	IsClose   bool   `json:"isClose"`
+}
+
+type ChatMessage struct {
+	Type string          `json:"type"`
+	Data ChatMessageData `json:"data"`
 }
 
 type Client struct {
@@ -74,6 +88,32 @@ func (c *Client) readMessages() {
 			log.Println("Stopping timer: ", timerData.TimerType)
 			c.hub.stopTimer(timerData.TimerType)
 		case "chat":
+			var chatMessage ChatMessage
+			err = json.Unmarshal(msg.Data, &chatMessage)
+			if err != nil {
+				log.Println("Error unmarshalling chat message data:", err)
+				continue
+			}
+
+			if chatMessage.Data.IsCorrect {
+				remainingTime, err := c.hub.GetTimer("round_timer")
+				if err == nil {
+					score := c.CalculateScore(remainingTime)
+					scoreMessage := &Message{
+						Type: "score",
+						Data: json.RawMessage(fmt.Sprintf(`{"score": %d}`, score)),
+					}
+					scoreMessageBytes, err := json.Marshal(scoreMessage)
+					if err == nil {
+						c.send <- scoreMessageBytes
+					} else {
+						log.Println("Error marshalling score message:", err)
+					}
+				} else {
+					log.Println("Error getting timer:", err)
+				}
+			}
+
 			c.hub.broadcast <- message
 		default:
 			c.hub.broadcast <- message
@@ -106,4 +146,9 @@ func (c *Client) writeMessages() {
 			log.Println("Sent ping message")
 		}
 	}
+}
+
+func (c *Client) CalculateScore(time int) int {
+	score := time * 10
+	return score
 }

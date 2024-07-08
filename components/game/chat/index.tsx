@@ -86,7 +86,9 @@ const Chat = ({ players, userId, roomId }: ChatProps) => {
             >
               <span className="font-bangers">{chat.username}</span>
               <span className="font-roboto">: </span>
-              <span className="font-roboto">{chat.message}</span>
+              <span className="font-roboto tracking-normal">
+                {chat.message}
+              </span>
             </motion.li>
           ))}
         </ul>

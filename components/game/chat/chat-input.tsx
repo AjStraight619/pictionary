@@ -3,7 +3,7 @@ import { useWord } from "@/context/word-provider";
 import { useCustomWebSocket } from "@/hooks/useCustomWebsocket";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { ChatMessage } from "@/types/ws";
-import { GamePlayer, Player } from "@prisma/client";
+import { GamePlayer } from "@prisma/client";
 import { useState } from "react";
 
 type ChatInputProps = {
@@ -47,6 +47,9 @@ export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
       isClose: isClose(input.trim()),
     };
     sendJsonMessage({ type: "chat", data: newChat });
+    if (newChat.isCorrect) {
+      setIsGuessCorrect(true);
+    }
     setInput("");
     // // formData.append("currentTime", String(timer));
     // formData.append("playerId", player.id);
@@ -57,6 +60,7 @@ export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
   return (
     <form action={sendMessage} className="relative w-full">
       <Input
+        disabled={isGuessCorrect}
         className="font-roboto"
         name="guess"
         placeholder="Guess the word..."

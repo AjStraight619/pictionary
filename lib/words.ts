@@ -1,3 +1,6 @@
+import { SelectableWord } from "@/types/word";
+import { nanoid } from "nanoid";
+
 export type WordsListType = {
   [category: string]: string[];
 };
@@ -5,14 +8,15 @@ export type WordsListType = {
 export const getRandomWords = (
   category: string = "Random",
   count: number = 3
-): string[] => {
+): SelectableWord[] => {
   const words = wordsList[category];
   if (!words) {
-    return ["Something went wrong"];
+    return [{ id: nanoid(), word: "Something went wrong" }];
   }
 
   const shuffledWords = shuffleArray(words);
-  return shuffledWords.slice(0, count);
+  const selectedWords = shuffledWords.slice(0, count);
+  return selectedWords.map((word) => ({ id: nanoid(), word }));
 };
 
 const shuffleArray = (array: string[]) => {

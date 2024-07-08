@@ -10,10 +10,16 @@ import {
 import { useWord } from "@/context/word-provider";
 import { useCustomWebSocket } from "@/hooks/useCustomWebsocket";
 import { getRandomWords } from "@/lib/words";
-
 import { useEffect, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
 import WordSelect from "./word-select";
+import {
+  motion,
+  AnimatePresence,
+  useAnimate,
+  usePresence,
+} from "framer-motion";
+import { SelectableWord } from "@/types/word";
+import { wait } from "@/lib/utils";
 
 type WordListProps = {
   newTurn: boolean;
@@ -22,29 +28,46 @@ type WordListProps = {
   roomId: string;
 };
 
+const containerVariants = {
+  visible: {
+    opacity: 1,
+    transition: {
+      when: "beforeChildren",
+      staggerChildren: 0.3,
+    },
+  },
+  hidden: {
+    opacity: 0,
+    transition: {
+      when: "afterChildren",
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: -10 },
+  visible: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: 10 },
+};
+
 export default function WordList({
   newTurn,
   roundId,
   roomId,
   userId,
 }: WordListProps) {
-  const { pending } = useFormStatus();
-  const renderRef = useRef(0);
-  const [wordList, setWordList] = useState<string[]>([]);
+  const [wordList, setWordList] = useState<SelectableWord[]>([]);
   const [selectCountdown, setSelectCountdown] = useState<number | undefined>(
     undefined
   );
-
-  useEffect(() => {
-    console.log("Word lists component re rendered: ", renderRef.current++);
-  });
-
-  useEffect(() => {
-    console.log("words list Component mounted");
-    setWordList(getRandomWords("Random", 3));
-  }, []);
-
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [scope, animate] = useAnimate();
+
+  useEffect(() => {
+    if (newTurn && scope.current) {
+      animate(scope.current, { opacity: [0, 1] }, { duration: 0.3 });
+    }
+  }, [newTurn, animate, scope, wordList]);
 
   const { updateWord } = useWord();
 
@@ -57,15 +80,11 @@ export default function WordList({
   useEffect(() => {
     if (lastMessage) {
       const msg = JSON.parse(lastMessage.data);
-      if (msg.data.time === 0 && inputRef.current) {
-        inputRef.current.click();
-      }
+      if (msg.data.time > 0) return;
       setSelectCountdown(msg.data.time);
     }
-  }, [lastMessage]);
-
-  useEffect(() => {
     if (newTurn) {
+      setWordList(getRandomWords("Random", 3));
       sendJsonMessage({
         type: "countdown",
         data: {
@@ -74,19 +93,42 @@ export default function WordList({
         },
       });
     }
-  }, [newTurn, sendJsonMessage]);
+  }, [newTurn, sendJsonMessage, lastMessage]);
 
   const getNewWords = () => {
     setWordList(getRandomWords("Random", 3));
   };
 
+  const handleWordSelect = async (word: SelectableWord) => {
+    setWordList([word]);
+    const selectedElement = document.getElementById(word.id);
+    if (selectedElement) {
+      await animate(
+        selectedElement,
+        { rotate: 360, scale: [1.4, 1.0] },
+        { duration: 0.5 }
+      );
+    }
+    const formData = new FormData();
+    formData.append("word", word.word);
+    handleSelectedWord(formData);
+  };
+
   const handleSelectedWord = async (formData: FormData) => {
     formData.append("roundId", roundId);
-    await updateWord(formData);
+    updateWord(formData);
     sendJsonMessage({
       type: "stop_timer",
       data: {
         timerType: "select_word_countdown",
+      },
+    });
+    await wait(2000);
+    sendJsonMessage({
+      type: "countdown",
+      data: {
+        timerType: "round_timer",
+        time: 30,
       },
     });
   };
@@ -104,11 +146,18 @@ export default function WordList({
             It is your turn to draw, select a word!
           </DialogDescription>
         </DialogHeader>
-        <form action={handleSelectedWord}>
-          <ul className="flex flex-row items-center justify-evenly text-lg">
-            {wordList.map((word, idx) => (
-              <li key={idx}>
-                <WordSelect pending={pending} inputRef={inputRef} word={word} />
+        <form onSubmit={(e) => e.preventDefault()}>
+          <ul
+            ref={scope}
+            className="flex flex-row items-center justify-evenly text-lg"
+          >
+            {wordList.map((word) => (
+              <li id={word.id} key={word.id}>
+                <WordSelect
+                  onSelect={handleWordSelect}
+                  inputRef={inputRef}
+                  word={word}
+                />
               </li>
             ))}
           </ul>

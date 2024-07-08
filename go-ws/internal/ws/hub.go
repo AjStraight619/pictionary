@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"errors"
 	"log"
 	"sync"
 	"time"
@@ -109,4 +110,13 @@ func (h *Hub) ClientCount() int {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	return len(h.clients)
+}
+
+func (h *Hub) GetTimer(timerType string) (int, error) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	if timer, exists := h.timers[timerType]; exists {
+		return timer.countdown, nil
+	}
+	return 0, errors.New("timer not found")
 }

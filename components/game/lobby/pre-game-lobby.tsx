@@ -48,8 +48,8 @@ export default function PreGameLobby({
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogContent
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e: any) => e.preventDefault()}
+        onInteractOutside={(e: any) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle>Pre Game Lobby</DialogTitle>
@@ -59,6 +59,7 @@ export default function PreGameLobby({
             showScore={false}
             players={players}
             currentDrawerId={null}
+            roomId={gameId}
           />
           <Separator />
           <GameRules gameId={gameId} leader={leader} />

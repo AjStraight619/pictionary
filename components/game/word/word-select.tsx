@@ -1,23 +1,32 @@
-import { Loader2 } from "lucide-react";
+import { SelectableWord } from "@/types/word";
 import { useFormStatus } from "react-dom";
 
-type WordSelect = {
-  word: string;
+type WordSelectProps = {
+  word: SelectableWord;
   inputRef: React.MutableRefObject<HTMLInputElement | null>;
-  pending?: boolean;
+  onSelect: (word: SelectableWord) => void;
 };
 
-export default function WordSelect({ word, inputRef, pending }: WordSelect) {
+export default function WordSelect({
+  word,
+  inputRef,
+  onSelect,
+}: WordSelectProps) {
+  const handleClick = () => {
+    onSelect(word);
+  };
+
   return (
     <>
-      {pending && <Loader2 className="animate-spin" />}
+      {/* {pending && <Loader2 className="animate-spin" />} */}
       <input
-        disabled={pending}
+        id={word.id}
         ref={inputRef}
-        type="submit"
-        className="text-xl border border-muted-foreground rounded-md px-4 py-2 m-2 cursor-pointer hover:bg-muted"
-        value={word}
+        type="button"
+        className="text-xl border border-muted-foreground rounded-md px-4 py-2 m-2 cursor-pointer hover:bg-muted transition-colors duration-150"
+        value={word.word}
         name="word"
+        onClick={handleClick}
       />
     </>
   );

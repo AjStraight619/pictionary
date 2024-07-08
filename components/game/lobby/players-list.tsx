@@ -5,11 +5,13 @@ import { GamePlayer } from "@prisma/client";
 import { motion } from "framer-motion";
 import { CrownIcon, PencilIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
+import Score from "../score/score";
 
 type PlayersListProps = {
   players: GamePlayer[];
   showScore?: boolean;
   currentDrawerId: string | null;
+  roomId: string;
 };
 
 const containerVariants = {
@@ -35,76 +37,22 @@ const listVariants = {
   exit: { opacity: 0, y: -20 },
 };
 
-// const mockPlayers: GamePlayer[] = [
-//   {
-//     id: "1",
-//     username: "Player0",
-//     score: 100,
-//     isLeader: false,
-//     createdAt: new Date(),
-//     updatedAt: new Date(),
-//     gameId: "game1",
-//     playerId: "player1",
-//   },
-//   {
-//     id: "2",
-//     username: "Player1",
-//     score: 80,
-//     isLeader: false,
-//     createdAt: new Date(),
-//     updatedAt: new Date(),
-//     gameId: "game1",
-//     playerId: "player2",
-//   },
-//   {
-//     id: "3",
-//     username: "Player2",
-//     score: 90,
-//     isLeader: false,
-//     createdAt: new Date(),
-//     updatedAt: new Date(),
-//     gameId: "game1",
-//     playerId: "player3",
-//   },
-//   {
-//     id: "4",
-//     username: "Player3",
-//     score: 70,
-//     isLeader: false,
-//     createdAt: new Date(),
-//     updatedAt: new Date(),
-//     gameId: "game1",
-//     playerId: "player4",
-//   },
-//   {
-//     id: "5",
-//     username: "Player4",
-//     score: 60,
-//     isLeader: false,
-//     createdAt: new Date(),
-//     updatedAt: new Date(),
-//     gameId: "game1",
-//     playerId: "player5",
-//   },
-// ];
-
 export default function PlayersList({
   players,
   showScore = true,
   currentDrawerId,
+  roomId,
 }: PlayersListProps) {
-  const allPlayers = [...players];
-
   return (
     <>
-      {allPlayers.length > 0 && (
+      {players.length > 0 && (
         <motion.ul
           className="grid grid-cols-2 gap-2 p-2"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {allPlayers.map((p, idx) => {
+          {players.map((p, idx) => {
             const playerColor = getPlayerColor(idx);
             const backgroundColor = addAlphaToHex(playerColor, 0.3);
             return (
@@ -136,7 +84,7 @@ export default function PlayersList({
                         <PencilIcon fill="orange" />
                       )}
                     </div>
-                    {showScore && <span className="text-black">{p.score}</span>}
+                    {showScore && <Score gameId={roomId} prevScore={p.score} />}
                   </div>
                 </div>
               </motion.li>

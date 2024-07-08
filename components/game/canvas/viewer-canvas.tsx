@@ -1,10 +1,7 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useCustomWebSocket } from "@/hooks/useCustomWebsocket";
-import { convertPathDataToSvgPathString, decompressMessage } from "@/lib/utils";
-import { CustomPath } from "@/lib/customFabricObjects";
 import { handleWebSocketMessage } from "@/lib/viewer-canvas";
-import { FreeHandDrawingData } from "@/types/drawing";
 
 export type ViewerCanvasTestProps = {
   roomId: string;
@@ -71,17 +68,21 @@ export default function ViewerCanvas({
     }
   }, [lastMessage]);
 
+  const memoizedPencilDraft = useMemo(() => pencilDraft, [pencilDraft]);
+
   return (
     <svg ref={svgContainerRef} className="w-full h-full rounded-md bg-gray-50">
-      {pencilDraft?.path && pencilDraft.path.length > 0 && (
+      {memoizedPencilDraft?.path && memoizedPencilDraft.path.length > 0 && (
         <path
-          // d={convertPathDataToSvgPathString(
-          //   pencilDraft?.path as unknown as (string | number)[][]
-          // )}
-          d={pencilDraft.path}
-          strokeWidth={pencilDraft?.strokeWidth}
-          stroke={pencilDraft?.stroke}
+          d={memoizedPencilDraft.path}
+          strokeWidth={memoizedPencilDraft?.strokeWidth}
+          stroke={memoizedPencilDraft?.stroke}
           fill="none"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          strokeDashoffset={0}
+          strokeMiterlimit={10}
+          strokeDasharray="none"
         />
       )}
     </svg>

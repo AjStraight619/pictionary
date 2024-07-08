@@ -5,6 +5,7 @@ import { startNewRound } from "@/actions/round";
 import { Button } from "@/components/ui/button";
 import { proceedGame } from "@/actions/game";
 import WordDisplay from "../word/word-display";
+import RoundTimer from "../timer/round-timer";
 
 type LobbyProps = {
   players: GamePlayer[];
@@ -32,12 +33,10 @@ export default function Lobby({
     <Card className="h-full w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Lobby</CardTitle>
-        {/* <div>{showTimer && <Timer />}</div> */}
-        <div>{currentWord}</div>
+        <RoundTimer roomId={gameId!} />
         <form
           action={async () => {
             "use server";
-
             await startNewRound(gameId as string);
           }}
         >
@@ -60,6 +59,7 @@ export default function Lobby({
           players={players}
           showScore={true}
           currentDrawerId={currentDrawerId}
+          roomId={gameId!}
         />
       </CardContent>
     </Card>

@@ -18,9 +18,7 @@ export function compressMessage(message: any): Uint8Array {
 export function decompressMessage(data: Uint8Array) {
   const values = Object.values(data);
   const compressedData = new Uint8Array(values);
-  console.log("Compressed data after conversion: ", compressedData);
   const decompressedData = pako.inflate(compressedData, { to: "string" });
-  console.log("Decompressed data: ", decompressedData);
   return JSON.parse(decompressedData);
 }
 
