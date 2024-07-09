@@ -1,21 +1,21 @@
-import DrawerCanvas from "@/components/game/canvas/drawer-canvas";
-import ViewerCanvas from "@/components/game/canvas/viewer-canvas";
-import Chat from "@/components/game/chat";
-import Lobby from "@/components/game/lobby";
-import WordDisplay from "@/components/game/word/word-display";
-import WordProvider from "@/context/word-provider";
-import { db } from "@/lib/db";
-import { currentUser } from "@clerk/nextjs/server";
-import dynamic from "next/dynamic";
-import { notFound, redirect } from "next/navigation";
+import DrawerCanvas from '@/components/game/canvas/drawer-canvas';
+import ViewerCanvas from '@/components/game/canvas/viewer-canvas';
+import Chat from '@/components/game/chat';
+import Lobby from '@/components/game/lobby';
+import WordDisplay from '@/components/game/word/wd';
+import WordProvider from '@/context/word-provider';
+import { db } from '@/lib/db';
+import { currentUser } from '@clerk/nextjs/server';
+import dynamic from 'next/dynamic';
+import { notFound, redirect } from 'next/navigation';
 
 const DynamicWordList = dynamic(
-  () => import("@/components/game/word/word-list"),
-  { ssr: false }
+  () => import('@/components/game/word/word-list'),
+  { ssr: false },
 );
 const DynamicPreGameLobby = dynamic(
-  () => import("@/components/game/lobby/pre-game-lobby"),
-  { ssr: false }
+  () => import('@/components/game/lobby/pre-game-lobby'),
+  { ssr: false },
 );
 
 type RoomPageProps = {
@@ -32,7 +32,7 @@ const getGame = async (roomId: string) => {
     include: {
       players: {
         orderBy: {
-          createdAt: "asc",
+          createdAt: 'asc',
         },
       },
       rounds: true,
@@ -43,17 +43,17 @@ const getGame = async (roomId: string) => {
 
 export default async function Room({ params: { roomId } }: RoomPageProps) {
   const user = await currentUser();
-  if (!user || !user.id) redirect("/sign-in");
+  if (!user || !user.id) redirect('/sign-in');
   const game = await getGame(roomId);
 
   if (!game) notFound();
-  console.log("Game status: ", game.status);
+  console.log('Game status: ', game.status);
 
   const currentRoundIndex = game.currentRound;
   const currentRound = game.rounds[currentRoundIndex - 1];
   const currentWord = currentRound?.word;
 
-  console.log("Current word: ", currentWord);
+  console.log('Current word: ', currentWord);
 
   return (
     <WordProvider word={currentWord} gameId={game.id}>
