@@ -9,27 +9,18 @@ type RoundTimerProps = {
 };
 
 export default function RoundTimer({ roomId }: RoundTimerProps) {
-  const { lastMessage } = useCustomWebSocket({
-    roomId,
-    messageType: "round_timer",
-  });
-
   const { time } = useTimer({
-    lastMessage,
-    timerType: "round_timer",
-    onShouldStopTimer: (time) => time === 0,
+    messageType: "round_timer",
   });
 
   const [scope, animate] = useAnimate();
 
   useEffect(() => {
+    if (time === undefined || time > 5) return;
     const animation = () => {
       animate("#target", { scale: [1, 1.5, 1] }, { duration: 1 });
     };
-    if (time) {
-      if (time > 5) return;
-      animation();
-    }
+    animation();
   }, [time, animate]);
 
   return (

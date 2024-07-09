@@ -36,6 +36,7 @@ export const useCustomWebSocket = ({
       try {
         const msg = JSON.parse(message.data);
         if (msg.type === "countdown") {
+          console.log("Timer message recieved: ", msg.data);
           return msg.data.timerType === messageType;
         }
         return msg.type === messageType;

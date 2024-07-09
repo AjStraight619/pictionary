@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { proceedGame } from "@/actions/game";
 import WordDisplay from "../word/word-display";
 import RoundTimer from "../timer/round-timer";
+import TestStartTimer from "@/components/test/test-start-timer";
+import TestTimer from "@/components/test/test-timer";
 
 type LobbyProps = {
   players: GamePlayer[];
@@ -29,10 +31,13 @@ export default function Lobby({
   currentWord,
 }: LobbyProps) {
   console.log("Current drawer id in Lobby: ", currentDrawerId);
+
   return (
     <Card className="h-full w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Lobby</CardTitle>
+        <TestStartTimer />
+        <TestTimer />
         <RoundTimer roomId={gameId!} />
         <form
           action={async () => {

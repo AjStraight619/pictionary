@@ -63,11 +63,11 @@ export default function WordList({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [scope, animate] = useAnimate();
 
-  useEffect(() => {
-    if (newTurn && scope.current) {
-      animate(scope.current, { opacity: [0, 1] }, { duration: 0.3 });
-    }
-  }, [newTurn, animate, scope, wordList]);
+  // useEffect(() => {
+  //   if (newTurn && scope.current) {
+  //     animate(scope.current, { opacity: [0, 1] }, { duration: 0.3 });
+  //   }
+  // }, [newTurn, animate, scope, wordList]);
 
   const { updateWord } = useWord();
 
@@ -77,23 +77,23 @@ export default function WordList({
     messageType: "select_word_countdown",
   });
 
-  useEffect(() => {
-    if (lastMessage) {
-      const msg = JSON.parse(lastMessage.data);
-      if (msg.data.time > 0) return;
-      setSelectCountdown(msg.data.time);
-    }
-    if (newTurn) {
-      setWordList(getRandomWords("Random", 3));
-      sendJsonMessage({
-        type: "countdown",
-        data: {
-          time: 30,
-          timerType: "select_word_countdown",
-        },
-      });
-    }
-  }, [newTurn, sendJsonMessage, lastMessage]);
+  // useEffect(() => {
+  //   if (lastMessage) {
+  //     const msg = JSON.parse(lastMessage.data);
+  //     if (msg.data.time > 0) return;
+  //     setSelectCountdown(msg.data.time);
+  //   }
+  //   if (newTurn) {
+  //     // setWordList(getRandomWords("Random", 3));
+  //     sendJsonMessage({
+  //       type: "countdown",
+  //       data: {
+  //         time: 30,
+  //         timerType: "select_word_countdown",
+  //       },
+  //     });
+  //   }
+  // }, [newTurn, sendJsonMessage, lastMessage]);
 
   const getNewWords = () => {
     setWordList(getRandomWords("Random", 3));

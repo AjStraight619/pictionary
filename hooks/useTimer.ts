@@ -1,61 +1,75 @@
-import { useCallback, useEffect, useState } from "react";
-import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useCustomWebSocket } from "./useCustomWebsocket";
+
+type StartTimerMessage = {
+  type: string;
+  data: {
+    time: number;
+    timerType: string;
+  };
+};
+type StopTimerMessage = {
+  data: {
+    timerType: string;
+  };
+};
 
 type UseTimerOptions = {
-  sendJsonMessage?: SendJsonMessage;
-  lastMessage?: MessageEvent<any> | null;
-  onShouldStopTimer?: (time: number | undefined) => boolean;
-  timerType: string;
+  messageType: string;
+  onShouldTimerStop?: (time: number) => boolean;
+  onTimerStop?: () => void;
 };
 
 export const useTimer = ({
-  sendJsonMessage,
-  lastMessage,
-  onShouldStopTimer,
-  timerType,
+  messageType,
+  onShouldTimerStop,
+  onTimerStop,
 }: UseTimerOptions) => {
   const [time, setTime] = useState<number | undefined>(undefined);
-
-  const stopTimer = useCallback(() => {
-    if (sendJsonMessage) {
-      sendJsonMessage({
-        type: "stop_timer",
-        data: {
-          timerType,
-        },
-      });
-    }
-  }, [sendJsonMessage, timerType]);
+  const pathname = usePathname();
+  const roomId = pathname.split("/").pop()!;
+  const { lastMessage, sendJsonMessage } = useCustomWebSocket({
+    roomId,
+    messageType: messageType,
+  });
 
   const startTimer = useCallback(
-    (initialTime: number) => {
-      if (sendJsonMessage) {
-        sendJsonMessage({
-          type: "countdown",
-          data: {
-            time: initialTime,
-            timerType,
-          },
-        });
-      }
+    (message: StartTimerMessage) => {
+      console.log("Starting timer...");
+      sendJsonMessage(message);
     },
-    [sendJsonMessage, timerType]
+    [sendJsonMessage]
   );
+
+  const stopTimer = useCallback(
+    (message: StopTimerMessage) => {
+      sendJsonMessage(message);
+    },
+    [sendJsonMessage]
+  );
+
+  const timerStopped = useRef(false);
 
   useEffect(() => {
     if (lastMessage) {
       const msg = JSON.parse(lastMessage.data);
-      if (msg.data.timerType === timerType) {
-        setTime(msg.data.time);
-      }
-    }
-  }, [lastMessage, timerType]);
 
-  useEffect(() => {
-    if (onShouldStopTimer && onShouldStopTimer(time)) {
-      stopTimer();
+      if (msg.data.time >= 0) {
+        setTime(msg.data.time);
+        if (onShouldTimerStop && onShouldTimerStop(msg.data.time)) {
+          if (!timerStopped.current) {
+            timerStopped.current = true;
+            onTimerStop?.();
+          }
+          return;
+        }
+      } else {
+        timerStopped.current = false;
+      }
+      return;
     }
-  }, [time, onShouldStopTimer, stopTimer]);
+  }, [lastMessage, onShouldTimerStop, onTimerStop]);
 
   return { time, startTimer, stopTimer };
 };
