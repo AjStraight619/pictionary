@@ -152,7 +152,7 @@ export default function WordDisplay({
       <>
         <div className="text-2xl mr-2">Guess This:</div>
         <motion.ul
-          className="flex items-center gap-x-2 text-3xl mr-2"
+          className="flex items-center gap-x-2 text-3xl mr-4"
           animate="show"
           initial="hidden"
           variants={container}

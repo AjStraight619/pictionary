@@ -1,10 +1,10 @@
-import { Input } from "@/components/ui/input";
-import { useWord } from "@/context/word-provider";
-import { useCustomWebSocket } from "@/hooks/useCustomWebsocket";
-import useLocalStorage from "@/hooks/useLocalStorage";
-import { ChatMessage } from "@/types/ws";
-import { GamePlayer } from "@prisma/client";
-import { useState } from "react";
+import { Input } from '@/components/ui/input';
+import { useWord } from '@/context/word-provider';
+import { useCustomWebSocket } from '@/hooks/useCustomWebsocket';
+import useLocalStorage from '@/hooks/useLocalStorage';
+import { ChatMessage } from '@/types/ws';
+import { GamePlayer } from '@prisma/client';
+import { useState } from 'react';
 
 type ChatInputProps = {
   player: GamePlayer | undefined;
@@ -12,12 +12,17 @@ type ChatInputProps = {
   userId: string;
 };
 
+type Guess = {
+  userId: string;
+  isCorrect: boolean;
+};
+
 export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const { sendJsonMessage } = useCustomWebSocket({ roomId, userId });
-  const [isGuessCorrect, setIsGuessCorrect] = useLocalStorage(
-    "isGuessCorrect",
-    false
+  const [isGuessCorrect, setIsGuessCorrect] = useLocalStorage<Guess | null>(
+    'isGuessCorrect',
+    null,
   );
 
   const { word } = useWord();
@@ -46,26 +51,25 @@ export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
       isCorrect: isCorrect(input.trim()),
       isClose: isClose(input.trim()),
     };
-    sendJsonMessage({ type: "chat", data: newChat });
+    sendJsonMessage({ type: 'chat', data: newChat });
     if (newChat.isCorrect) {
-      setIsGuessCorrect(true);
+      setIsGuessCorrect({
+        userId: userId,
+        isCorrect: true,
+      });
     }
-    setInput("");
-    // // formData.append("currentTime", String(timer));
-    // formData.append("playerId", player.id);
-    // formData.append("currentWord", "TEST WORD");
-    // await checkGuess(formData);
+    setInput('');
   };
 
   return (
     <form action={sendMessage} className="relative w-full">
       <Input
-        disabled={isGuessCorrect}
+        disabled={isGuessCorrect?.isCorrect}
         className="font-roboto"
         name="guess"
         placeholder="Guess the word..."
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={e => setInput(e.target.value)}
       />
     </form>
   );

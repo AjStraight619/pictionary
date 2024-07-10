@@ -1,18 +1,18 @@
-"use client";
+'use client';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { useEffect, useMemo, useRef, useState } from "react";
-import ChatInput from "./chat-input";
-import { GamePlayer } from "@prisma/client";
-import { motion } from "framer-motion";
-import { ChatMessage } from "@/types/ws";
-import React from "react";
-import { useCustomWebSocket } from "@/hooks/useCustomWebsocket";
+} from '@/components/ui/card';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import ChatInput from './chat-input';
+import { GamePlayer } from '@prisma/client';
+import { motion } from 'framer-motion';
+import { ChatMessage } from '@/types/ws';
+import React from 'react';
+import { useCustomWebSocket } from '@/hooks/useCustomWebsocket';
 
 type ChatProps = {
   players: GamePlayer[];
@@ -28,7 +28,7 @@ const listVariants = {
     x: 0,
     transition: {
       duration: 0.5,
-      type: "spring",
+      type: 'spring',
     },
   },
 };
@@ -37,22 +37,17 @@ const Chat = ({ players, userId, roomId }: ChatProps) => {
   const { lastMessage } = useCustomWebSocket({
     roomId,
     userId,
-    messageType: "chat",
+    messageType: 'chat',
   });
   const [chats, setChats] = useState<ChatMessage[]>([]);
-
-  const renderRef = useRef(0);
-  useEffect(() => {
-    console.log("Chat component re rendered: ", renderRef.current++);
-  });
 
   useEffect(() => {
     if (lastMessage) {
       const parsedMessage = JSON.parse(lastMessage.data);
-      if (parsedMessage.type === "chat") {
-        console.log("last message: ", parsedMessage.data);
+      if (parsedMessage.type === 'chat') {
+        console.log('last message: ', parsedMessage.data);
         const message: ChatMessage = parsedMessage.data;
-        setChats((prevChats) => [...prevChats, message]);
+        setChats(prevChats => [...prevChats, message]);
       }
     }
   }, [lastMessage]);
@@ -60,13 +55,13 @@ const Chat = ({ players, userId, roomId }: ChatProps) => {
   const bottomOfMessagesRef = useRef<HTMLDivElement | null>(null);
 
   const player = useMemo(
-    () => players.find((p) => p.playerId === userId),
-    [players, userId]
+    () => players.find(p => p.playerId === userId),
+    [players, userId],
   );
 
   useEffect(() => {
     if (bottomOfMessagesRef.current) {
-      bottomOfMessagesRef.current.scrollIntoView({ behavior: "smooth" });
+      bottomOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chats]);
 
@@ -86,7 +81,11 @@ const Chat = ({ players, userId, roomId }: ChatProps) => {
             >
               <span className="font-bangers">{chat.username}</span>
               <span className="font-roboto">: </span>
-              <span className="font-roboto tracking-normal">
+              <span
+                className={`font-roboto tracking-normal ${
+                  chat.isCorrect && 'text-green-500'
+                } ${chat.isClose && 'text-yellow-500'}`}
+              >
                 {chat.message}
               </span>
             </motion.li>
