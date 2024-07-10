@@ -72,6 +72,10 @@ export default function WordDisplay({
   const lastRevealTimeRef = useRef<number | null>(null);
   const [revealedIndices, setRevealedIndices] = useState<number[]>([]);
   const isCurrentDrawer = players.find(p => p.playerId === currentDrawerId);
+  const renderRef = useRef(0);
+  useEffect(() => {
+    console.log('Word Display component re rendered: ', renderRef.current++);
+  });
 
   const maxReveal = useMemo(() => {
     if (!splitWord) return;

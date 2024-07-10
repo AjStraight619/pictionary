@@ -48,6 +48,7 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
 
   if (!game) notFound();
   console.log('Game status: ', game.status);
+  console.log('Game players: ', game.players);
 
   const currentRoundIndex = game.currentRound;
   const currentRound = game.rounds[currentRoundIndex - 1];

@@ -1,7 +1,6 @@
 // In Next.js, this file would be called: app/providers.jsx
 'use client';
 
-import { ClerkProvider } from '@clerk/nextjs';
 // Since QueryClientProvider relies on useContext under the hood, we have to put 'use client' on top
 import {
   isServer,

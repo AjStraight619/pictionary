@@ -1,6 +1,6 @@
-import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useCustomWebSocket } from "./useCustomWebsocket";
+import { usePathname } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCustomWebSocket } from './useCustomWebsocket';
 
 type StartTimerMessage = {
   type: string;
@@ -28,7 +28,7 @@ export const useTimer = ({
 }: UseTimerOptions) => {
   const [time, setTime] = useState<number | undefined>(undefined);
   const pathname = usePathname();
-  const roomId = pathname.split("/").pop()!;
+  const roomId = pathname.split('/').pop()!;
   const { lastMessage, sendJsonMessage } = useCustomWebSocket({
     roomId,
     messageType: messageType,
@@ -36,17 +36,17 @@ export const useTimer = ({
 
   const startTimer = useCallback(
     (message: StartTimerMessage) => {
-      console.log("Starting timer...");
+      console.log('Starting timer...');
       sendJsonMessage(message);
     },
-    [sendJsonMessage]
+    [sendJsonMessage],
   );
 
   const stopTimer = useCallback(
     (message: StopTimerMessage) => {
       sendJsonMessage(message);
     },
-    [sendJsonMessage]
+    [sendJsonMessage],
   );
 
   const timerStopped = useRef(false);

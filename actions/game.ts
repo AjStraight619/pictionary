@@ -1,24 +1,24 @@
-"use server";
-import { db } from "@/lib/db";
-import { createRoomSchema } from "@/lib/schemas";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { z } from "zod";
-import { startNewRound } from "./round";
-import { startNewTurn } from "./turn";
-import { revalidatePath } from "next/cache";
-import { GamePlayer } from "@prisma/client";
-import { StartGameData } from "@/types/game";
+'use server';
+import { db } from '@/lib/db';
+import { createRoomSchema } from '@/lib/schemas';
+import { currentUser } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { z } from 'zod';
+import { startNewRound } from './round';
+import { startNewTurn } from './turn';
+import { revalidatePath } from 'next/cache';
+import { GamePlayer } from '@prisma/client';
+import { StartGameData } from '@/types/game';
 
 export async function createGame(values: z.infer<typeof createRoomSchema>) {
   const validatedValues = createRoomSchema.safeParse(values);
   if (!validatedValues.success) {
     return {
-      error: "Invalid form values",
+      error: 'Invalid form values',
     };
   }
   const user = await currentUser();
-  if (!user || !user.id) redirect("/sign-in");
+  if (!user || !user.id) redirect('/sign-in');
 
   const player = await db.player.findUnique({
     where: {
@@ -27,19 +27,21 @@ export async function createGame(values: z.infer<typeof createRoomSchema>) {
   });
 
   if (!player) {
-    redirect("/profile/finish");
+    redirect('/profile/finish');
   }
 
   const { isOpen, roomname } = validatedValues.data;
 
-  console.log("isOpen: ", isOpen);
+  console.log('isOpen: ', isOpen);
+
+  let newGame;
 
   try {
-    const newGame = await db.game.create({
+    newGame = await db.game.create({
       data: {
         isOpen,
         name: roomname,
-        status: "WAITING",
+        status: 'WAITING',
         currentRound: 0,
         players: {
           create: {
@@ -61,22 +63,27 @@ export async function createGame(values: z.infer<typeof createRoomSchema>) {
   } catch (err) {
     console.error(err);
     return {
-      error: "Something went wrong",
+      error: 'Something went wrong',
     };
   } finally {
-    revalidatePath("/", "page");
+    if (!newGame) {
+      return {
+        error: 'Could not create new game',
+      };
+    }
+    revalidatePath(`/room/${newGame.id}`);
   }
 }
 
 export async function startGame(formData: FormData) {
   const data = Object.fromEntries(formData) as unknown as StartGameData;
   const { gameId, maxPlayers, maxRounds, leader } = data;
-  console.log("Data: ", data);
-  console.log("Type of maxPlayers: ", typeof maxPlayers);
+  console.log('Data: ', data);
+  console.log('Type of maxPlayers: ', typeof maxPlayers);
   const parsedLeader = JSON.parse(leader) as GamePlayer;
-  console.log("Parsed leader: ", parsedLeader);
+  console.log('Parsed leader: ', parsedLeader);
   if (!parsedLeader) {
-    return { failure: "No valid leader in game" };
+    return { failure: 'No valid leader in game' };
   }
   try {
     await Promise.all([
@@ -87,15 +94,15 @@ export async function startGame(formData: FormData) {
         data: {
           maxPlayers: parseInt(maxPlayers),
           maxRounds: parseInt(maxRounds),
-          status: "IN_PROGRESS",
+          status: 'IN_PROGRESS',
           currentDrawerId: parsedLeader.playerId,
         },
       }),
       startNewRound(gameId),
     ]);
-    console.log("Started game.....");
+    console.log('Started game.....');
   } catch (err) {
-    console.error("Error: ", err);
+    console.error('Error: ', err);
   } finally {
     revalidatePath(`/room/${gameId}`);
   }
@@ -103,7 +110,7 @@ export async function startGame(formData: FormData) {
 
 export async function joinGame(gameId: string) {
   const user = await currentUser();
-  if (!user || !user.id) redirect("/sign-in");
+  if (!user || !user.id) redirect('/sign-in');
 
   try {
     const player = await db.player.findUnique({
@@ -112,7 +119,7 @@ export async function joinGame(gameId: string) {
       },
     });
 
-    if (!player) redirect("/profile/finish");
+    if (!player) redirect('/profile/finish');
 
     const game = await db.game.findUnique({
       where: {
@@ -125,15 +132,15 @@ export async function joinGame(gameId: string) {
 
     if (!game) {
       return {
-        error: "This game does not exist",
+        error: 'This game does not exist',
       };
     }
 
     const isPlayerInGame = game.players.some(
-      (gamePlayer) => gamePlayer.playerId === player.id
+      gamePlayer => gamePlayer.playerId === player.id,
     );
 
-    console.log("Is player in game: ", isPlayerInGame);
+    console.log('Is player in game: ', isPlayerInGame);
 
     if (!isPlayerInGame) {
       await db.gamePlayer.create({
@@ -151,7 +158,7 @@ export async function joinGame(gameId: string) {
   } catch (err) {
     console.error(err);
     return {
-      error: "Something went wrong",
+      error: 'Something went wrong',
     };
   } finally {
     revalidatePath(`/room/${gameId}`);
@@ -165,18 +172,18 @@ export async function proceedGame(gameId: string) {
       include: {
         players: true,
         rounds: {
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: 'asc' },
           include: { drawer: true },
         },
       },
     });
 
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error('Game not found');
     }
 
     const currentDrawerIndex = game.players.findIndex(
-      (player) => player.playerId === game.currentDrawerId
+      player => player.playerId === game.currentDrawerId,
     );
 
     const nextDrawerIndex = (currentDrawerIndex + 1) % game.players.length;
@@ -187,7 +194,7 @@ export async function proceedGame(gameId: string) {
       await startNewTurn(gameId);
     }
   } catch (err) {
-    console.error("error: ", err);
+    console.error('error: ', err);
   } finally {
     revalidatePath(`/room/${gameId}`);
   }

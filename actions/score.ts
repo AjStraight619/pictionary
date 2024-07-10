@@ -12,25 +12,40 @@ export async function updateScore(score: number, gameId: string) {
 
   const userId = user.id;
 
+  console.log('In update score');
+
   try {
-    // Find the GamePlayer record for the current user and game
-    const gamePlayer = await db.gamePlayer.findUnique({
+    const game = await db.game.findUnique({
       where: {
-        id: userId,
-        gameId: gameId,
+        id: gameId,
+      },
+      include: {
+        players: {
+          select: {
+            id: true,
+            playerId: true,
+            score: true,
+          },
+        },
       },
     });
 
-    if (!gamePlayer) {
-      return { failure: 'GamePlayer not found' };
+    if (!game) {
+      return { failure: 'Game does not exist' };
+    }
+
+    const player = game.players.find(p => p.playerId === userId);
+    if (!player) {
+      console.log('This player does not exist');
+      return { failure: 'Player does not exist in game.' };
     }
 
     await db.gamePlayer.update({
       where: {
-        id: gamePlayer.id,
+        id: player.id,
       },
       data: {
-        score: score,
+        score: player.score + score,
       },
     });
   } catch (err) {
@@ -39,6 +54,4 @@ export async function updateScore(score: number, gameId: string) {
   } finally {
     revalidatePath(`/room/${gameId}`);
   }
-
-  return { success: true };
 }

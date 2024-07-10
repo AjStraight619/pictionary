@@ -1,4 +1,4 @@
-import useWebSocket, { Options } from "react-use-websocket";
+import useWebSocket, { Options } from 'react-use-websocket';
 
 type UseCustomWebSocketProps = {
   roomId: string;
@@ -35,9 +35,11 @@ export const useCustomWebSocket = ({
       // ! Since we have a lot of different countdowns we need to filter on msg.data.timerType if the type of message is countdown
       try {
         const msg = JSON.parse(message.data);
-        if (msg.type === "countdown") {
-          console.log("Timer message recieved: ", msg.data);
+        if (msg.type === 'countdown') {
           return msg.data.timerType === messageType;
+        }
+        if (msg.type === 'chat') {
+          console.log('Chat message recieved');
         }
         return msg.type === messageType;
       } catch (e) {
@@ -46,15 +48,15 @@ export const useCustomWebSocket = ({
       }
     },
     retryOnError: true,
-    shouldReconnect: (closeEvent) => true,
+    shouldReconnect: closeEvent => true,
     reconnectAttempts: 10,
-    reconnectInterval: (attemptNumber) => {
-      console.log("Attempting to reconnect: ", attemptNumber);
+    reconnectInterval: attemptNumber => {
+      console.log('Attempting to reconnect: ', attemptNumber);
       return Math.min(Math.pow(2, attemptNumber) * 1000, 10000);
     },
     heartbeat: {
-      message: "ping",
-      returnMessage: "pong",
+      message: 'ping',
+      returnMessage: 'pong',
       timeout: 60000,
       interval: 10000,
     },

@@ -19,9 +19,14 @@ type Guess = {
 
 export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
   const [input, setInput] = useState('');
-  const { sendJsonMessage } = useCustomWebSocket({ roomId, userId });
+  const { sendJsonMessage } = useCustomWebSocket({
+    roomId,
+    userId,
+    messageType: 'chat',
+  });
+  // TODO: Need to change this to use database to track when a user guesses correct to disable the chat input, so someone can't run localStorage.clear() in browser and boost their score.
   const [isGuessCorrect, setIsGuessCorrect] = useLocalStorage<Guess | null>(
-    'isGuessCorrect',
+    'guesses',
     null,
   );
 
@@ -51,13 +56,15 @@ export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
       isCorrect: isCorrect(input.trim()),
       isClose: isClose(input.trim()),
     };
-    sendJsonMessage({ type: 'chat', data: newChat });
+
     if (newChat.isCorrect) {
       setIsGuessCorrect({
         userId: userId,
         isCorrect: true,
       });
+      newChat.message = "That's Correct!";
     }
+    sendJsonMessage({ type: 'chat', data: newChat });
     setInput('');
   };
 

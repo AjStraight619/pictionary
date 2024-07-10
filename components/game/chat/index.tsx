@@ -41,14 +41,17 @@ const Chat = ({ players, userId, roomId }: ChatProps) => {
   });
   const [chats, setChats] = useState<ChatMessage[]>([]);
 
+  const renderRef = useRef(0);
+  useEffect(() => {
+    console.log('Chat component re rendered: ', renderRef.current++);
+  });
+
   useEffect(() => {
     if (lastMessage) {
       const parsedMessage = JSON.parse(lastMessage.data);
-      if (parsedMessage.type === 'chat') {
-        console.log('last message: ', parsedMessage.data);
-        const message: ChatMessage = parsedMessage.data;
-        setChats(prevChats => [...prevChats, message]);
-      }
+      console.log('last message: ', parsedMessage.data);
+      const message: ChatMessage = parsedMessage.data;
+      setChats(prevChats => [...prevChats, message]);
     }
   }, [lastMessage]);
 
