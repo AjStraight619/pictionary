@@ -1,26 +1,31 @@
-const db = require("./dbtest");
+const { PrismaClient } = require('@prisma/client');
+const db = new PrismaClient();
 
 async function seedPlayers() {
   // Fetch the first game (or create one if necessary)
-  let game = await db.game.findFirst();
-  if (!game) {
-    game = await db.game.create({
-      data: {
-        name: "Test Game",
-        isOpen: true,
-        status: "WAITING",
-        currentRound: 1,
-      },
-    });
-  }
 
-  console.log("Seeding game: ", game);
+  let game = await db.game.findUnique({
+    where: {
+      id: 'f1998653-9e35-45f5-a3df-9ba4231d270c',
+    },
+  });
+
+  // game = await db.game.create({
+  //   data: {
+  //     name: 'Test Game',
+  //     isOpen: true,
+  //     status: 'WAITING',
+  //     currentRound: 1,
+  //   },
+  // });
+
+  console.log('Seeding game: ', game);
 
   // Create players
   const playersData = [
-    { id: "player1", username: "Player1", email: "player1@example.com" },
-    { id: "player2", username: "Player2", email: "player2@example.com" },
-    { id: "player3", username: "Player3", email: "player3@example.com" },
+    { id: 'player1', username: 'Player1', email: 'player1@example.com' },
+    { id: 'player2', username: 'Player2', email: 'player2@example.com' },
+    { id: 'player3', username: 'Player3', email: 'player3@example.com' },
   ];
 
   for (const playerData of playersData) {
@@ -39,12 +44,12 @@ async function seedPlayers() {
       },
     });
 
-    console.log("Seeded player: ", player);
+    console.log('Seeded player: ', player);
   }
 }
 
 seedPlayers()
-  .catch((e) => {
+  .catch(e => {
     console.error(e);
     process.exit(1);
   })

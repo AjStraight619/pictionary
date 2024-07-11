@@ -54,8 +54,6 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
   const currentRound = game.rounds[currentRoundIndex - 1];
   const currentWord = currentRound?.word;
 
-  console.log('Current word: ', currentWord);
-
   return (
     <WordProvider word={currentWord} gameId={game.id}>
       <div className="min-h-screen flex flex-col container items-center justify-center gap-y-4 p-6">
