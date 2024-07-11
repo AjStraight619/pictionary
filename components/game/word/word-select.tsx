@@ -1,5 +1,5 @@
-import { SelectableWord } from "@/types/word";
-import { useFormStatus } from "react-dom";
+import { SelectableWord } from '@/types/word';
+import { useFormStatus } from 'react-dom';
 
 type WordSelectProps = {
   word: SelectableWord;
@@ -22,7 +22,7 @@ export default function WordSelect({
       <input
         id={word.id}
         ref={inputRef}
-        type="button"
+        type="submit"
         className="text-xl border border-muted-foreground rounded-md px-4 py-2 m-2 cursor-pointer hover:bg-muted transition-colors duration-150"
         value={word.word}
         name="word"

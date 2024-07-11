@@ -2,7 +2,7 @@ import DrawerCanvas from '@/components/game/canvas/drawer-canvas';
 import ViewerCanvas from '@/components/game/canvas/viewer-canvas';
 import Chat from '@/components/game/chat';
 import Lobby from '@/components/game/lobby';
-import WordDisplay from '@/components/game/word/wd';
+import WordDisplay from '@/components/game/word/word-display';
 import WordProvider from '@/context/word-provider';
 import { db } from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
@@ -85,8 +85,6 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
         </div>
         {currentWord && (
           <WordDisplay
-            userId={user.id}
-            roomId={roomId}
             currentDrawerId={game.currentDrawerId}
             players={game.players}
           />

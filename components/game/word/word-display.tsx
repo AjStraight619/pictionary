@@ -1,24 +1,13 @@
 'use client';
+import { GamePlayer } from '@prisma/client';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useWord } from '@/context/word-provider';
 import { useTimer } from '@/hooks/useTimer';
-import { GamePlayer } from '@prisma/client';
-import { motion } from 'framer-motion';
-import {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-
 type WordDisplayProps = {
-  userId: string;
-  roomId: string;
   currentDrawerId: string | null;
   players: GamePlayer[];
 };
-
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -44,7 +33,7 @@ const item = {
 
 const revealCharVariants = {
   hidden: {
-    y: -30,
+    y: -50,
     opacity: 0,
   },
   show: {
@@ -52,170 +41,128 @@ const revealCharVariants = {
     opacity: 1,
     transition: {
       type: 'spring',
-      stiffness: 100,
-      damping: 10,
-      duration: 0.5,
+      bounce: 0.5,
+      duration: 0.3,
+      ease: 'easeInOut',
     },
   },
 };
 
 const VOWELS = ['a', 'e', 'i', 'o', 'u'];
-const START_REVEAL = 70;
-const END_REVEAL = 10;
+const FIRST_REVEAL = 70;
+const RANDOM_REVEAL = 50 || 25;
+const LAST_REVEAL = 10;
 
 export default function WordDisplay({
-  userId,
-  roomId,
   currentDrawerId,
   players,
 }: WordDisplayProps) {
   const { word } = useWord();
-  const currentDrawingUser = players.find(p => p.playerId === currentDrawerId);
-
-  const [revealedIndices, setRevealedIndices] = useState<number[]>([]);
-  const lastRevealTimeRef = useRef<number | null>(null);
-
   const splitWord = word?.split('');
-  const isCurrentDrawingUser = currentDrawingUser?.playerId === userId;
+  const lastRevealTimeRef = useRef<number | null>(null);
+  const [revealedIndices, setRevealedIndices] = useState<number[]>([]);
+  const isCurrentDrawer = players.find(p => p.playerId === currentDrawerId);
+  const renderRef = useRef(0);
+
+  useEffect(() => {
+    console.log('Word Display component re rendered: ', renderRef.current++);
+  });
 
   const { time } = useTimer({
     messageType: 'round_timer',
     onShouldTimerStop: time => time === 0,
     onTimerStop: () => {
-      setRevealedIndices(splitWord.map((_, idx) => idx));
+      setRevealedIndices(splitWord?.map((_, idx) => idx));
     },
   });
 
-  const revealRandomChar = useCallback(() => {
-    const randomIdx = Math.floor(Math.random() * splitWord.length);
-  }, [splitWord]);
-
   const revealFirstVowel = useCallback(() => {
-    const firstVowelIdx = splitWord.findIndex(ch =>
-      VOWELS.includes(ch.toLowerCase()),
-    );
+    const firstVowelIdx = splitWord.findIndex(ch => VOWELS.includes(ch));
     if (firstVowelIdx !== -1) {
       setRevealedIndices(prevIndices => [...prevIndices, firstVowelIdx]);
     }
   }, [splitWord]);
 
   const revealLastVowel = useCallback(() => {
-    const lastVowelIdx = splitWord.findLastIndex(ch =>
-      VOWELS.includes(ch.toLocaleLowerCase()),
-    );
-    if (lastVowelIdx !== -1 && !revealedIndices.includes(lastVowelIdx)) {
+    const lastVowelIdx = splitWord.findLastIndex(ch => VOWELS.includes(ch));
+    if (lastVowelIdx !== -1) {
       setRevealedIndices(prevIndices => [...prevIndices, lastVowelIdx]);
-    } else {
-      revealRandomChar();
     }
-  }, [splitWord, revealedIndices, revealRandomChar]);
+  }, [splitWord]);
+
+  const revealRandomLetter = useCallback(() => {
+    if (splitWord.length <= 8) return;
+    const randomIdx = Math.floor(Math.random() * splitWord.length);
+    if (!revealedIndices.includes(randomIdx)) {
+      setRevealedIndices(prevIndices => [...prevIndices, randomIdx]);
+    }
+  }, [splitWord, revealedIndices]);
 
   useEffect(() => {
-    if (!splitWord.length || !time || time <= 0) {
-      return;
-    }
+    if (!time || time === 0) return;
 
-    if (time === START_REVEAL && lastRevealTimeRef.current !== time) {
-      console.log('Finding first index...');
+    if (time === FIRST_REVEAL && lastRevealTimeRef.current !== time) {
       revealFirstVowel();
       lastRevealTimeRef.current = time;
     }
 
-    if (time === END_REVEAL && lastRevealTimeRef.current !== time) {
-      console.log('Finding last vowel index...');
-      revealLastVowel();
+    if (time === RANDOM_REVEAL && lastRevealTimeRef.current !== time) {
+      revealRandomLetter();
+      lastRevealTimeRef.current = time;
     }
-  }, [time, splitWord, revealFirstVowel, revealLastVowel]);
 
-  const renderWordForDrawer = () => (
-    <motion.ul
-      initial="hidden"
-      animate="show"
-      variants={container}
-      className="flex"
-    >
-      {splitWord.map((ch, idx) => (
-        <motion.li
-          key={idx}
-          className={`text-3xl -space-y-5 ${ch === ' ' ? 'mx-4' : 'mx-1'}`}
-          variants={item}
-        >
-          <div className="flex flex-col h-20 items-center justify-center leading-[3px]">
-            <span className="mb-1 font-sans">{ch !== ' ' ? ch : ' '}</span>
-            <span>
-              {ch !== ' ' ? (
-                <span className="tracking-tighter font-sans leading-[3px] self-end">
-                  __
-                </span>
-              ) : (
-                ' '
-              )}
-            </span>
-          </div>
-        </motion.li>
-      ))}
-    </motion.ul>
-  );
+    if (time === LAST_REVEAL && lastRevealTimeRef.current !== time) {
+      revealLastVowel();
+      lastRevealTimeRef.current = time;
+    }
+  }, [revealFirstVowel, revealLastVowel, revealRandomLetter, time, splitWord]);
 
-  const renderWordForGuesser = () => (
-    <motion.ul
-      initial="hidden"
-      animate="show"
-      variants={container}
-      className="flex relative"
-    >
-      {splitWord.map((ch, idx) => (
-        <motion.li
-          key={idx}
-          className={`text-3xl -space-y-5 ${ch === ' ' ? 'mx-4' : 'mx-1'}`}
-          variants={item}
-        >
-          <motion.div
-            initial="hidden"
-            animate="show"
-            variants={container}
-            className="flex flex-col items-center justify-center h-20 leading-[3px]"
+  const renderWord = (label: string, revealAll: boolean = false) => (
+    <motion.div className="relative flex gap-x-2 bg-white rounded-md p-4 items-center">
+      <div className="text-2xl mr-2">{label}</div>
+      <motion.ul
+        initial="hidden"
+        animate="show"
+        variants={container}
+        className="flex items-center gap-x-2 text-3xl mr-4"
+      >
+        {splitWord?.map((ch, idx) => (
+          <motion.li
+            variants={item}
+            className="flex flex-col items-center leading-[2px] gap-y-1 h-fit font-sans"
+            key={idx}
           >
             <motion.span
-              initial="hidden"
-              animate={revealedIndices.includes(idx) ? 'show' : 'hidden'}
               variants={revealCharVariants}
-              className="mb-1 font-sans"
-            >
-              {ch !== ' ' && revealedIndices.includes(idx) ? ch : ' '}
-            </motion.span>
-            <motion.span
+              animate={
+                revealAll || revealedIndices.includes(idx) ? 'show' : 'hidden'
+              }
               initial="hidden"
-              animate="show"
-              variants={revealCharVariants}
-              className="tracking-tighter font-sans leading-[3px] self-end"
             >
-              {ch !== ' ' ? '__' : ' '}
+              {ch !== ' ' && (revealAll || revealedIndices.includes(idx))
+                ? ch
+                : ' '}
             </motion.span>
-          </motion.div>
-        </motion.li>
-      ))}
-    </motion.ul>
+            <span
+              className={`tracking-tighter font-sans leading-[1px] ${
+                revealAll || revealedIndices.includes(idx) ? 'mb-[1px]' : ''
+              }`}
+            >
+              {ch !== ' ' ? '__' : <span>&nbsp;&nbsp;</span>}
+            </span>
+          </motion.li>
+        ))}
+      </motion.ul>
+
+      <div className="absolute bottom-1 right-1">{splitWord?.length}</div>
+    </motion.div>
   );
+
+  const renderWordForGuesser = () => renderWord('Guess This:');
+
+  const renderWordForDrawer = () => renderWord('Draw This:', true);
 
   return (
-    <div className="bg-white rounded-md p-2 flex items-center gap-x-2">
-      {isCurrentDrawingUser ? (
-        <>
-          <span className="text-2xl mr-4">Draw This:</span>
-          {renderWordForGuesser()}
-        </>
-      ) : (
-        <>
-          <span>Guess This:</span>
-          {renderWordForGuesser()}
-        </>
-      )}
-      <div className="self-end ml-2">{splitWord.length}</div>
-    </div>
+    <>{isCurrentDrawer ? renderWordForGuesser() : renderWordForGuesser()}</>
   );
-}
-
-function WordContainer({ children }: { children: ReactNode }) {
-  return <div className="relative"></div>;
 }

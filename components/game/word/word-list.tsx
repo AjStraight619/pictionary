@@ -1,25 +1,26 @@
-"use client";
-import { Button } from "@/components/ui/button";
+'use client';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useWord } from "@/context/word-provider";
-import { useCustomWebSocket } from "@/hooks/useCustomWebsocket";
-import { getRandomWords } from "@/lib/words";
-import { useEffect, useRef, useState } from "react";
-import WordSelect from "./word-select";
+} from '@/components/ui/dialog';
+import { useWord } from '@/context/word-provider';
+import { useCustomWebSocket } from '@/hooks/useCustomWebsocket';
+import { getRandomWords } from '@/lib/words';
+import { useEffect, useRef, useState } from 'react';
+import WordSelect from './word-select';
 import {
   motion,
   AnimatePresence,
   useAnimate,
   usePresence,
-} from "framer-motion";
-import { SelectableWord } from "@/types/word";
-import { wait } from "@/lib/utils";
+} from 'framer-motion';
+import { SelectableWord } from '@/types/word';
+import { wait } from '@/lib/utils';
+import { useTimer } from '@/hooks/useTimer';
 
 type WordListProps = {
   newTurn: boolean;
@@ -32,14 +33,14 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      when: "beforeChildren",
+      when: 'beforeChildren',
       staggerChildren: 0.3,
     },
   },
   hidden: {
     opacity: 0,
     transition: {
-      when: "afterChildren",
+      when: 'afterChildren',
     },
   },
 };
@@ -57,11 +58,18 @@ export default function WordList({
   userId,
 }: WordListProps) {
   const [wordList, setWordList] = useState<SelectableWord[]>([]);
-  const [selectCountdown, setSelectCountdown] = useState<number | undefined>(
-    undefined
-  );
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [scope, animate] = useAnimate();
+  const [isWordSelected, setIsWordSelected] = useState(false);
+
+  const { time, startTimer, stopTimer } = useTimer({
+    messageType: 'select_word_countdown',
+    onShouldTimerStop: time => time === 0 || isWordSelected,
+    onTimerStop: () => {
+      console.log('Timer stopped');
+      inputRef?.current?.click();
+    },
+  });
 
   // useEffect(() => {
   //   if (newTurn && scope.current) {
@@ -71,10 +79,9 @@ export default function WordList({
 
   const { updateWord } = useWord();
 
-  const { sendJsonMessage, lastMessage } = useCustomWebSocket({
+  const { sendJsonMessage } = useCustomWebSocket({
     roomId,
     userId,
-    messageType: "select_word_countdown",
   });
 
   // useEffect(() => {
@@ -95,40 +102,52 @@ export default function WordList({
   //   }
   // }, [newTurn, sendJsonMessage, lastMessage]);
 
+  useEffect(() => {
+    setIsWordSelected(false);
+    getNewWords();
+    startTimer({
+      type: 'countdown',
+      data: {
+        time: 30,
+        timerType: 'select_word_countdown',
+      },
+    });
+  }, [newTurn, startTimer]);
+
   const getNewWords = () => {
-    setWordList(getRandomWords("Random", 3));
+    setWordList(getRandomWords('Random', 3));
   };
 
   const handleWordSelect = async (word: SelectableWord) => {
     setWordList([word]);
+    setIsWordSelected(true);
     const selectedElement = document.getElementById(word.id);
     if (selectedElement) {
       await animate(
         selectedElement,
         { rotate: 360, scale: [1.4, 1.0] },
-        { duration: 0.5 }
+        { duration: 0.5 },
       );
     }
     const formData = new FormData();
-    formData.append("word", word.word);
+    formData.append('word', word.word);
     handleSelectedWord(formData);
   };
 
   const handleSelectedWord = async (formData: FormData) => {
-    formData.append("roundId", roundId);
+    formData.append('roundId', roundId);
     updateWord(formData);
-    sendJsonMessage({
-      type: "stop_timer",
+    stopTimer({
       data: {
-        timerType: "select_word_countdown",
+        timerType: 'select_word_countdown',
       },
     });
     await wait(2000);
     sendJsonMessage({
-      type: "countdown",
+      type: 'countdown',
       data: {
-        timerType: "round_timer",
-        time: 30,
+        timerType: 'round_timer',
+        time: 80,
       },
     });
   };
@@ -137,7 +156,7 @@ export default function WordList({
     <Dialog open={newTurn}>
       <DialogContent>
         <div className="absolute top-2 right-2 flex items-center gap-x-2">
-          <div>{selectCountdown}</div>
+          <div>{time}</div>
           <Button onClick={() => getNewWords()}>New Words</Button>
         </div>
         <DialogHeader>
@@ -146,12 +165,12 @@ export default function WordList({
             It is your turn to draw, select a word!
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={e => e.preventDefault()}>
           <ul
             ref={scope}
             className="flex flex-row items-center justify-evenly text-lg"
           >
-            {wordList.map((word) => (
+            {wordList.map(word => (
               <li id={word.id} key={word.id}>
                 <WordSelect
                   onSelect={handleWordSelect}
