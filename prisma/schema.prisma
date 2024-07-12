@@ -30,6 +30,7 @@ model Game {
   currentDrawerId String? 
   maxRounds      Int @default(8)
   maxPlayers     Int @default(6)
+  usedWords String[]
   newTurn        Boolean      @default(false)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -68,6 +69,8 @@ model Guess {
   player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
   playerId  String
   guess     String
+  isCorrect Boolean
+  timeGuessedAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

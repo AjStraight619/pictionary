@@ -3,7 +3,6 @@ import ViewerCanvas from '@/components/game/canvas/viewer-canvas';
 import Chat from '@/components/game/chat';
 import Lobby from '@/components/game/lobby';
 import Round from '@/components/game/round/round';
-import WordDisplay from '@/components/game/word/word-display';
 import Test from '@/components/test/test';
 import WordProvider from '@/context/word-provider';
 import { db } from '@/lib/db';
