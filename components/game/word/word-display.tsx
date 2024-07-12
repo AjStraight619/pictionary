@@ -118,8 +118,23 @@ export default function WordDisplay({
   }, [revealFirstVowel, revealLastVowel, revealRandomLetter, time, splitWord]);
 
   const renderWord = (label: string, revealAll: boolean = false) => (
-    <motion.div className="relative flex gap-x-2 bg-white rounded-md p-4 items-center">
-      <div className="text-2xl mr-2">{label}</div>
+    <div className="relative flex gap-x-2 h-full items-center">
+      <motion.div
+        initial={{
+          x: -10,
+          opacity: 0,
+        }}
+        animate={{
+          x: 0,
+          opacity: 1,
+        }}
+        transition={{
+          duration: 0.5,
+        }}
+        className="text-2xl mr-2"
+      >
+        {label}
+      </motion.div>
       <motion.ul
         initial="hidden"
         animate="show"
@@ -154,15 +169,35 @@ export default function WordDisplay({
         ))}
       </motion.ul>
 
-      <div className="absolute bottom-1 right-1">{splitWord?.length}</div>
-    </motion.div>
+      <motion.div
+        initial={{
+          opacity: 0,
+          y: -30,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          duration: 0.3,
+          type: 'spring',
+          damping: 5,
+          stiffness: 20,
+        }}
+        className="self-end"
+      >
+        {splitWord?.length}
+      </motion.div>
+    </div>
   );
 
   const renderWordForGuesser = () => renderWord('Guess This:');
 
   const renderWordForDrawer = () => renderWord('Draw This:', true);
 
+  if (!isCurrentDrawer) return;
+
   return (
-    <>{isCurrentDrawer ? renderWordForGuesser() : renderWordForGuesser()}</>
+    <>{isCurrentDrawer ? renderWordForDrawer() : renderWordForGuesser()}</>
   );
 }

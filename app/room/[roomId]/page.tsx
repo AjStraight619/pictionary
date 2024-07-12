@@ -2,7 +2,9 @@ import DrawerCanvas from '@/components/game/canvas/drawer-canvas';
 import ViewerCanvas from '@/components/game/canvas/viewer-canvas';
 import Chat from '@/components/game/chat';
 import Lobby from '@/components/game/lobby';
+import Round from '@/components/game/round/round';
 import WordDisplay from '@/components/game/word/word-display';
+import Test from '@/components/test/test';
 import WordProvider from '@/context/word-provider';
 import { db } from '@/lib/db';
 import { currentUser } from '@clerk/nextjs/server';
@@ -51,14 +53,18 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
   console.log('Game players: ', game.players);
 
   const currentRoundIndex = game.currentRound;
+
   const currentRound = game.rounds[currentRoundIndex - 1];
+  const currentDrawerId = currentRound?.drawerId;
   const currentWord = currentRound?.word;
+  const maxRounds = game.maxRounds;
 
   console.log('Current word: ', currentWord);
 
   return (
     <WordProvider word={currentWord} gameId={game.id}>
       <div className="min-h-screen flex flex-col container items-center justify-center gap-y-4 p-6">
+        <Test gameId={roomId} />
         <div className="flex flex-row items-center justify-center w-full h-[18rem] gap-x-4">
           <Lobby
             players={game.players}
@@ -83,13 +89,20 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
             roomId={roomId}
           />
         </div>
-        {currentWord && (
+        {/* {currentWord && (
           <WordDisplay
             currentDrawerId={game.currentDrawerId}
             players={game.players}
           />
-        )}
-        <div className="flex flex-row gap-x-2 w-full h-[calc(100vh-20rem-10rem)] pb-2">
+        )} */}
+
+        <Round
+          currentDrawerId={currentDrawerId}
+          players={game.players}
+          maxRounds={game.maxRounds}
+          currentRound={currentRoundIndex}
+        />
+        <div className="flex flex-row gap-x-2 w-full h-[calc(100vh-34rem)] pb-2">
           <div className="flex-1 h-full">
             <DrawerCanvas userId={user.id} roomId={roomId} />
           </div>

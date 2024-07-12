@@ -71,6 +71,7 @@ export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
   return (
     <form action={sendMessage} className="relative w-full">
       <Input
+        autoComplete="off"
         disabled={isGuessCorrect?.isCorrect}
         className="font-roboto"
         name="guess"
