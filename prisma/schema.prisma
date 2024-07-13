@@ -30,7 +30,7 @@ model Game {
   currentDrawerId String? 
   maxRounds      Int @default(8)
   maxPlayers     Int @default(6)
-  usedWords String[]
+  usedWords      String[]
   newTurn        Boolean      @default(false)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt

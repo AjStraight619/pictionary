@@ -55,13 +55,13 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
 
   const currentRound = game.rounds[currentRoundIndex - 1];
   const currentDrawerId = currentRound?.drawerId;
-  const currentWord = currentRound?.word;
+  const newWord = currentRound?.word;
   const maxRounds = game.maxRounds;
 
-  console.log('Current word: ', currentWord);
+  console.log('Current word: ', newWord);
 
   return (
-    <WordProvider word={currentWord} gameId={game.id}>
+    <WordProvider newWord={newWord} gameId={game.id}>
       <div className="min-h-screen flex flex-col container items-center justify-center gap-y-4 p-6">
         <Test gameId={roomId} />
         <div className="flex flex-row items-center justify-center w-full h-[18rem] gap-x-4">
@@ -72,7 +72,8 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
             currentRound={game.currentRound}
             currentDrawerId={game.currentDrawerId}
             gameId={game.id}
-            currentWord={currentWord}
+            currentWord={newWord}
+            newTurn={game.newTurn}
           />
           <DynamicPreGameLobby
             gameId={game.id}

@@ -34,7 +34,7 @@ export default function Round({
       // variants={containerVariants}
       // animate="show"
       // initial="hidden"
-      className="w-full bg-white flex items-center justify-between rounded-md gap-x-4 p-4"
+      className="w-full bg-white flex items-center rounded-md gap-x-4 p-4"
     >
       <RoundInfo currentRound={currentRound} maxRounds={maxRounds} />
       <WordDisplay players={players} currentDrawerId={currentDrawerId} />
@@ -58,3 +58,5 @@ function RoundInfo({
     </div>
   );
 }
+
+function RoundTimer() {}

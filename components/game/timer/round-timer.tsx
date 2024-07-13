@@ -1,5 +1,6 @@
 'use client';
 
+import { proceedGame } from '@/actions/game';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import { useTimer } from '@/hooks/useTimer';
 import { useAnimate } from 'framer-motion';
@@ -8,24 +9,28 @@ import { useEffect, useRef } from 'react';
 
 type RoundTimerProps = {
   roomId: string;
+  newTurn: boolean;
 };
 
-export default function RoundTimer({ roomId }: RoundTimerProps) {
+export default function RoundTimer({ roomId, newTurn }: RoundTimerProps) {
   const renderRef = useRef(0);
-  const { refresh } = useRouter();
   useEffect(() => {
     console.log('Round timer component re rendered: ', renderRef.current++);
   });
+  console.log('new turn: ', newTurn);
   const { time, stopTimer } = useTimer({
     messageType: 'round_timer',
-    onShouldTimerStop: time => time === 0,
-    onTimerStop: () => {
+    onShouldTimerStop: time => time === 0 || newTurn,
+    onTimerStop: async () => {
+      console.log('Timer stopped (Round timer)');
       localStorage.removeItem('guesses');
       stopTimer({
         data: {
           timerType: 'round_timer',
         },
       });
+
+      await proceedGame(roomId);
     },
   });
 

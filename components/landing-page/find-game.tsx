@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db } from '@/lib/db';
 import {
   Dialog,
   DialogContent,
@@ -6,17 +6,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { redirect } from "next/navigation";
-import { Button } from "../ui/button";
-import GameList from "./game-list";
+} from '../ui/dialog';
+import { Input } from '../ui/input';
+import { redirect } from 'next/navigation';
+import { Button } from '../ui/button';
+import GameList from './game-list';
 
 const getOpenGames = async () => {
   const openGames = await db.game.findMany({
     where: {
       isOpen: true,
-      status: "WAITING",
+      status: 'WAITING',
     },
     select: {
       id: true,
@@ -29,7 +29,7 @@ const getOpenGames = async () => {
     },
     take: 10,
   });
-  return openGames.map((game) => ({
+  return openGames.map(game => ({
     id: game.id,
     name: game.name,
     playerCount: game._count.players,
@@ -38,10 +38,10 @@ const getOpenGames = async () => {
 
 export default async function FindGame() {
   const openGames = await getOpenGames();
-  console.log("Open Games: ", openGames);
+  console.log('Open Games: ', openGames);
   const joinInviteLink = async (formData: FormData) => {
-    "use server";
-    const inviteLink = formData.get("inviteLink");
+    'use server';
+    const inviteLink = formData.get('inviteLink');
     redirect(`/room/${inviteLink}`);
   };
 
@@ -52,7 +52,7 @@ export default async function FindGame() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Join a game</DialogTitle>
+          <DialogTitle>Join a Room</DialogTitle>
           <DialogDescription>
             Join an invite link or an open room
           </DialogDescription>

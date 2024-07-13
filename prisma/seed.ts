@@ -1,26 +1,29 @@
-const db = require("./dbtest");
+const db = require('./dbtest');
 
 async function seedPlayers() {
-  // Fetch the first game (or create one if necessary)
-  let game = await db.game.findFirst();
+  let game = await db.game.findUnique({
+    where: {
+      id: '710fad4f-767f-47fb-908e-5e07e8e51f04',
+    },
+  });
   if (!game) {
     game = await db.game.create({
       data: {
-        name: "Test Game",
+        name: 'Test Game',
         isOpen: true,
-        status: "WAITING",
+        status: 'WAITING',
         currentRound: 1,
       },
     });
   }
 
-  console.log("Seeding game: ", game);
+  console.log('Seeding game: ', game);
 
   // Create players
   const playersData = [
-    { id: "player1", username: "Player1", email: "player1@example.com" },
-    { id: "player2", username: "Player2", email: "player2@example.com" },
-    { id: "player3", username: "Player3", email: "player3@example.com" },
+    { id: 'player1', username: 'Player1', email: 'player1@example.com' },
+    { id: 'player2', username: 'Player2', email: 'player2@example.com' },
+    { id: 'player3', username: 'Player3', email: 'player3@example.com' },
   ];
 
   for (const playerData of playersData) {
@@ -39,12 +42,12 @@ async function seedPlayers() {
       },
     });
 
-    console.log("Seeded player: ", player);
+    console.log('Seeded player: ', player);
   }
 }
 
 seedPlayers()
-  .catch((e) => {
+  .catch(e => {
     console.error(e);
     process.exit(1);
   })

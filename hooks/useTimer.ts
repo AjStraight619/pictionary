@@ -9,6 +9,7 @@ type StartTimerMessage = {
     timerType: string;
   };
 };
+
 type StopTimerMessage = {
   data: {
     timerType: string;
@@ -62,12 +63,13 @@ export const useTimer = ({
             timerStopped.current = true;
             onTimerStop?.();
           }
-          return;
+        } else {
+          timerStopped.current = false; // Reset when the timer shouldn't stop
         }
       } else {
-        timerStopped.current = false;
+        setTime(undefined); // Reset time state when the timer is not running
+        timerStopped.current = false; // Ensure timerStopped is reset when time is invalid
       }
-      return;
     }
   }, [lastMessage, onShouldTimerStop, onTimerStop]);
 

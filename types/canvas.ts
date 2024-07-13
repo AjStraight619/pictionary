@@ -1,8 +1,8 @@
-import { fabric } from "fabric";
-import { DrawingData, Position } from "./drawing";
-import { Point } from "fabric/fabric-impl";
-import { CustomFabricObject, DrawingData2 } from "./shape";
-import { CustomFabricObjectShape } from "@/lib/customFabricObjects";
+import { fabric } from 'fabric';
+import { DrawingData, Position } from './drawing';
+import { Point } from 'fabric/fabric-impl';
+import { CustomFabricObject, DrawingData2 } from './shape';
+import { CustomFabricObjectShape } from '@/lib/customFabricObjects';
 
 export type InitializeFabric = {
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
@@ -22,11 +22,11 @@ export type CanvasMouseDown = {
 };
 
 export enum Tool {
-  selector = "selector",
-  pencil = "pencil",
-  rect = "rect",
-  circle = "circle",
-  triangle = "triangle",
+  selector = 'selector',
+  pencil = 'pencil',
+  rect = 'rect',
+  circle = 'circle',
+  triangle = 'triangle',
 }
 
 export type CanvasMouseUp = {
@@ -49,6 +49,7 @@ export type CanvasMouseMove = {
   selectedObjectsRef: React.MutableRefObject<fabric.Object[] | undefined>;
   lastUsedColorRef: React.MutableRefObject<string>;
   lastUsedStrokeWidthRef: React.MutableRefObject<number>;
+  isMouseDownWithSelectionRef: React.MutableRefObject<boolean>;
 };
 
 export type CanvasPathCreated = {

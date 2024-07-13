@@ -7,31 +7,30 @@ import {
   CanvasMouseMove,
   CanvasSelectionChange,
   CanvasObjectsMoving,
-} from "@/types/canvas";
-import { FreeHandDrawingData, Position } from "@/types/drawing";
-import { fabric } from "fabric";
-import { nanoid } from "nanoid";
+} from '@/types/canvas';
+import { FreeHandDrawingData, Position } from '@/types/drawing';
+import { fabric } from 'fabric';
+import { nanoid } from 'nanoid';
 
-import { CustomFabricObjectShapeType, DrawingData2 } from "@/types/shape";
+import { CustomFabricObjectShapeType } from '@/types/shape';
 import {
   CustomCircle,
   CustomFabricObjectShape,
-  CustomPath,
   CustomRect,
   CustomTriangle,
-} from "./customFabricObjects";
+} from './customFabricObjects';
 import {
   calculateNewPosition,
   compressMessage,
   storeInitialPositions,
-} from "./utils";
-import { Point } from "fabric/fabric-impl";
+} from './utils';
+import { Point } from 'fabric/fabric-impl';
 
 export const initializeFabricCanvas = ({
   canvasRef,
   fabricRef,
 }: InitializeFabric) => {
-  const canvasElement = document.getElementById("canvas");
+  const canvasElement = document.getElementById('canvas');
   const canvas = new fabric.Canvas(canvasRef.current, {
     width: canvasElement?.clientWidth,
     height: canvasElement?.clientHeight,
@@ -55,7 +54,7 @@ export const handleCanvasMouseDown = ({
 }: CanvasMouseDown) => {
   if (isFillActiveRef.current && options.target) {
     const selectedObject = options.target as any;
-    if (selectedObject.type === "path") {
+    if (selectedObject.type === 'path') {
       selectedObject.set({
         stroke: lastUsedColorRef.current,
       });
@@ -73,9 +72,8 @@ export const handleCanvasMouseDown = ({
 
   const position = { x: pointer.x, y: pointer.y };
   const target = canvas.findTarget(options.e, false);
-  const point = new fabric.Point(pointer.x, pointer.y);
   pathDataRef.current.push(position);
-  let shapeId: string = "";
+  let shapeId: string = '';
   if (selectedToolRef.current !== Tool.selector) {
     shapeId = nanoid();
   }
@@ -136,8 +134,8 @@ export const handleCanvasMouseDown = ({
   if (shape) {
     activeShapeRef.current = shape;
     canvas.add(shape);
-    console.log("shape: ", shape);
-    console.log("shape to object tosvg: ", shape.toSVG());
+    console.log('shape: ', shape);
+    console.log('shape object to svg: ', shape.toSVG());
 
     sendDrawingDataSVG(shapeId, shape.toSVG());
   }
@@ -145,7 +143,7 @@ export const handleCanvasMouseDown = ({
   if (
     target &&
     (target.type === activeShapeRef.current?.type ||
-      target.type === "activeSelection")
+      target.type === 'activeSelection')
   ) {
     isDrawing.current = false;
     canvas.setActiveObject(target);
@@ -160,12 +158,12 @@ export const handleCanvasMouseUp = ({
   selectedToolRef,
   setSelectedTool,
 }: CanvasMouseUp) => {
-  if (selectedToolRef.current === "pencil") {
+  if (selectedToolRef.current === 'pencil') {
     isDrawing.current = false;
     return;
   }
 
-  shapeRef.current = "null";
+  shapeRef.current = 'null';
   selectedToolRef.current = null;
 
   // If the canvas is not in drawing mode, set the active element to default after 700ms
@@ -178,12 +176,12 @@ export const handleCanvasMouseUp = ({
 
 export const handleObjectChange = (
   obj: CustomFabricObjectShape,
-  sendJsonMessage: any
+  sendJsonMessage: any,
 ) => {
   if (!obj) return;
   const svg = obj.toSVG();
   sendJsonMessage({
-    type: "drawing",
+    type: 'drawing',
     data: {
       id: obj.id,
       svg,
@@ -201,8 +199,34 @@ export const handleCanvasMouseMove = ({
   lastUsedColorRef,
   lastUsedStrokeWidthRef,
   selectedObjectsRef,
+  isMouseDownWithSelectionRef,
 }: CanvasMouseMove) => {
   if (!selectedToolRef.current) return;
+  if (
+    isMouseDownWithSelectionRef.current &&
+    selectedObjectsRef.current &&
+    selectedObjectsRef.current.length > 1
+  ) {
+    const pointer = options.pointer;
+
+    if (!canvas || !pointer) return;
+
+    const boundingRect = canvas.getActiveObject()?.getBoundingRect();
+    if (boundingRect) {
+      const isPointerInBounds =
+        pointer.x >= boundingRect.left &&
+        pointer.x <= boundingRect.left + boundingRect.width &&
+        pointer.y >= boundingRect.top &&
+        pointer.y <= boundingRect.top + boundingRect.height;
+
+      if (isPointerInBounds) {
+        console.log('Pointer is in bounds...');
+      } else {
+        console.log('Pointer is out of bounds...');
+        return;
+      }
+    }
+  }
 
   const distanceThreshold = 5;
 
@@ -222,8 +246,8 @@ export const handleCanvasMouseMove = ({
 
       // Create the path string in SVG format
       const pathString = pathDataRef.current
-        .map((p, index) => `${index === 0 ? "M" : "L"}${p.x},${p.y}`)
-        .join(" ");
+        .map((p, index) => `${index === 0 ? 'M' : 'L'}${p.x},${p.y}`)
+        .join(' ');
 
       // Create the freehand drawing data object
       const freeHandData: FreeHandDrawingData = {
@@ -250,7 +274,7 @@ export const handlePathCreated = ({
     stroke: lastUsedColorRef.current,
   });
 
-  sendDrawingDataSVG(pathId, path.toSVG(), "path");
+  sendDrawingDataSVG(pathId, path.toSVG(), 'path');
 };
 
 export const handleCanvasObjectsMoving = ({
@@ -259,11 +283,11 @@ export const handleCanvasObjectsMoving = ({
   sendDrawingData,
 }: CanvasObjectsMoving) => {
   const activeSelection = options.target as CustomFabricObjectShape;
-  console.log("active selection: ", activeSelection.toObject());
+  console.log('active selection: ', activeSelection.toObject());
   const objects = canvas.getActiveObjects() as CustomFabricObjectShape[];
   if (!activeSelection) return;
 
-  objects.forEach((obj) => {
+  objects.forEach(obj => {
     if (obj) {
       const newPosition = calculateNewPosition(obj, activeSelection);
       if (newPosition) {
@@ -274,7 +298,7 @@ export const handleCanvasObjectsMoving = ({
           shapeData: { ...obj.toObject(), left: newLeft, top: newTop },
         });
       } else {
-        console.error("Invalid new position calculated");
+        console.error('Invalid new position calculated');
       }
     }
   });
@@ -287,15 +311,15 @@ export const handleSelectionChange = ({
   selectedObjectsRef.current =
     (options.selected as unknown as CustomFabricObjectShape[]) || [];
 
-  console.log("selection created: ", options.selected);
+  console.log('selection created: ', options.selected);
 };
 
 export const handleSelectionAndInitialPosition = (
   options: fabric.IEvent,
   selectedObjectsRef: React.MutableRefObject<
     CustomFabricObjectShape[] | undefined
-  >
+  >,
 ) => {
   storeInitialPositions(options.selected as CustomFabricObjectShape[]);
-  console.log("options selected: ", options.selected);
+  console.log('options selected: ', options.selected);
 };

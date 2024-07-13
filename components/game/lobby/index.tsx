@@ -13,6 +13,7 @@ import UpdateScoreTest from '@/components/test/update-score';
 type LobbyProps = {
   players: GamePlayer[];
   currentRound?: number;
+  newTurn: boolean;
   rounds?: Round[];
   currentDrawerId: string | null;
   showTimer?: boolean;
@@ -26,6 +27,7 @@ export default function Lobby({
   showTimer,
   showScore,
   currentRound,
+  newTurn,
   currentDrawerId,
   rounds,
   gameId,
@@ -39,7 +41,7 @@ export default function Lobby({
         <CardTitle>Lobby</CardTitle>
         {/* <TestStartTimer />
         <TestTimer /> */}
-        <RoundTimer roomId={gameId!} />
+        <RoundTimer newTurn={newTurn} roomId={gameId!} />
         {/* <form
           action={async () => {
             'use server';

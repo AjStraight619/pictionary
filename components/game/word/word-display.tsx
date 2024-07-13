@@ -1,7 +1,7 @@
 'use client';
 import { GamePlayer } from '@prisma/client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useWord } from '@/context/word-provider';
 import { useTimer } from '@/hooks/useTimer';
 type WordDisplayProps = {
@@ -16,6 +16,13 @@ const container = {
       staggerChildren: 0.1,
     },
   },
+  exit: {
+    opacity: 0,
+    transition: {
+      staggerChildren: 0.1,
+      staggerDirection: -1,
+    },
+  },
 };
 
 const item = {
@@ -23,6 +30,15 @@ const item = {
   show: {
     opacity: 1,
     x: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 500,
+      damping: 30,
+    },
+  },
+  exit: {
+    opacity: 0,
+    x: 50,
     transition: {
       type: 'spring',
       stiffness: 500,
@@ -39,6 +55,16 @@ const revealCharVariants = {
   show: {
     y: 0,
     opacity: 1,
+    transition: {
+      type: 'spring',
+      bounce: 0.5,
+      duration: 0.3,
+      ease: 'easeInOut',
+    },
+  },
+  exit: {
+    y: 50,
+    opacity: 0,
     transition: {
       type: 'spring',
       bounce: 0.5,
@@ -135,67 +161,72 @@ export default function WordDisplay({
       >
         {label}
       </motion.div>
-      <motion.ul
-        initial="hidden"
-        animate="show"
-        variants={container}
-        className="flex items-center gap-x-2 text-3xl mr-4"
-      >
-        {splitWord?.map((ch, idx) => (
-          <motion.li
-            variants={item}
-            className="flex flex-col items-center leading-[2px] gap-y-1 h-fit font-sans"
-            key={idx}
-          >
-            <motion.span
-              variants={revealCharVariants}
-              animate={
-                revealAll || revealedIndices.includes(idx) ? 'show' : 'hidden'
-              }
-              initial="hidden"
+      <AnimatePresence>
+        <motion.ul
+          key={word}
+          initial="hidden"
+          animate="show"
+          exit="exit"
+          variants={container}
+          className="flex items-center gap-x-2 text-3xl mr-4"
+        >
+          {splitWord?.map((ch, idx) => (
+            <motion.li
+              variants={item}
+              // exit="exit"
+              className="flex flex-col items-center leading-[2px] gap-y-1 h-fit font-sans"
+              key={idx}
             >
-              {ch !== ' ' && (revealAll || revealedIndices.includes(idx))
-                ? ch
-                : ' '}
-            </motion.span>
-            <span
-              className={`tracking-tighter font-sans leading-[1px] ${
-                revealAll || revealedIndices.includes(idx) ? 'mb-[1px]' : ''
-              }`}
-            >
-              {ch !== ' ' ? '__' : <span>&nbsp;&nbsp;</span>}
-            </span>
-          </motion.li>
-        ))}
-      </motion.ul>
-
-      <motion.div
-        initial={{
-          opacity: 0,
-          y: -30,
-        }}
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration: 0.3,
-          type: 'spring',
-          damping: 5,
-          stiffness: 20,
-        }}
-        className="self-end"
-      >
-        {splitWord?.length}
-      </motion.div>
+              <motion.span
+                variants={revealCharVariants}
+                animate={
+                  revealAll || revealedIndices.includes(idx) ? 'show' : 'hidden'
+                }
+                initial="hidden"
+                // exit="exit"
+              >
+                {ch !== ' ' && (revealAll || revealedIndices.includes(idx))
+                  ? ch
+                  : ' '}
+              </motion.span>
+              <span
+                className={`tracking-tighter font-sans leading-[1px] ${
+                  revealAll || revealedIndices.includes(idx) ? 'mb-[1px]' : ''
+                }`}
+              >
+                {ch !== ' ' ? '__' : <span>&nbsp;&nbsp;</span>}
+              </span>
+            </motion.li>
+          ))}
+        </motion.ul>
+      </AnimatePresence>
+      {splitWord.length !== 0 && (
+        <motion.div
+          // initial={{
+          //   opacity: 0,
+          //   y: -30,
+          // }}
+          // animate={{
+          //   opacity: 1,
+          //   y: 0,
+          // }}
+          // transition={{
+          //   duration: 0.3,
+          //   type: 'spring',
+          //   damping: 5,
+          //   stiffness: 20,
+          // }}
+          className="self-end"
+        >
+          {splitWord.length}
+        </motion.div>
+      )}
     </div>
   );
 
   const renderWordForGuesser = () => renderWord('Guess This:');
 
   const renderWordForDrawer = () => renderWord('Draw This:', true);
-
-  if (!isCurrentDrawer) return;
 
   return (
     <>{isCurrentDrawer ? renderWordForDrawer() : renderWordForGuesser()}</>

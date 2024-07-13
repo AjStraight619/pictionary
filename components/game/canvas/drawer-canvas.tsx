@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { fabric } from "fabric";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { fabric } from 'fabric';
 import {
   initializeFabricCanvas,
   handleCanvasMouseDown,
@@ -10,23 +10,15 @@ import {
   handleCanvasMouseMove,
   handleSelectionAndInitialPosition,
   handleObjectChange,
-} from "@/lib/canvas";
-import Toolbar from "../toolbar";
-import { Tool } from "@/types/canvas";
-import { useThrottledCallback } from "use-debounce";
-import { DrawingData, FreeHandDrawingData } from "@/types/drawing";
-import { useCustomWebSocket } from "@/hooks/useCustomWebsocket";
-import { DrawingData2 } from "@/types/shape";
-import { CustomFabricObjectShape } from "@/lib/customFabricObjects";
-import { IEvent } from "fabric/fabric-impl";
-import { handleKeyDown } from "@/lib/keyevents";
-import { compressMessage } from "@/lib/utils";
-
-type State = DrawingData[];
-type Action =
-  | { type: "add"; payload: DrawingData }
-  | { type: "update"; payload: DrawingData }
-  | { type: "remove"; payload: { id: string } };
+} from '@/lib/canvas';
+import Toolbar from '../toolbar';
+import { Tool } from '@/types/canvas';
+import { useThrottledCallback } from 'use-debounce';
+import { FreeHandDrawingData } from '@/types/drawing';
+import { useCustomWebSocket } from '@/hooks/useCustomWebsocket';
+import { CustomFabricObjectShape } from '@/lib/customFabricObjects';
+import { IEvent } from 'fabric/fabric-impl';
+import { handleKeyDown } from '@/lib/keyevents';
 
 type CanvasProps = {
   userId: string;
@@ -42,33 +34,36 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
   const activeShapeRef = useRef<fabric.Object | null>(null);
   const selectedShapeRef = useRef<fabric.Object | null>(null);
   const pathDataRef = useRef<fabric.Point[]>([]);
-  const selectedObjectsRef = useRef<CustomFabricObjectShape[] | undefined>([]);
-  const lastUsedColorRef = useRef<string>("#000000");
+  const lastUsedColorRef = useRef<string>('#000000');
   const lastUsedStrokeWidthRef = useRef<number>(5);
   const isFillActiveRef = useRef<boolean>(false);
+
+  // To handle multiple objects moving at once on the canvas since fabric.js does not support this
+  const isMouseDownWithSelectionRef = useRef<boolean>(false);
+  const selectedObjectsRef = useRef<CustomFabricObjectShape[] | undefined>([]);
 
   const { sendJsonMessage } = useCustomWebSocket({ roomId, userId });
 
   const sendFreeHandData = useThrottledCallback(
     (freeHandData: FreeHandDrawingData) => {
       sendJsonMessage({
-        type: "drawing",
+        type: 'drawing',
         compressed: true,
         data: freeHandData,
       });
     },
-    5
+    5,
   );
 
   const sendDrawingDataSVG = useThrottledCallback(
     (id: string, svgData: string, shapeType?: string) => {
       sendJsonMessage({
-        type: "drawing",
+        type: 'drawing',
         compressed: false,
         data: { id, shapeType, svg: svgData },
       });
     },
-    16
+    16,
   );
 
   const handleSelectedToolChange = useCallback((tool: Tool) => {
@@ -78,28 +73,28 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
 
     if (tool !== Tool.pencil) {
       fabricRef.current.isDrawingMode = false;
-      fabricRef.current.hoverCursor = "default";
-      fabricRef.current.defaultCursor = "default";
+      fabricRef.current.hoverCursor = 'default';
+      fabricRef.current.defaultCursor = 'default';
     }
 
     switch (tool) {
       case Tool.selector:
         fabricRef.current.isDrawingMode = false;
-        fabricRef.current.hoverCursor = "default";
-        fabricRef.current.defaultCursor = "default";
+        fabricRef.current.hoverCursor = 'default';
+        fabricRef.current.defaultCursor = 'default';
         break;
       case Tool.pencil:
         fabricRef.current.isDrawingMode = true;
-        fabricRef.current.hoverCursor = "crosshair";
-        fabricRef.current.defaultCursor = "crosshair";
+        fabricRef.current.hoverCursor = 'crosshair';
+        fabricRef.current.defaultCursor = 'crosshair';
         fabricRef.current.freeDrawingBrush.width =
           lastUsedStrokeWidthRef.current;
         fabricRef.current.freeDrawingBrush.color = lastUsedColorRef.current;
         break;
       default:
         fabricRef.current.isDrawingMode = false;
-        fabricRef.current.hoverCursor = "default";
-        fabricRef.current.defaultCursor = "default";
+        fabricRef.current.hoverCursor = 'default';
+        fabricRef.current.defaultCursor = 'default';
 
         break;
     }
@@ -113,10 +108,15 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
 
     const eventHandler = (options: IEvent) => {
       const obj = options.target as CustomFabricObjectShape;
+
       handleObjectChange(obj, sendJsonMessage);
     };
 
-    canvas.on("mouse:down", (options) => {
+    canvas.on('mouse:down', options => {
+      if (selectedObjectsRef.current && selectedObjectsRef.current.length > 1) {
+        isMouseDownWithSelectionRef.current = true;
+        return;
+      }
       handleCanvasMouseDown({
         canvas,
         options,
@@ -130,7 +130,7 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
       });
     });
 
-    canvas.on("path:created", (options) => {
+    canvas.on('path:created', options => {
       handlePathCreated({
         options,
         lastUsedColorRef,
@@ -138,7 +138,8 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
       });
     });
 
-    canvas.on("mouse:up", () => {
+    canvas.on('mouse:up', () => {
+      isMouseDownWithSelectionRef.current = false;
       handleCanvasMouseUp({
         canvas,
         isDrawing,
@@ -149,7 +150,7 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
       pathDataRef.current = [];
     });
 
-    canvas.on("mouse:move", (options) => {
+    canvas.on('mouse:move', options => {
       handleCanvasMouseMove({
         canvas,
         options,
@@ -162,33 +163,38 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
         selectedObjectsRef,
         sendFreeHandData,
         lastUsedStrokeWidthRef,
+        isMouseDownWithSelectionRef,
       });
     });
 
-    canvas.on("object:modified", (options) => {
+    canvas.on('object:modified', options => {
       eventHandler(options);
     });
-    canvas.on("object:moving", eventHandler);
-    canvas.on("object:rotating", eventHandler);
+    canvas.on('object:moving', options => {
+      console.log('Object moving...');
 
-    canvas.on("selection:created", (options) => {
-      console.log("Selection created: ", options.selected);
+      eventHandler(options);
+    });
+    canvas.on('object:rotating', eventHandler);
+
+    canvas.on('selection:created', options => {
+      console.log('Selection created: ', options.selected);
       handleSelectionAndInitialPosition(options, selectedObjectsRef);
     });
 
-    canvas.on("selection:updated", (options) => {
+    canvas.on('selection:updated', options => {
       handleSelectionAndInitialPosition(options, selectedObjectsRef);
     });
 
-    canvas.on("selection:cleared", () => {
+    canvas.on('selection:cleared', () => {
       selectedObjectsRef.current = [];
       console.log(
-        "Selection cleared: ",
-        console.log(selectedObjectsRef.current)
+        'Selection cleared: ',
+        console.log(selectedObjectsRef.current),
       );
     });
 
-    window.addEventListener("keydown", (e) => {
+    window.addEventListener('keydown', e => {
       handleKeyDown({
         e,
         canvas,
@@ -198,7 +204,7 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
 
     return () => {
       canvas.dispose();
-      window.removeEventListener("keydown", (e) => {
+      window.removeEventListener('keydown', e => {
         handleKeyDown({
           e,
           canvas,

@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogContent,
+  DialogDescription,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 
@@ -77,6 +78,9 @@ export default function CreateRoom() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Room</DialogTitle>
+          <DialogDescription>
+            Create a room and invite friends!
+          </DialogDescription>
           {error && <ErrorMessage message={error} />}
           {success && (
             <div className="flex items-center justify-center gap-2 w-full">

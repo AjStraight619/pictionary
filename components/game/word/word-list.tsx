@@ -29,27 +29,27 @@ type WordListProps = {
   roomId: string;
 };
 
-const containerVariants = {
-  visible: {
-    opacity: 1,
-    transition: {
-      when: 'beforeChildren',
-      staggerChildren: 0.3,
-    },
-  },
-  hidden: {
-    opacity: 0,
-    transition: {
-      when: 'afterChildren',
-    },
-  },
-};
+// const containerVariants = {
+//   visible: {
+//     opacity: 1,
+//     transition: {
+//       when: 'beforeChildren',
+//       staggerChildren: 0.3,
+//     },
+//   },
+//   hidden: {
+//     opacity: 0,
+//     transition: {
+//       when: 'afterChildren',
+//     },
+//   },
+// };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: -10 },
-  visible: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: 10 },
-};
+// const itemVariants = {
+//   hidden: { opacity: 0, y: -10 },
+//   visible: { opacity: 1, y: 0 },
+//   exit: { opacity: 0, y: 10 },
+// };
 
 export default function WordList({
   newTurn,
@@ -67,15 +67,11 @@ export default function WordList({
     onShouldTimerStop: time => time === 0 || isWordSelected,
     onTimerStop: () => {
       console.log('Timer stopped');
-      inputRef?.current?.click();
+      if (!isWordSelected) {
+        selectRandomWord();
+      }
     },
   });
-
-  // useEffect(() => {
-  //   if (newTurn && scope.current) {
-  //     animate(scope.current, { opacity: [0, 1] }, { duration: 0.3 });
-  //   }
-  // }, [newTurn, animate, scope, wordList]);
 
   const { updateWord } = useWord();
 
@@ -83,24 +79,6 @@ export default function WordList({
     roomId,
     userId,
   });
-
-  // useEffect(() => {
-  //   if (lastMessage) {
-  //     const msg = JSON.parse(lastMessage.data);
-  //     if (msg.data.time > 0) return;
-  //     setSelectCountdown(msg.data.time);
-  //   }
-  //   if (newTurn) {
-  //     // setWordList(getRandomWords("Random", 3));
-  //     sendJsonMessage({
-  //       type: "countdown",
-  //       data: {
-  //         time: 30,
-  //         timerType: "select_word_countdown",
-  //       },
-  //     });
-  //   }
-  // }, [newTurn, sendJsonMessage, lastMessage]);
 
   useEffect(() => {
     setIsWordSelected(false);
@@ -150,6 +128,12 @@ export default function WordList({
         time: 80,
       },
     });
+  };
+
+  const selectRandomWord = () => {
+    const randomIndex = Math.floor(Math.random() * wordList.length);
+    const randomWord = wordList[randomIndex];
+    handleWordSelect(randomWord);
   };
 
   return (
