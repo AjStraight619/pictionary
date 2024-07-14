@@ -200,7 +200,7 @@ export default function WordDisplay({
           ))}
         </motion.ul>
       </AnimatePresence>
-      {splitWord.length !== 0 && (
+      {splitWord?.length !== 0 && (
         <motion.div
           // initial={{
           //   opacity: 0,
