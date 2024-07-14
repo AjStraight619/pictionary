@@ -5,6 +5,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Hub struct {
@@ -15,9 +17,10 @@ type Hub struct {
 	timers     map[string]*timer
 	mu         sync.RWMutex
 	ping       chan *Client
+	db *gorm.DB
 }
 
-func NewHub() *Hub {
+func NewHub(db *gorm.DB) *Hub {
 	return &Hub{
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
@@ -25,6 +28,7 @@ func NewHub() *Hub {
 		clients:    make(map[*Client]bool),
 		timers:     make(map[string]*timer),
 		ping:       make(chan *Client),
+		db: db,
 	}
 }
 
@@ -78,6 +82,10 @@ func (h *Hub) startPing() {
 					log.Println("Unregistering client, last pong response was more than 60 sec:", client.userId)
 					client.conn.Close()
 					h.unregister <- client
+					// err := db.RemoveUserFromRoom(h.db, client.roomId, client.userId)
+					// if err != nil {
+					// 	log.Printf("Error removing user %s from room %s: %v", client.userId, client.roomId, err)
+					// }
 				}
 			}
 			h.mu.Unlock()

@@ -27,6 +27,10 @@ func CheckAndDeleteStaleGames(database *gorm.DB) {
 	}
 }
 
+
+// TODO: Need roomId here when a user's ping > 30 seconds we hit Next.js API endpoint to remove them from the room
+
+
 // func RemoveUser(database *gorm.DB) {
 
 // 	players, err := GetPlayers(database)

@@ -40,6 +40,7 @@ type Client struct {
 	lastPong time.Time
 	ping     chan struct{}
 	userId   string
+	roomId string
 }
 
 func (c *Client) readMessages() {
@@ -152,3 +153,4 @@ func (c *Client) CalculateScore(time int) int {
 	score := time * 10
 	return score
 }
+

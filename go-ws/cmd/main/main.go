@@ -11,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/lpernett/godotenv"
+	"github.com/joho/godotenv"
 )
 
 // /Users/alex/projects/webapps/pictionary-final/
@@ -72,7 +72,7 @@ func main() {
 		w.Write([]byte("welcome"))
 	})
 
-	hubManager := ws.NewHubManager()
+	hubManager := ws.NewHubManager(database)
 
 	r.Get("/ws/{roomId}", func(w http.ResponseWriter, r *http.Request) {
 		roomId := chi.URLParam(r, "roomId")

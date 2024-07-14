@@ -18,12 +18,14 @@ type StopTimerMessage = {
 
 type UseTimerOptions = {
   messageType: string;
+  onTimerStart?: () => void;
   onShouldTimerStop?: (time: number) => boolean;
   onTimerStop?: () => void;
 };
 
 export const useTimer = ({
   messageType,
+  onTimerStart,
   onShouldTimerStop,
   onTimerStop,
 }: UseTimerOptions) => {
@@ -39,8 +41,11 @@ export const useTimer = ({
     (message: StartTimerMessage) => {
       console.log('Starting timer...');
       sendJsonMessage(message);
+      if (onTimerStart) {
+        onTimerStart();
+      }
     },
-    [sendJsonMessage],
+    [sendJsonMessage, onTimerStart],
   );
 
   const stopTimer = useCallback(
