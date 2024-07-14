@@ -23,7 +23,7 @@ func ServeWs(h *Hub, w http.ResponseWriter, r *http.Request, userId string) {
 		log.Println("Upgrade:", err)
 		return
 	}
-	client := &Client{hub: h, conn: conn, send: make(chan []byte, 1024), lastPong: time.Now(), ping: make(chan struct{}, 1), userId: userId}
+	client := &Client{hub: h, conn: conn, send: make(chan []byte, 1024), lastPong: time.Now(), ping: make(chan struct{}, 1), userId: userId, roomId: roomId}
 	conn.EnableWriteCompression(true)
 	client.hub.register <- client
 
