@@ -218,7 +218,7 @@ export default function WordDisplay({
           // }}
           className="self-end"
         >
-          {splitWord.length}
+          {splitWord?.length}
         </motion.div>
       )}
     </div>

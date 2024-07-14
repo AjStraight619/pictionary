@@ -82,19 +82,16 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
             userId={user.id}
           />
           <Chat players={game.players} userId={user.id} roomId={roomId} />
-          <DynamicWordList
-            newTurn={game.newTurn}
-            roundId={currentRound?.id}
-            userId={user.id}
-            roomId={roomId}
-          />
+          {game.status !== 'WAITING' && (
+            <DynamicWordList
+              status={game.status}
+              newTurn={game.newTurn}
+              roundId={currentRound?.id}
+              userId={user.id}
+              roomId={roomId}
+            />
+          )}
         </div>
-        {/* {currentWord && (
-          <WordDisplay
-            currentDrawerId={game.currentDrawerId}
-            players={game.players}
-          />
-        )} */}
 
         <Round
           currentDrawerId={currentDrawerId}

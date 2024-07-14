@@ -26,3 +26,13 @@ func CheckAndDeleteStaleGames(database *gorm.DB) {
 		}
 	}
 }
+
+// func RemoveUser(database *gorm.DB) {
+
+// 	players, err := GetPlayers(database)
+// 	if err != nil {
+// 		log.Printf("Error getting players: %v", err)
+// 		return
+// 	}
+
+// }

@@ -152,6 +152,7 @@ export async function joinGame(gameId: string) {
       });
     }
 
+    // redirect(`/room/${gameId}`);
     return {
       success: true,
     };

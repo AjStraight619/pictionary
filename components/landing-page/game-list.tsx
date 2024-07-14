@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { UsersRoundIcon } from "lucide-react";
-import SubmitButton2 from "../ui/submit-button2";
-import { Separator } from "../ui/separator";
-import { joinGame } from "@/actions/game";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ErrorMessage, SuccessMessage } from "../forms/form-messages";
+import { motion } from 'framer-motion';
+import { UsersRoundIcon } from 'lucide-react';
+import SubmitButton2 from '../ui/submit-button2';
+import { Separator } from '../ui/separator';
+import { joinGame } from '@/actions/game';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ErrorMessage, SuccessMessage } from '../forms/form-messages';
 
 type GameListProps = {
   openGames: {
@@ -44,19 +44,19 @@ const childVariant = {
 };
 
 export default function GameList({ openGames }: GameListProps) {
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const { push } = useRouter();
   const handleJoinGame = async (formData: FormData) => {
-    const gameId = formData.get("gameId");
+    const gameId = formData.get('gameId');
     const { success, error } = await joinGame(gameId as string);
     if (success) {
       push(`/room/${gameId}`);
     } else {
-      setError(error ? error : "");
+      setError(error ? error : '');
     }
   };
 
-  console.log("Open games: ", openGames);
+  console.log('Open games: ', openGames);
   return (
     <>
       <h3 className="font-semibold text-xl">Open Games:</h3>
@@ -68,7 +68,7 @@ export default function GameList({ openGames }: GameListProps) {
         initial="hidden"
         animate="visible"
       >
-        {openGames.map((game) => (
+        {openGames.map(game => (
           <React.Fragment key={game.id}>
             <motion.li
               className="flex flex-row items-center justify-between gap-x-2"

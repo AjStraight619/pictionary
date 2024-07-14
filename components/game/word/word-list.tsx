@@ -21,8 +21,10 @@ import {
 import { SelectableWord } from '@/types/word';
 import { wait } from '@/lib/utils';
 import { useTimer } from '@/hooks/useTimer';
+import { GameStatus } from '@prisma/client';
 
 type WordListProps = {
+  status: GameStatus;
   newTurn: boolean;
   roundId: string;
   userId: string;
@@ -56,6 +58,7 @@ export default function WordList({
   roundId,
   roomId,
   userId,
+  status,
 }: WordListProps) {
   const [wordList, setWordList] = useState<SelectableWord[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -135,6 +138,8 @@ export default function WordList({
     const randomWord = wordList[randomIndex];
     handleWordSelect(randomWord);
   };
+
+  if (status === 'WAITING' || status === 'FINISHED') return null;
 
   return (
     <Dialog open={newTurn}>
