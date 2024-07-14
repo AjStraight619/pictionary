@@ -11,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/joho/godotenv"
+	"github.com/lpernett/godotenv"
 )
 
 // /Users/alex/projects/webapps/pictionary-final/
@@ -22,19 +22,21 @@ func main() {
 	}
 
 	if env == "development" {
-		err := godotenv.Load("/Users/alex/projects/webapps/pictionary-final/.env")
+		err := godotenv.Load("")
 		if err != nil {
 			log.Printf("No .env file found: %v", err)
 		}
 	}
 
+	
+
 	log.Printf("Running in %s mode", env)
 
-	connStr := os.Getenv("DATABASE_URL")
-	if connStr == "" {
-		log.Fatalf("DATABASE_URL environment variable is not set")
-	}
-	database, err := db.GetDB(connStr)
+	// connStr := os.Getenv("DATABASE_URL")
+	// if connStr == "" {
+	// 	log.Fatalf("DATABASE_URL environment variable is not set")
+	// }
+	database, err := db.GetDB("postgresql://neondb_owner:h1SjWtbuZ3Yw@ep-odd-lab-a5dvqd7l-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require")
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
