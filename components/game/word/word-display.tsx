@@ -199,28 +199,27 @@ export default function WordDisplay({
             </motion.li>
           ))}
         </motion.ul>
+        {splitWord?.length !== 0 && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: -30,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              type: 'spring',
+              damping: 10,
+              stiffness: 80,
+            }}
+            className="self-end font-sans"
+          >
+            {splitWord?.length}
+          </motion.div>
+        )}
       </AnimatePresence>
-      {/* {splitWord?.length !== 0 && (
-        <motion.div
-          // initial={{
-          //   opacity: 0,
-          //   y: -30,
-          // }}
-          // animate={{
-          //   opacity: 1,
-          //   y: 0,
-          // }}
-          // transition={{
-          //   duration: 0.3,
-          //   type: 'spring',
-          //   damping: 5,
-          //   stiffness: 20,
-          // }}
-          className="self-end"
-        >
-          {splitWord?.length}
-        </motion.div>
-      )} */}
     </div>
   );
 

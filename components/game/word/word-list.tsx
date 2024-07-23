@@ -53,6 +53,29 @@ type WordListProps = {
 //   exit: { opacity: 0, y: 10 },
 // };
 
+const container = {
+  hidden: {
+    opacity: 0,
+    y: -20,
+  },
+  show: {
+    opacity: 1,
+    y: 20,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const item = {
+  hidden: {
+    opacity: 0,
+  },
+  show: {
+    opacity: 1,
+  },
+};
+
 export default function WordList({
   newTurn,
   roundId,
@@ -145,7 +168,7 @@ export default function WordList({
     <Dialog open={newTurn}>
       <DialogContent>
         <div className="absolute top-2 right-2 flex items-center gap-x-2">
-          <div>{time}</div>
+          <div className="font-sans">{time}</div>
           <Button onClick={() => getNewWords()}>New Words</Button>
         </div>
         <DialogHeader>
@@ -155,20 +178,23 @@ export default function WordList({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={e => e.preventDefault()}>
-          <ul
+          <motion.ul
             ref={scope}
-            className="flex flex-row items-center justify-evenly text-lg"
+            className="flex flex-row items-center justify-evenly text-lg flex-wrap"
+            variants={container}
+            initial="hidden"
+            animate="show"
           >
             {wordList.map(word => (
-              <li id={word.id} key={word.id}>
+              <motion.li variants={item} id={word.id} key={word.id}>
                 <WordSelect
                   onSelect={handleWordSelect}
                   inputRef={inputRef}
                   word={word}
                 />
-              </li>
+              </motion.li>
             ))}
-          </ul>
+          </motion.ul>
         </form>
       </DialogContent>
     </Dialog>

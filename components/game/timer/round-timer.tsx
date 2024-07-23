@@ -46,7 +46,9 @@ export default function RoundTimer({ roomId, newTurn }: RoundTimerProps) {
 
   return (
     <div ref={scope}>
-      <div id="target">{time}</div>
+      <div className="font-sans" id="target">
+        {time}
+      </div>
     </div>
   );
 }
