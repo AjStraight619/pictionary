@@ -1,17 +1,17 @@
-"use server";
+'use server';
 
-import { db } from "@/lib/db";
-import { revalidatePath } from "next/cache";
-import { startNewRound } from "./round";
+import { db } from '@/lib/db';
+import { revalidatePath } from 'next/cache';
+import { startNewRound } from './round';
 
 export async function setWordForRound(
   gameId: string,
   roundId: string,
-  word: string
+  word: string,
 ) {
-  console.log("gameId: ", gameId);
-  console.log("word: ", word);
-  console.log("RoundId: ", roundId);
+  console.log('gameId: ', gameId);
+  console.log('word: ', word);
+  console.log('RoundId: ', roundId);
   try {
     const [existingRound] = await Promise.all([
       db.round.findUnique({
@@ -37,8 +37,25 @@ export async function setWordForRound(
       }),
     ]);
   } catch (error) {
-    console.error("Error setting word for round: ", error);
+    console.error('Error setting word for round: ', error);
   } finally {
     revalidatePath(`/room/${gameId}`);
+  }
+}
+
+export async function addWordToUsedList(gameId: string, word: string) {
+  try {
+    await db.game.update({
+      where: {
+        id: gameId,
+      },
+      data: {
+        usedWords: {
+          push: word,
+        },
+      },
+    });
+  } catch (err) {
+    console.log('Error: ', err);
   }
 }

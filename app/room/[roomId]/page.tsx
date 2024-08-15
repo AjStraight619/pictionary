@@ -58,6 +58,10 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
   const newWord = currentRound?.word;
   const maxRounds = game.maxRounds;
 
+  const usedWords = game.usedWords;
+
+  console.log('used words: ', usedWords);
+
   console.log('Current word: ', newWord);
 
   return (
@@ -89,6 +93,7 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
               roundId={currentRound?.id}
               userId={user.id}
               roomId={roomId}
+              usedWords={usedWords}
             />
           )}
         </div>

@@ -146,80 +146,68 @@ export default function WordDisplay({
   const renderWord = (label: string, revealAll: boolean = false) => (
     <div className="relative flex gap-x-2 h-full items-center">
       <motion.div
-        initial={{
-          x: -10,
-          opacity: 0,
-        }}
-        animate={{
-          x: 0,
-          opacity: 1,
-        }}
-        transition={{
-          duration: 0.5,
-        }}
+        initial={{ x: -10, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
         className="text-2xl mr-2"
       >
         {label}
       </motion.div>
       <AnimatePresence>
-        <motion.ul
-          key={word}
-          initial="hidden"
-          animate="show"
-          exit="exit"
-          variants={container}
-          className="flex items-center gap-x-2 text-3xl mr-4"
-        >
-          {splitWord?.map((ch, idx) => (
-            <motion.li
-              variants={item}
-              // exit="exit"
-              className="flex flex-col items-center leading-[2px] gap-y-1 h-fit font-sans"
-              key={idx}
-            >
-              <motion.span
-                variants={revealCharVariants}
-                animate={
-                  revealAll || revealedIndices.includes(idx) ? 'show' : 'hidden'
-                }
-                initial="hidden"
-                // exit="exit"
-              >
-                {ch !== ' ' && (revealAll || revealedIndices.includes(idx))
-                  ? ch
-                  : ' '}
-              </motion.span>
-              <span
-                className={`tracking-tighter font-sans leading-[1px] ${
-                  revealAll || revealedIndices.includes(idx) ? 'mb-[1px]' : ''
-                }`}
-              >
-                {ch !== ' ' ? '__' : <span>&nbsp;&nbsp;</span>}
-              </span>
-            </motion.li>
-          ))}
-        </motion.ul>
-        {splitWord?.length !== 0 && (
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: -30,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              type: 'spring',
-              damping: 10,
-              stiffness: 80,
-            }}
-            className="self-end font-sans"
+        {splitWord && splitWord.length > 0 && (
+          <motion.ul
+            key={word || 'default-key'}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            variants={container}
+            className="flex items-center gap-x-2 text-3xl mr-4"
           >
-            {splitWord?.length}
-          </motion.div>
+            {splitWord.map((ch, idx) => (
+              <motion.li
+                variants={item}
+                className="flex flex-col items-center leading-[2px] gap-y-1 h-fit font-sans"
+                key={`${ch || 'space'}-${idx}`}
+              >
+                <motion.span
+                  variants={revealCharVariants}
+                  animate={
+                    revealAll || revealedIndices.includes(idx)
+                      ? 'show'
+                      : 'hidden'
+                  }
+                  initial="hidden"
+                >
+                  {ch !== ' ' && (revealAll || revealedIndices.includes(idx))
+                    ? ch
+                    : ' '}
+                </motion.span>
+                <span
+                  className={`tracking-tighter font-sans leading-[1px] ${
+                    revealAll || revealedIndices.includes(idx) ? 'mb-[1px]' : ''
+                  }`}
+                >
+                  {ch !== ' ' ? '__' : <span>&nbsp;&nbsp;</span>}
+                </span>
+              </motion.li>
+            ))}
+          </motion.ul>
         )}
       </AnimatePresence>
+      {splitWord && splitWord.length !== 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            type: 'spring',
+            damping: 10,
+            stiffness: 80,
+          }}
+          className="self-end font-sans"
+        >
+          {splitWord.length}
+        </motion.div>
+      )}
     </div>
   );
 

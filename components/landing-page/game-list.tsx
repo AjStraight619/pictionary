@@ -46,6 +46,7 @@ const childVariant = {
 export default function GameList({ openGames }: GameListProps) {
   const [error, setError] = useState('');
   const { push } = useRouter();
+
   const handleJoinGame = async (formData: FormData) => {
     const gameId = formData.get('gameId');
     const { success, error } = await joinGame(gameId as string);

@@ -13,11 +13,6 @@ type RoundTimerProps = {
 };
 
 export default function RoundTimer({ roomId, newTurn }: RoundTimerProps) {
-  const renderRef = useRef(0);
-  useEffect(() => {
-    console.log('Round timer component re rendered: ', renderRef.current++);
-  });
-  console.log('new turn: ', newTurn);
   const { time, stopTimer } = useTimer({
     messageType: 'round_timer',
     onShouldTimerStop: time => time === 0 || newTurn,

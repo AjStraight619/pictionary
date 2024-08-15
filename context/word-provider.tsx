@@ -1,5 +1,5 @@
 'use client';
-import { setWordForRound } from '@/actions/word';
+import { addWordToUsedList, setWordForRound } from '@/actions/word';
 import {
   ReactNode,
   createContext,
@@ -26,12 +26,14 @@ export default function WordProvider({
   newWord,
   gameId,
 }: WordProviderProps) {
-  // const [word, addOptimisticWord] = useOptimistic(newWord);
   const updateWord = async (formData: FormData) => {
     const roundId = formData.get('roundId') as string;
     const word = formData.get('word') as string;
-    // addOptimisticWord(word);
     await setWordForRound(gameId, roundId, word);
+    Promise.all([
+      setWordForRound(gameId, roundId, word),
+      addWordToUsedList(gameId, word),
+    ]);
   };
 
   return (

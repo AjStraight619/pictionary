@@ -18,7 +18,6 @@ export default function WordSelect({
 
   return (
     <>
-      {/* {pending && <Loader2 className="animate-spin" />} */}
       <input
         id={word.id}
         ref={inputRef}

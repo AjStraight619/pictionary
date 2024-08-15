@@ -29,29 +29,8 @@ type WordListProps = {
   roundId: string;
   userId: string;
   roomId: string;
+  usedWords: string[];
 };
-
-// const containerVariants = {
-//   visible: {
-//     opacity: 1,
-//     transition: {
-//       when: 'beforeChildren',
-//       staggerChildren: 0.3,
-//     },
-//   },
-//   hidden: {
-//     opacity: 0,
-//     transition: {
-//       when: 'afterChildren',
-//     },
-//   },
-// };
-
-// const itemVariants = {
-//   hidden: { opacity: 0, y: -10 },
-//   visible: { opacity: 1, y: 0 },
-//   exit: { opacity: 0, y: 10 },
-// };
 
 const container = {
   hidden: {
@@ -82,6 +61,7 @@ export default function WordList({
   roomId,
   userId,
   status,
+  usedWords,
 }: WordListProps) {
   const [wordList, setWordList] = useState<SelectableWord[]>([]);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -91,12 +71,12 @@ export default function WordList({
   const { time, startTimer, stopTimer } = useTimer({
     messageType: 'select_word_countdown',
     onShouldTimerStop: time => time === 0 || isWordSelected,
-    onTimerStop: () => {
-      console.log('Timer stopped');
-      if (!isWordSelected) {
-        selectRandomWord();
-      }
-    },
+    // onTimerStop: () => {
+    //   console.log('Timer stopped');
+    //   if (!isWordSelected) {
+    //     selectRandomWord();
+    //   }
+    // },
   });
 
   const { updateWord } = useWord();

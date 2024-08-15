@@ -1,25 +1,26 @@
-"use client";
+'use client';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { GamePlayer, GameStatus } from "@prisma/client";
-import { useState, useEffect } from "react";
+} from '@/components/ui/dialog';
+import { GamePlayer, GameStatus } from '@prisma/client';
+import { useState, useEffect } from 'react';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import PlayersList from "./players-list";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import SubmitButton2 from "@/components/ui/submit-button2";
-import { wait } from "@/lib/utils";
-import { startGame } from "@/actions/game";
+} from '@/components/ui/select';
+import PlayersList from './players-list';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import SubmitButton2 from '@/components/ui/submit-button2';
+import { wait } from '@/lib/utils';
+import { startGame } from '@/actions/game';
+import GameLink from './game-link';
 
 type PreGameLobbyProps = {
   players: GamePlayer[];
@@ -35,15 +36,15 @@ export default function PreGameLobby({
   userId,
 }: PreGameLobbyProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(
-    gameStatus === GameStatus.WAITING
+    gameStatus === GameStatus.WAITING,
   );
 
   useEffect(() => {
-    console.log("Game status changed..: ", gameStatus);
+    console.log('Game status changed..: ', gameStatus);
     setIsDialogOpen(gameStatus === GameStatus.WAITING);
   }, [gameStatus]);
 
-  const leader = players.find((p) => p.isLeader && p.playerId === userId);
+  const leader = players.find(p => p.isLeader && p.playerId === userId);
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -62,16 +63,20 @@ export default function PreGameLobby({
             roomId={gameId}
           />
           <Separator />
-          <GameRules gameId={gameId} leader={leader} />
+          <GameRules
+            gameId={gameId}
+            leader={leader}
+            numPlayers={players.length}
+          />
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-type TimerOptions = "80" | "100" | "120";
-type MaxPlayers = "2" | "3" | "4" | "5" | "6";
-type MaxRounds = "8" | "10" | "12";
+type TimerOptions = '80' | '100' | '120';
+type MaxPlayers = '2' | '3' | '4' | '5' | '6';
+type MaxRounds = '8' | '10' | '12';
 
 type GameRulesType = {
   timer: TimerOptions;
@@ -82,26 +87,27 @@ type GameRulesType = {
 type GameRulesProps = {
   gameId: string;
   leader: GamePlayer | undefined;
+  numPlayers: number;
 };
 
-function GameRules({ gameId, leader }: GameRulesProps) {
+function GameRules({ gameId, leader, numPlayers }: GameRulesProps) {
   const [gameRules, setGameRules] = useState<GameRulesType>({
-    timer: "80",
-    maxPlayers: "6",
-    maxRounds: "8",
+    timer: '80',
+    maxPlayers: '6',
+    maxRounds: '8',
   });
 
   const handleUpdateGameRules = async (formData: FormData) => {
-    formData.append("timer", String(gameRules.timer));
-    formData.append("maxPlayers", String(gameRules.maxPlayers));
-    formData.append("gameId", gameId);
-    formData.append("leader", JSON.stringify(leader));
+    formData.append('timer', String(gameRules.timer));
+    formData.append('maxPlayers', String(gameRules.maxPlayers));
+    formData.append('gameId', gameId);
+    formData.append('leader', JSON.stringify(leader));
     await startGame(formData);
   };
 
   return (
     <div className="grid grid-cols-2 gap-4">
-      <h3 className="text-xl col-span-2">Game Rules:</h3>
+      <h3 className="text-xl col-span-2 text-center">Game Rules</h3>
       <form
         action={handleUpdateGameRules}
         className="col-span-2 grid grid-cols-2 gap-4"
@@ -114,8 +120,8 @@ function GameRules({ gameId, leader }: GameRulesProps) {
             disabled={!leader}
             name="timer"
             value={gameRules.timer}
-            onValueChange={(v) =>
-              setGameRules((prevGameRules) => ({
+            onValueChange={v =>
+              setGameRules(prevGameRules => ({
                 ...prevGameRules,
                 timer: v as TimerOptions,
               }))
@@ -139,8 +145,8 @@ function GameRules({ gameId, leader }: GameRulesProps) {
             disabled={!leader}
             name="maxPlayers"
             value={gameRules.maxPlayers}
-            onValueChange={(v) =>
-              setGameRules((prevGameRules) => ({
+            onValueChange={v =>
+              setGameRules(prevGameRules => ({
                 ...prevGameRules,
                 maxPlayers: v as MaxPlayers,
               }))
@@ -166,8 +172,8 @@ function GameRules({ gameId, leader }: GameRulesProps) {
             disabled={!leader}
             name="maxRounds"
             value={gameRules.maxRounds}
-            onValueChange={(v) =>
-              setGameRules((prevGameRules) => ({
+            onValueChange={v =>
+              setGameRules(prevGameRules => ({
                 ...prevGameRules,
                 maxRounds: v as MaxRounds,
               }))
@@ -185,6 +191,8 @@ function GameRules({ gameId, leader }: GameRulesProps) {
         </div>
         <SubmitButton2 className="col-span-2 mt-4">Start</SubmitButton2>
       </form>
+
+      <GameLink />
     </div>
   );
 }
