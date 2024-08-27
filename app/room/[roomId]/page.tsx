@@ -71,11 +71,8 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
         <div className="flex flex-row items-center justify-center w-full h-[18rem] gap-x-4">
           <Lobby
             players={game.players}
-            showTimer={true}
-            rounds={game.rounds}
-            currentRound={game.currentRound}
+            currentDrawerId={currentDrawerId}
             gameId={game.id}
-            currentWord={newWord}
             newTurn={game.newTurn}
           />
           <DynamicPreGameLobby

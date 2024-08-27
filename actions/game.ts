@@ -95,7 +95,6 @@ export async function startGame(formData: FormData) {
           maxPlayers: parseInt(maxPlayers),
           maxRounds: parseInt(maxRounds),
           status: 'IN_PROGRESS',
-          currentDrawerId: parsedLeader.playerId,
         },
       }),
       startNewRound(gameId),

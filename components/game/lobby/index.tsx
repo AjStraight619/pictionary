@@ -12,26 +12,16 @@ import UpdateScoreTest from '@/components/test/update-score';
 
 type LobbyProps = {
   players: GamePlayer[];
-  currentRound?: number;
   newTurn: boolean;
-  rounds?: Round[];
   currentDrawerId: string | null;
-  showTimer?: boolean;
-  showScore?: boolean;
   gameId?: string;
-  currentWord?: string;
 };
 
 export default function Lobby({
   players,
-  showTimer,
-  showScore,
-  currentRound,
   newTurn,
   currentDrawerId,
-  rounds,
   gameId,
-  currentWord,
 }: LobbyProps) {
   console.log('Current drawer id in Lobby: ', currentDrawerId);
 
