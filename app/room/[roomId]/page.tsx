@@ -74,7 +74,6 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
             showTimer={true}
             rounds={game.rounds}
             currentRound={game.currentRound}
-            currentDrawerId={game.currentDrawerId}
             gameId={game.id}
             currentWord={newWord}
             newTurn={game.newTurn}
