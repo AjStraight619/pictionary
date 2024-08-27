@@ -27,7 +27,6 @@ model Game {
   rounds         Round[]
   players        GamePlayer[]
   currentRound   Int
-  currentDrawerId String? 
   maxRounds      Int @default(8)
   maxPlayers     Int @default(6)
   usedWords      String[]
