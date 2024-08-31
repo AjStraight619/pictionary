@@ -1,8 +1,10 @@
+import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
 import { fabric } from 'fabric';
 import { DrawingData, Position } from './drawing';
 import { Point } from 'fabric/fabric-impl';
 import { CustomFabricObject, DrawingData2 } from './shape';
 import { CustomFabricObjectShape } from '@/lib/customFabricObjects';
+import React from 'react';
 
 export type InitializeFabric = {
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
@@ -69,4 +71,16 @@ export type CanvasSelectionChange = {
   selectedObjectsRef: React.MutableRefObject<
     CustomFabricObjectShape[] | undefined
   >;
+};
+
+export type CanvasMouseDownWithMultipleObjects = {
+  selectedObjectsRef: React.MutableRefObject<fabric.Object[]>;
+  mouseX: number;
+  mouseY: number;
+};
+
+export type CanvasMultipleObjectsModified = {
+  canvas: fabric.Canvas;
+  options: fabric.IEvent;
+  sendJsonMessage: SendJsonMessage;
 };

@@ -182,20 +182,54 @@ export async function proceedGame(gameId: string) {
       throw new Error('Game not found');
     }
 
-    const currentDrawerIndex = game.players.findIndex(
-      player => player.playerId === game.currentDrawerId,
-    );
+    // const currentDrawerIndex = game.players.findIndex(
+    //   player => player.playerId === game.currentDrawerId,
+    // );
 
-    const nextDrawerIndex = (currentDrawerIndex + 1) % game.players.length;
+    // const nextDrawerIndex = (currentDrawerIndex + 1) % game.players.length;
 
-    if (nextDrawerIndex === 0 && currentDrawerIndex !== -1) {
-      await Promise.all([startNewRound(gameId), startNewTurn(gameId)]);
-    } else {
-      await startNewTurn(gameId);
-    }
+    // if (nextDrawerIndex === 0 && currentDrawerIndex !== -1) {
+    //   await Promise.all([startNewRound(gameId), startNewTurn(gameId)]);
+    // } else {
+    //   await startNewTurn(gameId);
+    // }
   } catch (err) {
     console.error('error: ', err);
   } finally {
     revalidatePath(`/room/${gameId}`);
   }
+}
+
+export async function getNextDrawer(gameId: string) {
+  // Fetch the game with players and rounds
+  const game = await db.game.findUnique({
+    where: { id: gameId },
+    include: {
+      players: {
+        orderBy: { createdAt: 'asc' }, // Assuming the order of players is based on creation time
+      },
+      rounds: {
+        orderBy: { createdAt: 'desc' }, // Get the most recent round
+        take: 1,
+        include: { drawer: true },
+      },
+    },
+  });
+
+  if (!game) throw new Error('Game not found');
+
+  const players = game.players;
+  const currentRound = game.rounds[0];
+  const currentDrawerId = currentRound?.drawerId;
+
+  // Find the index of the current drawer
+  const currentDrawerIndex = players.findIndex(
+    player => player.playerId === currentDrawerId,
+  );
+
+  // Determine the next drawer's index
+  const nextDrawerIndex = (currentDrawerIndex + 1) % players.length;
+  const nextDrawer = players[nextDrawerIndex];
+
+  return nextDrawer;
 }

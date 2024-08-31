@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
 import {
   initializeFabricCanvas,
@@ -8,8 +8,8 @@ import {
   handleCanvasMouseUp,
   handlePathCreated,
   handleCanvasMouseMove,
-  handleSelectionAndInitialPosition,
   handleObjectChange,
+  handleMultipleObjectsMoving,
 } from '@/lib/canvas';
 import Toolbar from '../toolbar';
 import { Tool } from '@/types/canvas';
@@ -40,7 +40,7 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
 
   // To handle multiple objects moving at once on the canvas since fabric.js does not support this
   const isMouseDownWithSelectionRef = useRef<boolean>(false);
-  const selectedObjectsRef = useRef<CustomFabricObjectShape[] | undefined>([]);
+  const selectedObjectsRef = useRef<fabric.Object[] | undefined>([]);
 
   const { sendJsonMessage } = useCustomWebSocket({ roomId, userId });
 
@@ -108,15 +108,10 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
 
     const eventHandler = (options: IEvent) => {
       const obj = options.target as CustomFabricObjectShape;
-
       handleObjectChange(obj, sendJsonMessage);
     };
 
     canvas.on('mouse:down', options => {
-      if (selectedObjectsRef.current && selectedObjectsRef.current.length > 1) {
-        isMouseDownWithSelectionRef.current = true;
-        return;
-      }
       handleCanvasMouseDown({
         canvas,
         options,
@@ -168,30 +163,58 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
     });
 
     canvas.on('object:modified', options => {
-      eventHandler(options);
+      handleMultipleObjectsMoving({
+        canvas,
+        options,
+        sendJsonMessage,
+      });
     });
-    canvas.on('object:moving', options => {
-      console.log('Object moving...');
 
-      eventHandler(options);
+    canvas.on('object:moving', options => {
+      // console.log('Object moving...');
+      if (selectedObjectsRef.current && selectedObjectsRef.current.length > 1) {
+        // handleMultipleObjectsMoving({
+        //   canvas,
+        //   selectedObjectsRef,
+        //   options,
+        // });
+      } else {
+        eventHandler(options);
+      }
     });
+
     canvas.on('object:rotating', eventHandler);
 
+    // Add objects to
     canvas.on('selection:created', options => {
-      console.log('Selection created: ', options.selected);
-      handleSelectionAndInitialPosition(options, selectedObjectsRef);
+      // // console.log('Selection created: ', options.selected);
+      // // handleSelectionAndInitialPosition(options, selectedObjectsRef);
+      // const objects = options.selected;
+      // if (objects && objects.length > 1) {
+      //   isMouseDownWithSelectionRef.current = true;
+      //   objects.forEach(obj => {
+      //     if (!selectedObjectsRef.current) return;
+      //     selectedObjectsRef.current.push(obj);
+      //   });
+      // }
+      // console.log('Seleciton created...');
     });
 
+    // Not sure how to utilize this event listener yet.
     canvas.on('selection:updated', options => {
-      handleSelectionAndInitialPosition(options, selectedObjectsRef);
+      // handleSelectionAndInitialPosition(options, selectedObjectsRef);
+
+      console.log('Selection updated..');
     });
 
+    // Clear objects ref
     canvas.on('selection:cleared', () => {
-      selectedObjectsRef.current = [];
-      console.log(
-        'Selection cleared: ',
-        console.log(selectedObjectsRef.current),
-      );
+      // selectedObjectsRef.current = [];
+      // isMouseDownWithSelectionRef.current = false;
+      // console.log(
+      //   'Selection cleared: ',
+      //   console.log(selectedObjectsRef.current),
+      // );
     });
 
     window.addEventListener('keydown', e => {
@@ -231,3 +254,27 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
     </>
   );
 }
+
+const isMouseDownInBounds = (mouseX: number, mouseY: number) => {};
+
+const calculateBoundingBoxForSelectedObjects = (
+  selectedObjects: fabric.Object[],
+) => {
+  return selectedObjects.reduce(
+    (boundingBox, obj) => {
+      const objBoundingRect = obj.getBoundingRect(true, true);
+      boundingBox.left = Math.min(boundingBox.left, objBoundingRect.left);
+      boundingBox.top = Math.min(boundingBox.top, objBoundingRect.top);
+      boundingBox.right = Math.max(
+        boundingBox.right,
+        objBoundingRect.left + objBoundingRect.width,
+      );
+      boundingBox.bottom = Math.max(
+        boundingBox.bottom,
+        objBoundingRect.top + objBoundingRect.height,
+      );
+      return boundingBox;
+    },
+    { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity },
+  );
+};

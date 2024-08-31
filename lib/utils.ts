@@ -114,3 +114,25 @@ export const wait = (ms: number): Promise<void> => {
     setTimeout(resolve, ms);
   });
 };
+
+export const calculateBoundingBoxForSelectedObjects = (
+  selectedObjects: fabric.Object[],
+) => {
+  return selectedObjects.reduce(
+    (boundingBox, obj) => {
+      const objBoundingRect = obj.getBoundingRect(true, true);
+      boundingBox.left = Math.min(boundingBox.left, objBoundingRect.left);
+      boundingBox.top = Math.min(boundingBox.top, objBoundingRect.top);
+      boundingBox.right = Math.max(
+        boundingBox.right,
+        objBoundingRect.left + objBoundingRect.width,
+      );
+      boundingBox.bottom = Math.max(
+        boundingBox.bottom,
+        objBoundingRect.top + objBoundingRect.height,
+      );
+      return boundingBox;
+    },
+    { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity },
+  );
+};

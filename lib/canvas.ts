@@ -1,3 +1,4 @@
+import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
 import {
   CanvasMouseDown,
   CanvasMouseUp,
@@ -7,6 +8,8 @@ import {
   CanvasMouseMove,
   CanvasSelectionChange,
   CanvasObjectsMoving,
+  CanvasMouseDownWithMultipleObjects,
+  CanvasMultipleObjectsModified,
 } from '@/types/canvas';
 import { FreeHandDrawingData, Position } from '@/types/drawing';
 import { fabric } from 'fabric';
@@ -322,4 +325,40 @@ export const handleSelectionAndInitialPosition = (
 ) => {
   storeInitialPositions(options.selected as CustomFabricObjectShape[]);
   console.log('options selected: ', options.selected);
+};
+
+export const handleMultipleObjectsMoving = ({
+  canvas,
+  options,
+  sendJsonMessage,
+}: CanvasMultipleObjectsModified) => {
+  const activeSelection = canvas.getActiveObject();
+
+  if (activeSelection && activeSelection.type === 'activeSelection') {
+    const objects = (activeSelection as fabric.ActiveSelection).getObjects();
+
+    // Log the objects before discarding the active selection
+    // console.log(
+    //   'Objects before discard:',
+    //   objects.map(obj => ({ left: obj.left, top: obj.top })),
+    // );
+
+    // Dissolve the active selection back into individual objects
+    canvas.discardActiveObject();
+
+    // After discarding the active selection, the objects should now reflect their true positions
+    // objects.forEach((obj, idx) => {
+    //   const left = obj.left;
+    //   const top = obj.top;
+    //   console.log(
+    //     `Object ${idx} new position after drop: left = ${left}, top = ${top}`,
+    //   );
+    // });
+
+    objects.forEach(obj => {
+      handleObjectChange(obj as CustomFabricObjectShape, sendJsonMessage);
+    });
+
+    // canvas.renderAll();
+  }
 };
