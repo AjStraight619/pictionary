@@ -39,7 +39,6 @@ export const useTimer = ({
 
   const startTimer = useCallback(
     (message: StartTimerMessage) => {
-      console.log('Starting timer...');
       sendJsonMessage(message);
       if (onTimerStart) {
         onTimerStart();

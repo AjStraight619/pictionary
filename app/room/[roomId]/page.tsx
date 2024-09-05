@@ -52,11 +52,11 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
   console.log('Game players: ', game.players);
 
   const currentRoundIndex = game.currentRound;
-
+  console.log('Rounds: ', game.rounds);
   const currentRound = game.rounds[currentRoundIndex - 1];
   const currentDrawerId = currentRound?.drawerId;
+  console.log('Current drawerId: ', currentDrawerId);
   const newWord = currentRound?.word;
-  const maxRounds = game.maxRounds;
 
   const usedWords = game.usedWords;
 

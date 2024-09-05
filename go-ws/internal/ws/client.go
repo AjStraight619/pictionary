@@ -40,7 +40,7 @@ type Client struct {
 	lastPong time.Time
 	ping     chan struct{}
 	userId   string
-	roomId string
+	roomId   string
 }
 
 func (c *Client) readMessages() {
@@ -88,6 +88,16 @@ func (c *Client) readMessages() {
 			}
 			log.Println("Stopping timer: ", timerData.TimerType)
 			c.hub.stopTimer(timerData.TimerType)
+
+		case "reset_timer":
+			var timerData TimerData
+			err = json.Unmarshal(msg.Data, &timerData)
+			if err != nil {
+				log.Println("Error unmarshalling timer data:", err)
+				continue
+			}
+			log.Println("Resetting timer: ", timerData.TimerType)
+			c.hub.resetTimer(timerData.Time, timerData.TimerType)
 		case "chat":
 			var chatMessage ChatMessage
 			err = json.Unmarshal(msg.Data, &chatMessage)
@@ -153,4 +163,3 @@ func (c *Client) CalculateScore(time int) int {
 	score := time * 10
 	return score
 }
-

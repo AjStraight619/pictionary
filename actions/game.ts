@@ -5,7 +5,6 @@ import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { startNewRound } from './round';
-import { startNewTurn } from './turn';
 import { revalidatePath } from 'next/cache';
 import { GamePlayer } from '@prisma/client';
 import { StartGameData } from '@/types/game';
@@ -201,15 +200,14 @@ export async function proceedGame(gameId: string) {
 }
 
 export async function getNextDrawer(gameId: string) {
-  // Fetch the game with players and rounds
   const game = await db.game.findUnique({
     where: { id: gameId },
     include: {
       players: {
-        orderBy: { createdAt: 'asc' }, // Assuming the order of players is based on creation time
+        orderBy: { createdAt: 'asc' },
       },
       rounds: {
-        orderBy: { createdAt: 'desc' }, // Get the most recent round
+        orderBy: { createdAt: 'desc' },
         take: 1,
         include: { drawer: true },
       },
@@ -224,7 +222,7 @@ export async function getNextDrawer(gameId: string) {
 
   // Find the index of the current drawer
   const currentDrawerIndex = players.findIndex(
-    player => player.playerId === currentDrawerId,
+    player => player.id === currentDrawerId,
   );
 
   // Determine the next drawer's index
@@ -232,4 +230,47 @@ export async function getNextDrawer(gameId: string) {
   const nextDrawer = players[nextDrawerIndex];
 
   return nextDrawer;
+}
+
+export async function resetGame(gameId: string) {
+  try {
+    // Reset the game status, currentRound, usedWords, and other necessary fields
+    await db.game.update({
+      where: {
+        id: gameId,
+      },
+      data: {
+        status: 'WAITING',
+        currentRound: 0,
+        usedWords: [],
+        newTurn: false,
+        maxRounds: 8,
+        maxPlayers: 6,
+      },
+    });
+
+    await db.gamePlayer.updateMany({
+      where: {
+        gameId: gameId,
+      },
+      data: {
+        score: 0,
+        hasGuessedCorrectly: false,
+      },
+    });
+
+    await db.round.deleteMany({
+      where: {
+        gameId: gameId,
+      },
+    });
+
+    // Revalidate the path to reflect the changes in the UI
+    revalidatePath(`/room/${gameId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error resetting the game: ', error);
+    return { error: 'Failed to reset the game' };
+  }
 }

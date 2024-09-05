@@ -1,15 +1,15 @@
-"use server";
+'use server';
 
-import { db } from "@/lib/db";
-import { profileSchema } from "@/lib/schemas";
-import { mapErrorToMessage } from "@/lib/errors";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { z } from "zod";
+import { db } from '@/lib/db';
+import { profileSchema } from '@/lib/schemas';
+import { mapErrorToMessage } from '@/lib/errors';
+import { currentUser } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { z } from 'zod';
 
 export const createPlayer = async (values: z.infer<typeof profileSchema>) => {
   const user = await currentUser();
-  if (!user || !user.id) redirect("/sign-in");
+  if (!user || !user.id) redirect('/sign-in');
 
   const validatedValues = profileSchema.safeParse(values);
   if (!validatedValues.success) {
@@ -20,6 +20,19 @@ export const createPlayer = async (values: z.infer<typeof profileSchema>) => {
   }
 
   const { username, email } = validatedValues.data;
+
+  const existingPlayerWithUsername = await db.player.findUnique({
+    where: {
+      username,
+    },
+  });
+
+  if (existingPlayerWithUsername) {
+    return {
+      success: false,
+      error: 'Username already taken',
+    };
+  }
 
   try {
     await db.player.create({

@@ -1,7 +1,9 @@
+import { updateScore } from '@/actions/score';
 import { Input } from '@/components/ui/input';
 import { useWord } from '@/context/word-provider';
 import { useCustomWebSocket } from '@/hooks/useCustomWebsocket';
 import useLocalStorage from '@/hooks/useLocalStorage';
+import { useTimer } from '@/hooks/useTimer';
 import { ChatMessage } from '@/types/ws';
 import { GamePlayer } from '@prisma/client';
 import { useState } from 'react';
@@ -19,11 +21,16 @@ type Guess = {
 
 export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
   const [input, setInput] = useState('');
+  const [isUpdatingScore, setIsUpdatingScore] = useState(false);
   const { sendJsonMessage } = useCustomWebSocket({
     roomId,
     userId,
     messageType: 'chat',
   });
+
+  const { time } = useTimer({ messageType: 'round_timer' });
+
+  console.log('current time: ', time);
   // TODO: Need to change this to use database to track when a user guesses correct to disable the chat input, so someone can't run localStorage.clear() in browser and boost their score.
   const [isGuessCorrect, setIsGuessCorrect] = useLocalStorage<Guess | null>(
     'guesses',
@@ -37,9 +44,32 @@ export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
   };
 
   const isClose = (guess: string) => {
-    if (word.toLowerCase() === guess.toLowerCase()) return false;
+    // Normalize the case
+    const wordLower = word.toLowerCase();
+    const guessLower = guess.toLowerCase();
 
-    return true;
+    // If it's an exact match, return false (not close)
+    if (wordLower === guessLower) return false;
+
+    const wordLength = wordLower.length;
+
+    // Set the threshold based on word length
+    const allowedDifference = wordLength > 6 ? 2 : 1;
+
+    // Check character-by-character differences
+    let differenceCount = 0;
+
+    for (let i = 0; i < Math.min(wordLower.length, guessLower.length); i++) {
+      if (wordLower[i] !== guessLower[i]) {
+        differenceCount++;
+      }
+    }
+
+    // Account for any extra characters in longer word
+    differenceCount += Math.abs(wordLower.length - guessLower.length);
+
+    // If the difference is within the allowed range, return true (it's close)
+    return differenceCount <= allowedDifference;
   };
 
   const sendMessage = async (formData: FormData) => {
@@ -49,23 +79,46 @@ export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
 
     if (!input.trim()) return;
 
+    const trimmedInput = input.trim();
+
     const newChat: ChatMessage = {
       id: player.id,
       username: player.username,
-      message: input,
-      isCorrect: isCorrect(input.trim()),
-      isClose: isClose(input.trim()),
+      message: trimmedInput,
+      isCorrect: isCorrect(trimmedInput),
+      isClose: isClose(trimmedInput),
     };
 
-    if (newChat.isCorrect) {
-      setIsGuessCorrect({
-        userId: userId,
-        isCorrect: true,
-      });
-      newChat.message = "That's Correct!";
+    if (!newChat.isCorrect || newChat.isClose) {
+      sendJsonMessage({ type: 'chat', data: newChat });
+      setInput('');
+      return;
     }
+
+    // If the guess is correct, update the message and the score
+    newChat.message = `${player.username} guessed correctly!!`;
     sendJsonMessage({ type: 'chat', data: newChat });
+
+    const points = calculateScore();
+    await updateScore(points, roomId);
     setInput('');
+  };
+
+  const calculateScore = () => {
+    let points = 0;
+    if (!time) return points;
+    if (time > 60) {
+      points = 100;
+    } else if (time > 40) {
+      points = 80;
+    } else if (time > 20) {
+      points = 60;
+    } else if (time > 1) {
+      points = 40;
+    } else {
+      return points;
+    }
+    return points;
   };
 
   return (

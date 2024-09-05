@@ -12,11 +12,8 @@ model Player {
   username  String       @unique
   email     String       @unique
   games     GamePlayer[]
-  guesses   Guess[]
-  rounds    Round[]    
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
-  
 }
 
 model Game {
@@ -36,42 +33,30 @@ model Game {
 }
 
 model GamePlayer {
-  id          String  @id @default(uuid())
-  player      Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  playerId    String 
-  game        Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId      String
-  username    String
-  score       Int     @default(0)
-  isLeader    Boolean @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String  @id @default(uuid())
+  player            Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId          String 
+  game              Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId            String
+  username          String
+  score             Int     @default(0)
+  hasGuessedCorrectly Boolean @default(false)
+  isLeader          Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  rounds            Round[] 
 }
 
 model Round {
-  id        String   @id @default(uuid())
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId    String
-  drawer    Player   @relation(fields: [drawerId], references: [id], onDelete: Cascade)
-  drawerId  String
-  word      String
-  guesses   Guess[]
-  timer     Int @default(80)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Guess {
-  id        String   @id @default(uuid())
-  round     Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  roundId   String
-  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  playerId  String
-  guess     String
-  isCorrect Boolean
-  timeGuessedAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String      @id @default(uuid())
+  game        Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId      String
+  drawer      GamePlayer  @relation(fields: [drawerId], references: [id], onDelete: Cascade) // Changed relation to GamePlayer
+  drawerId    String
+  word        String
+  timer       Int         @default(80)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 enum GameStatus {

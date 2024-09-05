@@ -2,6 +2,7 @@ import { proceedGame } from '@/actions/game';
 import { Button } from '../ui/button';
 import TestStartTimer from './test-start-timer';
 import UpdateScoreTest from './update-score';
+import { startNewRound } from '@/actions/round';
 
 type TestProps = {
   gameId: string;
@@ -16,7 +17,7 @@ export default function Test({ gameId }: TestProps) {
       <form
         action={async () => {
           'use server';
-          await proceedGame(gameId as string);
+          await startNewRound(gameId as string);
         }}
       >
         <Button type="submit">Proceed Game</Button>

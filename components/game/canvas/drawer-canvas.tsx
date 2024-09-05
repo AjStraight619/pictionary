@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
 import {
@@ -19,6 +18,7 @@ import { useCustomWebSocket } from '@/hooks/useCustomWebsocket';
 import { CustomFabricObjectShape } from '@/lib/customFabricObjects';
 import { IEvent } from 'fabric/fabric-impl';
 import { handleKeyDown } from '@/lib/keyevents';
+import pencilCursor from '@/assets/cursors/pencil-cursor.png';
 
 type CanvasProps = {
   userId: string;
@@ -134,7 +134,6 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
     });
 
     canvas.on('mouse:up', () => {
-      isMouseDownWithSelectionRef.current = false;
       handleCanvasMouseUp({
         canvas,
         isDrawing,
@@ -172,33 +171,13 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
 
     canvas.on('object:moving', options => {
       // console.log('Object moving...');
-      if (selectedObjectsRef.current && selectedObjectsRef.current.length > 1) {
-        // handleMultipleObjectsMoving({
-        //   canvas,
-        //   selectedObjectsRef,
-        //   options,
-        // });
-      } else {
-        eventHandler(options);
-      }
+      eventHandler(options);
     });
 
     canvas.on('object:rotating', eventHandler);
 
     // Add objects to
-    canvas.on('selection:created', options => {
-      // // console.log('Selection created: ', options.selected);
-      // // handleSelectionAndInitialPosition(options, selectedObjectsRef);
-      // const objects = options.selected;
-      // if (objects && objects.length > 1) {
-      //   isMouseDownWithSelectionRef.current = true;
-      //   objects.forEach(obj => {
-      //     if (!selectedObjectsRef.current) return;
-      //     selectedObjectsRef.current.push(obj);
-      //   });
-      // }
-      // console.log('Seleciton created...');
-    });
+    canvas.on('selection:created', options => {});
 
     // Not sure how to utilize this event listener yet.
     canvas.on('selection:updated', options => {
@@ -208,14 +187,7 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
     });
 
     // Clear objects ref
-    canvas.on('selection:cleared', () => {
-      // selectedObjectsRef.current = [];
-      // isMouseDownWithSelectionRef.current = false;
-      // console.log(
-      //   'Selection cleared: ',
-      //   console.log(selectedObjectsRef.current),
-      // );
-    });
+    canvas.on('selection:cleared', () => {});
 
     window.addEventListener('keydown', e => {
       handleKeyDown({
@@ -237,9 +209,28 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
     };
   }, [canvasRef, sendDrawingDataSVG, sendFreeHandData, sendJsonMessage]);
 
+  const handleMouseEnter = () => {
+    // TODO: Change cursor based on selected tool here..
+    // console.log('Mouse entered...');
+    // if (selectedTool === Tool.pencil) {
+    //   // console.log('Mouse entered pencil tool selected...');
+    //   console.log('Pencil src: ', pencilCursor.src);
+    //   // document.body.style.cursor = `url(${pencilCursor.src}), crosshair`;
+    //   document.body.style.cursor =
+    //     'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/aoDD34AAAAASUVORK5CYII="), crosshair';
+    // }
+  };
+
   return (
     <>
-      <div className="bg-gray-50 flex-1 w-full h-full rounded-md" id="canvas">
+      <div
+        onMouseEnter={() => handleMouseEnter()}
+        onMouseLeave={() => {
+          document.body.style.cursor = 'default';
+        }}
+        className="bg-gray-50 flex-1 w-full h-full rounded-md"
+        id="canvas"
+      >
         <canvas ref={canvasRef} />
       </div>
       <Toolbar
@@ -254,27 +245,3 @@ export default function DrawerCanvas({ userId, roomId }: CanvasProps) {
     </>
   );
 }
-
-const isMouseDownInBounds = (mouseX: number, mouseY: number) => {};
-
-const calculateBoundingBoxForSelectedObjects = (
-  selectedObjects: fabric.Object[],
-) => {
-  return selectedObjects.reduce(
-    (boundingBox, obj) => {
-      const objBoundingRect = obj.getBoundingRect(true, true);
-      boundingBox.left = Math.min(boundingBox.left, objBoundingRect.left);
-      boundingBox.top = Math.min(boundingBox.top, objBoundingRect.top);
-      boundingBox.right = Math.max(
-        boundingBox.right,
-        objBoundingRect.left + objBoundingRect.width,
-      );
-      boundingBox.bottom = Math.max(
-        boundingBox.bottom,
-        objBoundingRect.top + objBoundingRect.height,
-      );
-      return boundingBox;
-    },
-    { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity },
-  );
-};

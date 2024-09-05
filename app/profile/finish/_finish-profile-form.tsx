@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { profileSchema } from "@/lib/schemas";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { profileSchema } from '@/lib/schemas';
 import {
   Form,
   FormControl,
@@ -11,7 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 import {
   Card,
   CardContent,
@@ -19,39 +19,42 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { z } from "zod";
-import { Input } from "@/components/ui/input";
-import { useState, useTransition } from "react";
-import SubmitButton from "@/components/ui/submit-button";
-import { createPlayer } from "@/actions/player";
-import GoHomeButton from "@/components/ui/go-home-button";
+} from '@/components/ui/card';
+import { z } from 'zod';
+import { Input } from '@/components/ui/input';
+import { useState, useTransition } from 'react';
+import SubmitButton from '@/components/ui/submit-button';
+import { createPlayer } from '@/actions/player';
+import GoHomeButton from '@/components/ui/go-home-button';
+import { useRouter } from 'next/navigation';
 
 type FinishProfileFormProps = {
   email: string | undefined;
 };
 
 export default function FinishProfileForm({ email }: FinishProfileFormProps) {
-  const [error, setError] = useState<string | null>("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState<string | null>('');
+  const [success, setSuccess] = useState('');
+  const { push } = useRouter();
 
   const [isPending, startTransition] = useTransition();
 
   const form = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      email: email ?? "",
-      username: "",
+      email: email ?? '',
+      username: '',
     },
   });
 
   const onSubmit = (values: z.infer<typeof profileSchema>) => {
-    setSuccess("");
-    setError("");
+    setSuccess('');
+    setError('');
     startTransition(() => {
-      createPlayer(values).then((data) => {
+      createPlayer(values).then(data => {
         if (data.success) {
-          setSuccess("Profile created successfully!");
+          setSuccess('Profile created successfully!');
+          push('/');
         } else {
           setError(data.error);
         }

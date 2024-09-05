@@ -87,7 +87,7 @@ export default function WordDisplay({
   const splitWord = word?.split('');
   const lastRevealTimeRef = useRef<number | null>(null);
   const [revealedIndices, setRevealedIndices] = useState<number[]>([]);
-  const isCurrentDrawer = players.find(p => p.playerId === currentDrawerId);
+  const isCurrentDrawer = players.find(p => p.id === currentDrawerId);
   const renderRef = useRef(0);
 
   useEffect(() => {

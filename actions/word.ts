@@ -2,29 +2,25 @@
 
 import { db } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { startNewRound } from './round';
 
 export async function setWordForRound(
   gameId: string,
   roundId: string,
   word: string,
 ) {
-  console.log('gameId: ', gameId);
-  console.log('word: ', word);
-  console.log('RoundId: ', roundId);
   try {
-    const [existingRound] = await Promise.all([
-      db.round.findUnique({
-        where: {
-          id: roundId,
-        },
-      }),
-      // Might add more here later
-    ]);
+    // const [existingRound] = await Promise.all([
+    //   db.round.findUnique({
+    //     where: {
+    //       id: roundId,
+    //     },
+    //   }),
+    //   // Might add more here later
+    // ]);
 
-    if (!existingRound) {
-      await startNewRound(gameId);
-    }
+    // if (!existingRound) {
+    //   await startNewRound(gameId);
+    // }
 
     await Promise.all([
       db.round.update({

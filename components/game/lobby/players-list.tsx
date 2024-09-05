@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { addAlphaToHex, getPlayerColor } from "@/lib/utils";
-import { GamePlayer } from "@prisma/client";
-import { motion } from "framer-motion";
-import { CrownIcon, PencilIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
-import Score from "../score/score";
+import { addAlphaToHex, getPlayerColor } from '@/lib/utils';
+import { GamePlayer } from '@prisma/client';
+import { motion } from 'framer-motion';
+import { CrownIcon, PencilIcon } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import Score from '../score/score';
 
 type PlayersListProps = {
   players: GamePlayer[];
@@ -19,14 +19,14 @@ const containerVariants = {
     opacity: 0,
     transition: {
       staggerChildren: 0.1,
-      when: "afterChildren",
+      when: 'afterChildren',
     },
   },
   visible: {
     opacity: 1,
     transition: {
       staggerChildren: 0.1,
-      when: "beforeChildren",
+      when: 'beforeChildren',
     },
   },
 };
@@ -73,16 +73,14 @@ export default function PlayersList({
                       backgroundColor,
                       color: playerColor,
                       borderColor: playerColor,
-                      borderWidth: "1px",
-                      borderStyle: "solid",
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
                     }}
                     className="flex items-center justify-between flex-grow rounded-md p-2"
                   >
                     <div className="flex items-center gap-x-2">
                       <span className="font-semibold">{p.username}</span>
-                      {currentDrawerId === p.playerId && (
-                        <PencilIcon fill="orange" />
-                      )}
+                      {currentDrawerId === p.id && <PencilIcon fill="orange" />}
                     </div>
                     {showScore && <Score gameId={roomId} prevScore={p.score} />}
                   </div>

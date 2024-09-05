@@ -19,25 +19,6 @@ export async function startNewTurn(gameId: string) {
       throw new Error('Game not found');
     }
 
-    // const players = game.players;
-    // const currentDrawerIndex = players.findIndex(
-    //   player => player.playerId === game.currentDrawerId,
-    // );
-
-    // // Determine the next drawer index
-    // let nextDrawerIndex = (currentDrawerIndex + 1) % players.length;
-
-    // // If the currentDrawerId is not found, start with the first player
-    // if (currentDrawerIndex === -1) {
-    //   nextDrawerIndex = 0;
-    // }
-
-    // const nextDrawer = players[nextDrawerIndex];
-
-    // console.log('Next drawer (startNewRound): ', nextDrawer);
-
-    // Update the game with the next drawer and set newTurn to true
-
     const nextDrawer = await getNextDrawer(game.id);
 
     console.log('Next Drawer: ', nextDrawer);

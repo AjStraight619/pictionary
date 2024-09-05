@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"sync"
@@ -17,7 +18,7 @@ type Hub struct {
 	timers     map[string]*timer
 	mu         sync.RWMutex
 	ping       chan *Client
-	db *gorm.DB
+	db         *gorm.DB
 }
 
 func NewHub(db *gorm.DB) *Hub {
@@ -28,7 +29,7 @@ func NewHub(db *gorm.DB) *Hub {
 		clients:    make(map[*Client]bool),
 		timers:     make(map[string]*timer),
 		ping:       make(chan *Client),
-		db: db,
+		db:         db,
 	}
 }
 
@@ -71,25 +72,25 @@ func (h *Hub) startPing() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			now := time.Now()
-			h.mu.Lock()
-			for client := range h.clients {
-				h.ping <- client
-				if now.Sub(client.lastPong) > 60*time.Second {
-					log.Println("Unregistering client, last pong response was more than 60 sec:", client.userId)
-					client.conn.Close()
-					h.unregister <- client
-					// err := db.RemoveUserFromRoom(h.db, client.roomId, client.userId)
-					// if err != nil {
-					// 	log.Printf("Error removing user %s from room %s: %v", client.userId, client.roomId, err)
-					// }
+	for range ticker.C {
+		now := time.Now()
+		h.mu.Lock()
+		for client := range h.clients {
+			h.ping <- client
+			if now.Sub(client.lastPong) > 60*time.Second {
+				log.Printf("Unregistering client, last pong response was more than 60 sec: %v", client.userId)
+				disconnectMessage := &Message{
+					Type: "disconnect",
+					Data: json.RawMessage(`{"reason": "Inactivity"}`),
 				}
+				messageBytes, _ := json.Marshal(disconnectMessage)
+				client.send <- messageBytes
+
+				client.conn.Close()
+				h.unregister <- client
 			}
-			h.mu.Unlock()
 		}
+		h.mu.Unlock()
 	}
 }
 
@@ -111,6 +112,17 @@ func (h *Hub) stopTimer(timerType string) {
 		existingTimer.stop()
 		delete(h.timers, timerType)
 	}
+}
+
+func (h *Hub) resetTimer(countdown int, timerType string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if existingTimer, ok := h.timers[timerType]; ok {
+		existingTimer.stop()
+	}
+	newTimer := newTimer(h, countdown, timerType)
+	h.timers[timerType] = newTimer
+	newTimer.start()
 }
 
 // ClientCount returns the number of registered clients

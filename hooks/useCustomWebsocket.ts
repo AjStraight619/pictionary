@@ -48,7 +48,13 @@ export const useCustomWebSocket = ({
       }
     },
     retryOnError: true,
-    shouldReconnect: closeEvent => true,
+    shouldReconnect: closeEvent => {
+      console.log(
+        'Client unregistered from ws connection (reason): ',
+        closeEvent.reason,
+      );
+      return true;
+    },
     reconnectAttempts: 10,
     reconnectInterval: attemptNumber => {
       console.log('Attempting to reconnect: ', attemptNumber);
