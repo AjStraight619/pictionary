@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import useWebSocket, { Options } from 'react-use-websocket';
 
 type UseCustomWebSocketProps = {
@@ -67,6 +68,30 @@ export const useCustomWebSocket = ({
       interval: 10000,
     },
   });
+
+  const logConnectionStatus = () => {
+    switch (readyState) {
+      case 0:
+        console.log('WebSocket is connecting...');
+        break;
+      case 1:
+        console.log('WebSocket is open');
+        break;
+      case 2:
+        console.log('WebSocket is closing...');
+        break;
+      case 3:
+        console.log('WebSocket is closed');
+        break;
+      default:
+        console.log('Unknown WebSocket readyState');
+        break;
+    }
+  };
+
+  useEffect(() => {
+    logConnectionStatus();
+  }, [readyState]);
 
   return {
     sendMessage,
