@@ -76,12 +76,12 @@ const Chat = ({ players, userId, roomId }: ChatProps) => {
       </CardHeader>
       <CardContent className="flex flex-col flex-grow overflow-y-auto">
         <ul className="flex-grow">
-          {chats.map((chat, idx) => (
+          {chats.map(chat => (
             <motion.li
               variants={listVariants}
               animate="animate"
               initial="initial"
-              key={idx}
+              key={chat.id}
             >
               <span style={{ color: getPlayerColor(playerIdx) }}>
                 {chat.username}
@@ -106,4 +106,4 @@ const Chat = ({ players, userId, roomId }: ChatProps) => {
   );
 };
 
-export default React.memo(Chat);
+export default Chat;
