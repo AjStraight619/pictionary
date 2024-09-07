@@ -13,6 +13,7 @@ import { motion } from 'framer-motion';
 import { ChatMessage } from '@/types/ws';
 import React from 'react';
 import { useCustomWebSocket } from '@/hooks/useCustomWebsocket';
+import { getPlayerColor } from '@/lib/utils';
 
 type ChatProps = {
   players: GamePlayer[];
@@ -39,12 +40,12 @@ const Chat = ({ players, userId, roomId }: ChatProps) => {
     userId,
     messageType: 'chat',
   });
+
   const [chats, setChats] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
     if (lastMessage) {
       const parsedMessage = JSON.parse(lastMessage.data);
-
       const message: ChatMessage = parsedMessage.data;
       setChats(prevChats => [...prevChats, message]);
     }
@@ -63,6 +64,11 @@ const Chat = ({ players, userId, roomId }: ChatProps) => {
     }
   }, [chats]);
 
+  const playerIdx = useMemo(
+    () => players.findIndex(p => p.playerId === userId),
+    [players, userId],
+  );
+
   return (
     <Card className="h-full w-1/3 flex flex-col">
       <CardHeader>
@@ -77,7 +83,9 @@ const Chat = ({ players, userId, roomId }: ChatProps) => {
               initial="initial"
               key={idx}
             >
-              <span className="font-bangers">{chat.username}</span>
+              <span style={{ color: getPlayerColor(playerIdx) }}>
+                {chat.username}
+              </span>
               <span className="font-roboto">: </span>
               <span
                 className={`font-roboto tracking-normal ${

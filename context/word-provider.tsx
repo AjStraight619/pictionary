@@ -1,12 +1,6 @@
 'use client';
 import { addWordToUsedList, setWordForRound } from '@/actions/word';
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useOptimistic,
-  useState,
-} from 'react';
+import { ReactNode, createContext, useContext } from 'react';
 
 type WordContextType = {
   updateWord: (formData: FormData) => void;

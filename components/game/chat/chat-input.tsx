@@ -30,10 +30,6 @@ export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
 
   const { time } = useTimer({ messageType: 'round_timer' });
   // TODO: Need to change this to use database to track when a user guesses correct to disable the chat input, so someone can't run localStorage.clear() in browser and boost their score.
-  const [isGuessCorrect, setIsGuessCorrect] = useLocalStorage<Guess | null>(
-    'guesses',
-    null,
-  );
 
   const { word } = useWord();
 
@@ -123,7 +119,7 @@ export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
     <form action={sendMessage} className="relative w-full">
       <Input
         autoComplete="off"
-        disabled={isGuessCorrect?.isCorrect}
+        // disabled={}
         className="font-roboto"
         name="guess"
         placeholder="Guess the word..."

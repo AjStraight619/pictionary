@@ -31,7 +31,7 @@ const DisconnectedPage = ({ params, searchParams }: DisconnectedPageProps) => {
   const reason = searchParams.reason as string;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex items-center justify-center gap-y-2">
       <h1>Disconnected from Room {roomId}</h1>
       <p>{userId && `User ID: ${userId}`}</p>
       <p>{getDisconnectionMessage(reason)}</p>

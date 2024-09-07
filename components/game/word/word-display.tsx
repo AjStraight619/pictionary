@@ -79,7 +79,6 @@ const revealCharVariants = {
 
 const VOWELS = ['a', 'e', 'i', 'o', 'u'];
 const FIRST_REVEAL = 70;
-
 const LAST_REVEAL = 10;
 
 export default function WordDisplay({

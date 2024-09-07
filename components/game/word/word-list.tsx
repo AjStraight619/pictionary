@@ -8,16 +8,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useWord } from '@/context/word-provider';
-import { useCustomWebSocket } from '@/hooks/useCustomWebsocket';
+
 import { getRandomWords } from '@/lib/words';
 import { useEffect, useRef, useState } from 'react';
 import WordSelect from './word-select';
-import {
-  motion,
-  AnimatePresence,
-  useAnimate,
-  usePresence,
-} from 'framer-motion';
+import { motion, useAnimate } from 'framer-motion';
 import { SelectableWord } from '@/types/word';
 import { wait } from '@/lib/utils';
 import { useTimer } from '@/hooks/useTimer';
@@ -83,11 +78,6 @@ export default function WordList({
 
   const { updateWord } = useWord();
 
-  const { sendJsonMessage } = useCustomWebSocket({
-    roomId,
-    userId,
-  });
-
   useEffect(() => {
     setIsWordSelected(false);
     getNewWords();
@@ -129,7 +119,7 @@ export default function WordList({
       },
     });
     await wait(2000);
-    sendJsonMessage({
+    startTimer({
       type: 'countdown',
       data: {
         timerType: 'round_timer',
