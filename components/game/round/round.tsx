@@ -2,7 +2,7 @@
 import { useWord } from '@/context/word-provider';
 import { motion, AnimatePresence } from 'framer-motion';
 import WordDisplay from '../word/word-display';
-import { GamePlayer } from '@prisma/client';
+import { GamePlayer, GameStatus } from '@prisma/client';
 const containerVariants = {
   hidden: {
     y: -20,
@@ -22,12 +22,14 @@ type RoundProps = {
   maxRounds: number;
   players: GamePlayer[];
   currentDrawerId: string | null;
+  gameStatus: GameStatus;
 };
 export default function Round({
   currentRound,
   maxRounds,
   players,
   currentDrawerId,
+  gameStatus,
 }: RoundProps) {
   return (
     <motion.div
@@ -37,7 +39,11 @@ export default function Round({
       className="w-full bg-white flex items-center rounded-md gap-x-4 p-4"
     >
       <RoundInfo currentRound={currentRound} maxRounds={maxRounds} />
-      <WordDisplay players={players} currentDrawerId={currentDrawerId} />
+      <WordDisplay
+        gameStatus={gameStatus}
+        players={players}
+        currentDrawerId={currentDrawerId}
+      />
     </motion.div>
   );
 }
@@ -58,5 +64,3 @@ function RoundInfo({
     </div>
   );
 }
-
-function RoundTimer() {}

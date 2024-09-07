@@ -68,6 +68,8 @@ export default function WordList({
   const [scope, animate] = useAnimate();
   const [isWordSelected, setIsWordSelected] = useState(false);
 
+  console.log('New Turn?: ', newTurn);
+
   const { time, startTimer, stopTimer } = useTimer({
     messageType: 'select_word_countdown',
     onShouldTimerStop: time => time === 0 || isWordSelected,
@@ -134,12 +136,6 @@ export default function WordList({
         time: 80,
       },
     });
-  };
-
-  const selectRandomWord = () => {
-    const randomIndex = Math.floor(Math.random() * wordList.length);
-    const randomWord = wordList[randomIndex];
-    handleWordSelect(randomWord);
   };
 
   if (status === 'WAITING' || status === 'FINISHED') return null;

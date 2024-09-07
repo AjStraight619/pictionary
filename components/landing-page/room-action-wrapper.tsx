@@ -1,11 +1,11 @@
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card";
+} from '../ui/card';
 
 type RoomActionWrapperProps = {
   children: ReactNode;
@@ -15,7 +15,7 @@ export default function RoomActionWrapper({
   children,
 }: RoomActionWrapperProps) {
   return (
-    <Card className="w-full sm:w-1/2 md:w-1/3">
+    <Card className="mx-auto max-w-sm">
       <CardHeader>
         <CardTitle>Create or Join a Room</CardTitle>
         <CardDescription>

@@ -42,6 +42,7 @@ func (h *Hub) Run() {
 			h.clients[client] = true
 			h.mu.Unlock()
 			log.Printf("Client registered: %v", client.userId)
+			log.Printf("Total active clients: %d", h.ClientCount())
 		case client := <-h.unregister:
 			h.mu.Lock()
 			if _, ok := h.clients[client]; ok {
@@ -50,6 +51,7 @@ func (h *Hub) Run() {
 			}
 			h.mu.Unlock()
 			log.Printf("Client unregistered: %v", client.userId)
+			log.Printf("Total active clients: %d", h.ClientCount())
 		case message := <-h.broadcast:
 			h.mu.RLock()
 			for client := range h.clients {

@@ -95,6 +95,7 @@ export default async function Room({ params: { roomId } }: RoomPageProps) {
         </div>
 
         <Round
+          gameStatus={game.status}
           currentDrawerId={currentDrawerId}
           players={game.players}
           maxRounds={game.maxRounds}

@@ -1,7 +1,6 @@
 'use client';
-import React, { useEffect, memo, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useMotionValue, useTransform, animate, motion } from 'framer-motion';
-import { useCustomWebSocket } from '@/hooks/useCustomWebsocket';
 
 type ScoreProps = {
   prevScore: number;

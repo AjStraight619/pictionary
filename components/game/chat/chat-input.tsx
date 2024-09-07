@@ -29,8 +29,6 @@ export default function ChatInput({ player, roomId, userId }: ChatInputProps) {
   });
 
   const { time } = useTimer({ messageType: 'round_timer' });
-
-  console.log('current time: ', time);
   // TODO: Need to change this to use database to track when a user guesses correct to disable the chat input, so someone can't run localStorage.clear() in browser and boost their score.
   const [isGuessCorrect, setIsGuessCorrect] = useLocalStorage<Guess | null>(
     'guesses',

@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
-import useWebSocket, { Options } from 'react-use-websocket';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
+import useWebSocket, { Options, ReadyState } from 'react-use-websocket';
 
 type UseCustomWebSocketProps = {
   roomId: string;
@@ -21,6 +22,8 @@ export const useCustomWebSocket = ({
   messageType,
   options = {}, // Default to an empty object if no options are provided
 }: UseCustomWebSocketProps) => {
+  const { push } = useRouter();
+  const didUnmount = useRef(false);
   const {
     sendMessage,
     lastMessage,
@@ -30,10 +33,10 @@ export const useCustomWebSocket = ({
   } = useWebSocket(`${WS_URL}/${roomId}?userId=${userId}`, {
     ...options,
 
-    share: true,
+    share: true, // Share this connection between components
 
+    // ! Filter message to prevent unnecessary re-renders
     filter(message) {
-      // ! Since we have a lot of different countdowns we need to filter on msg.data.timerType if the type of message is countdown
       try {
         const msg = JSON.parse(message.data);
         if (msg.type === 'countdown') {
@@ -49,49 +52,64 @@ export const useCustomWebSocket = ({
       }
     },
     retryOnError: true,
-    shouldReconnect: closeEvent => {
-      console.log(
-        'Client unregistered from ws connection (reason): ',
-        closeEvent.reason,
-      );
-      return true;
-    },
+
     reconnectAttempts: 10,
     reconnectInterval: attemptNumber => {
-      console.log('Attempting to reconnect: ', attemptNumber);
-      return Math.min(Math.pow(2, attemptNumber) * 1000, 10000);
+      console.log('Attempting to reconnect: ', attemptNumber); // ? Not logging out the correct number?
+      return Math.min(Math.pow(2, attemptNumber) * 1000, 10000); // Exponential backoff
     },
+
     heartbeat: {
       message: 'ping',
       returnMessage: 'pong',
-      timeout: 60000,
-      interval: 10000,
+      timeout: 60000, // 1 min
+      interval: 10000, // 10 sec
+    },
+
+    onReconnectStop: () => {
+      console.log('Reconnection attempts have stopped');
+      push(
+        `/disconnected/${roomId}?userId=${userId}&reason=reconnection_failed`,
+      );
+    },
+    onClose: event => {
+      console.log('Websocket connection is closed: ', event.reason);
+
+      push(`/disconnected/${roomId}?userId=${userId}&reason=${event.reason}`);
+    },
+    shouldReconnect: closeEvent => {
+      if (didUnmount.current) {
+        return false; // Don't reconnect if the component is unmounted
+      }
+      if (closeEvent.code === 1000) {
+        console.log('WebSocket closed normally.');
+        return false; // Normal closure, no need to reconnect
+      }
+      if (closeEvent.code === 1006) {
+        console.log('WebSocket closed abnormally. Reconnecting...');
+        return true; // Unexpected disconnection, try to reconnect
+      }
+      return true; // Other closures, attempt to reconnect
     },
   });
 
-  const logConnectionStatus = () => {
-    switch (readyState) {
-      case 0:
-        console.log('WebSocket is connecting...');
-        break;
-      case 1:
-        console.log('WebSocket is open');
-        break;
-      case 2:
-        console.log('WebSocket is closing...');
-        break;
-      case 3:
-        console.log('WebSocket is closed');
-        break;
-      default:
-        console.log('Unknown WebSocket readyState');
-        break;
-    }
-  };
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: 'Connecting',
+    [ReadyState.OPEN]: 'Open',
+    [ReadyState.CLOSING]: 'Closing',
+    [ReadyState.CLOSED]: 'Closed',
+    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
+  }[readyState];
 
   useEffect(() => {
-    logConnectionStatus();
-  }, [readyState]);
+    console.log('Connection status: ', connectionStatus);
+  }, [connectionStatus]);
+
+  useEffect(() => {
+    return () => {
+      didUnmount.current = true;
+    };
+  }, []);
 
   return {
     sendMessage,

@@ -1,13 +1,16 @@
 'use client';
-import { GamePlayer } from '@prisma/client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { GamePlayer, GameStatus } from '@prisma/client';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useWord } from '@/context/word-provider';
 import { useTimer } from '@/hooks/useTimer';
+
 type WordDisplayProps = {
   currentDrawerId: string | null;
   players: GamePlayer[];
+  gameStatus: GameStatus;
 };
+
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -76,15 +79,16 @@ const revealCharVariants = {
 
 const VOWELS = ['a', 'e', 'i', 'o', 'u'];
 const FIRST_REVEAL = 70;
-const RANDOM_REVEAL = 50 || 25;
+
 const LAST_REVEAL = 10;
 
 export default function WordDisplay({
   currentDrawerId,
   players,
+  gameStatus,
 }: WordDisplayProps) {
   const { word } = useWord();
-  const splitWord = word?.split('');
+  const splitWord = useMemo(() => word?.split(''), [word]);
   const lastRevealTimeRef = useRef<number | null>(null);
   const [revealedIndices, setRevealedIndices] = useState<number[]>([]);
   const isCurrentDrawer = players.find(p => p.id === currentDrawerId);
@@ -132,7 +136,7 @@ export default function WordDisplay({
       lastRevealTimeRef.current = time;
     }
 
-    if (time === RANDOM_REVEAL && lastRevealTimeRef.current !== time) {
+    if (time === 50 || (time === 25 && lastRevealTimeRef.current !== time)) {
       revealRandomLetter();
       lastRevealTimeRef.current = time;
     }
@@ -214,6 +218,8 @@ export default function WordDisplay({
   const renderWordForGuesser = () => renderWord('Guess This:');
 
   const renderWordForDrawer = () => renderWord('Draw This:', true);
+
+  if (gameStatus === 'WAITING') return null;
 
   return (
     <>{isCurrentDrawer ? renderWordForDrawer() : renderWordForGuesser()}</>
