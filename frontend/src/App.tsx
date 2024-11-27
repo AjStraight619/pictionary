@@ -1,11 +1,10 @@
-import { useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
-import './App.css';
+import { useEffect, useState } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
+import CanvasComponent from './components/canvas/canvas';
 
 function App() {
   const [count, setCount] = useState(0);
+  const [players, setPlayers] = useState<any[]>([]);
   const { sendJsonMessage, lastMessage, readyState } = useWebSocket(
     'ws://localhost:8000/game/123',
     {
@@ -18,7 +17,7 @@ function App() {
         returnMessage: 'pong',
       },
       filter: message => {
-        console.log('message:', message);
+        console.log('message:', message.data);
         return true;
       },
     },
@@ -32,30 +31,23 @@ function App() {
     [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
   }[readyState];
 
+  useEffect(() => {
+    if (lastMessage) {
+      const message = JSON.parse(lastMessage.data);
+      switch (message.event) {
+        case 'player-joined':
+          setPlayers(players => [...players, message.payload]);
+          break;
+        default:
+          console.log('Unhandled message:', message);
+      }
+    }
+  }, [lastMessage]);
+
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount(count => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-      <p>Connection status: {connectionStatus}</p>
-    </>
+    <main className="flex flex-col min-h-screen items-center justify-center">
+      <CanvasComponent />
+    </main>
   );
 }
 
