@@ -1,16 +1,22 @@
-import { removePlayerBySocket } from './../services/game-service.ts';
+// import { removePlayerBySocket } from './../services/game-service.ts';
 import {
   initializeGame,
   isCurrentGame,
   addPlayer,
-  removePlayer,
   getGame,
   broadcastToGame,
-} from '../services/game-service.ts';
+  removePlayerBySocket,
+  startTimer,
+} from '../services/game-service/index.ts';
 
 import { Player } from '../models/game-model.ts';
 
-export function gameHandler(gameId: string, req: Request) {
+export function gameHandler(
+  gameId: string,
+  playerId: string,
+  playerName: string,
+  req: Request,
+) {
   if (req.headers.get('upgrade') !== 'websocket') {
     return new Response(null, { status: 400 });
   }
@@ -19,11 +25,15 @@ export function gameHandler(gameId: string, req: Request) {
     initializeGame(gameId);
   }
 
+  console.log('Player ID:', playerId);
+  console.log('Game ID:', gameId);
+
   const { socket, response } = Deno.upgradeWebSocket(req);
 
+  // Always create a new player for now (rollback to working logic)
   const newPlayer: Player = {
-    id: crypto.randomUUID(),
-    name: `Player_${Math.floor(Math.random() * 1000)}`,
+    id: playerId,
+    name: playerName,
     score: 0,
     socket,
   };
@@ -32,28 +42,51 @@ export function gameHandler(gameId: string, req: Request) {
     console.log(`Player connected to game ${gameId}`);
     addPlayer(gameId, newPlayer);
 
-    // Broadcast updated player list to all players in the game
+    const game = getGame(gameId);
+
+    // Broadcast the updated game state to all players
     broadcastToGame(gameId, {
-      event: 'player-list',
-      payload: getGame(gameId)?.players || [],
+      type: 'game-state',
+      payload: game,
     });
   };
 
   socket.onmessage = event => {
-    console.log(`Message received in game ${gameId}:`, event.data);
-
     if (event.data === 'ping') {
       socket.send('pong');
+      return;
     }
+
+    const messageType = JSON.parse(event.data).type;
+    const messagePayload = JSON.parse(event.data).payload;
+    console.log('messageType:', messageType);
+
+    if (messageType === 'start-timer') {
+      startTimer(
+        gameId,
+        messagePayload.timerType,
+        messagePayload.duration,
+        () => {
+          broadcastToGame(gameId, {
+            type: `${messagePayload.timerType}-timer-ended`,
+            payload: { duraton: 0 },
+          });
+        },
+      );
+    }
+
+    broadcastToGame(gameId, {
+      type: messageType,
+      payload: messagePayload,
+    });
   };
 
   socket.onclose = () => {
     console.log(`Player disconnected from game ${gameId}`);
     removePlayerBySocket(gameId, socket);
 
-    // Broadcast updated player list to remaining players
     broadcastToGame(gameId, {
-      event: 'player-list',
+      type: 'player-list',
       payload: getGame(gameId)?.players || [],
     });
 

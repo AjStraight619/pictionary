@@ -1,18 +1,63 @@
+import {
+  fetchRandomWord,
+  getGame,
+  updateWord,
+} from './services/game-service/index.ts';
 import { gameHandler } from './handlers/game-handler.ts';
 
-Deno.serve({ port: 8000 }, req => {
-  const url = new URL(req.url); // Parse the request URL
-  const pathname = url.pathname; // Get the path (e.g., "/game/123")
+function withCors(response: Response): Response {
+  const newHeaders = new Headers(response.headers);
+  newHeaders.set('Access-Control-Allow-Origin', '*');
+  newHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  newHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
 
-  const segments = pathname.split('/').filter(Boolean); // Split the path into segments
-  console.log('Path segments:', segments);
+  return new Response(response.body, {
+    ...response,
+    headers: newHeaders,
+  });
+}
 
-  if (segments[0] === 'game' && segments[1]) {
-    const gameId = segments[1]; // Extract the "id" from "/game/[id]"
-    console.log('Game ID:', gameId);
+Deno.serve({ port: 8000 }, async req => {
+  const url = new URL(req.url);
+  const segments = url.pathname.split('/').filter(Boolean);
+  const queryParams = Object.fromEntries(url.searchParams.entries());
+  const method = req.method;
+  console.log('Query params: ', queryParams);
+  const playerId = queryParams.playerId as string;
+  const playerName = queryParams.playerName as string;
 
-    return gameHandler(gameId, req);
+  // Handle CORS Preflight Requests
+  if (method === 'OPTIONS') {
+    return withCors(new Response(null, { status: 204 }));
   }
 
-  return new Response('Not Found', { status: 404 });
+  // Handle WebSocket connections
+  if (segments[0] === 'game' && segments[1] && !segments[2]) {
+    const gameId = segments[1];
+    return gameHandler(gameId, playerId, playerName, req);
+  }
+
+  // Handle GET request for a word
+  if (method === 'GET' && segments[0] === 'game' && segments[2] === 'word') {
+    const gameId = segments[1];
+    console.log('In GET /game/:id/word method');
+
+    const game = getGame(gameId);
+    if (!game) {
+      return withCors(new Response('Game not found', { status: 404 }));
+    }
+
+    const word = await fetchRandomWord();
+    updateWord(gameId, word);
+
+    return withCors(
+      new Response(JSON.stringify({ word }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+  }
+
+  // Fallback for unmatched routes
+  return withCors(new Response('Not Found', { status: 404 }));
 });
