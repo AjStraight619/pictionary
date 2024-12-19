@@ -1,5 +1,5 @@
 import { useCustomWebsocket } from '@/hooks/useCustomWebsocket';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -17,9 +17,12 @@ type ChatMessage = {
 const Chat = () => {
   const [chats, setChats] = useState<ChatMessage[]>([]);
   const { lastMessage, sendJsonMessage } = useCustomWebsocket({
-    messageTypes: ['chat'],
+    messageTypes: ['player-guess'],
     queryParams: {},
   });
+
+
+  const cardContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (lastMessage) {
@@ -28,23 +31,34 @@ const Chat = () => {
     }
   }, [lastMessage]);
 
+
+  useEffect(() => {
+    if (cardContentRef.current) {
+      // Scroll the container to the bottom
+      cardContentRef.current.scrollTop = cardContentRef.current.scrollHeight;
+    }
+  }, [chats]);
+
   return (
     <Card className="">
       <CardHeader>
         <CardTitle>Chat</CardTitle>
       </CardHeader>
-      <CardContent className="h-[10rem] overflow-y-auto">
+      <CardContent ref={cardContentRef} className="h-[10rem] overflow-y-auto">
         {chats.map((chat, index) => (
           <div key={index}>
             <p>
               {chat.username}: {chat.message}
             </p>
+
           </div>
         ))}
       </CardContent>
+
       <CardFooter>
         <ChatInput sendJsonMessage={sendJsonMessage} />
       </CardFooter>
+
     </Card>
   );
 };

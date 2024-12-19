@@ -13,9 +13,10 @@ const ChatInput = ({ sendJsonMessage }: ChatInputProps) => {
   const [playerInfo] = useLocalStorage<PlayerInfo | null>('playerInfo', null);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!input.trim()) return
     if (e.key === 'Enter') {
       sendJsonMessage({
-        type: 'chat',
+        type: 'player-guess',
         payload: { username: playerInfo?.name, message: input },
       });
       setInput('');
