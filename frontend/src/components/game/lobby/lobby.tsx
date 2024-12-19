@@ -3,6 +3,7 @@ import { useCustomWebsocket } from '@/hooks/useCustomWebsocket';
 
 import { Player } from '@/types/lobby';
 import { useEffect, useRef, useState } from 'react';
+import PlayerCard from './player-card';
 
 const Lobby = () => {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -13,27 +14,37 @@ const Lobby = () => {
     console.log('Lobby component re-rendered: ', ref.current);
   });
 
-  const { lastMessage } = useCustomWebsocket({
-    messageTypes: ['game-state'],
+  const { lastMessage, connectionStatus } = useCustomWebsocket({
+    messageTypes: ['game-state', 'player-list'],
   });
 
   useEffect(() => {
     if (lastMessage) {
-      const newPlayers = JSON.parse(lastMessage.data).payload
-        .players as Player[];
-      setPlayers(newPlayers);
+      const parsedMessage = JSON.parse(lastMessage.data)
+      console.log("Parsed message type: ", parsedMessage.type)
+      const players = parsedMessage.payload.players
+      console.log("Players: ", players)
+      setPlayers(players)
     }
   }, [lastMessage]);
 
+  //const repeatedPlayers = Array(8)
+  //  .fill(players)
+  //  .flat()
+  //  .map((player, index) => ({ ...player, id: `${player.id}-${index}` }));
   return (
-    <Card className="flex-1">
+    <Card className="flex-1 flex-shrink-0">
       <CardHeader>
         <CardTitle>Lobby</CardTitle>
       </CardHeader>
       <CardContent>
-        {players.map(player => (
-          <div key={player.id}>{player.name}</div>
-        ))}
+        <div className="grid grid-cols-4 grid-rows-2 gap-2 grid-flow-row">
+
+          {players.map(player => (
+            <PlayerCard key={player.id} name={player.name} connectionStatus={connectionStatus} score={player.score} color={player.color} />
+          ))}
+
+        </div>
       </CardContent>
     </Card>
   );
