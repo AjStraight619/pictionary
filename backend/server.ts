@@ -2,49 +2,48 @@ import {
   fetchRandomWord,
   getGame,
   updateWord,
-} from './services/game-service/index.ts';
-import { gameHandler } from './handlers/game-handler.ts';
+} from "./services/game-service/index.ts";
+import { gameHandler } from "./handlers/game-handler.ts";
+import { createGameHandler } from "./handlers/create-game-handler.ts";
+import { withCors } from "./utils.ts";
 
-function withCors(response: Response): Response {
-  const newHeaders = new Headers(response.headers);
-  newHeaders.set('Access-Control-Allow-Origin', '*');
-  newHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  newHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
-
-  return new Response(response.body, {
-    ...response,
-    headers: newHeaders,
-  });
-}
-
-Deno.serve({ port: 8000 }, async req => {
+Deno.serve({ port: 8000 }, async (req: Request) => {
   const url = new URL(req.url);
-  const segments = url.pathname.split('/').filter(Boolean);
+  const segments = url.pathname.split("/").filter(Boolean);
   const queryParams = Object.fromEntries(url.searchParams.entries());
   const method = req.method;
-  console.log('Query params: ', queryParams);
-  const playerId = queryParams.playerId as string;
-  const playerName = queryParams.playerName as string;
+  console.log("Query params: ", queryParams);
+  const userId = queryParams.userId as string;
+  const username = queryParams.username as string;
+  console.log("userId: ", userId);
+  console.log("username: ", username);
+
+  console.log("new req: ", JSON.stringify(req, null, 2));
 
   // Handle CORS Preflight Requests
-  if (method === 'OPTIONS') {
+  if (method === "OPTIONS") {
     return withCors(new Response(null, { status: 204 }));
   }
 
   // Handle WebSocket connections
-  if (segments[0] === 'game' && segments[1] && !segments[2]) {
+  if (segments[0] === "game" && segments[1] && !segments[2]) {
     const gameId = segments[1];
-    return gameHandler(gameId, playerId, playerName, req);
+    console.log("userId: ", userId);
+    console.log("username: ", username);
+    return gameHandler(gameId, userId, username, req);
   }
 
+  if (method === "POST" && segments[0] === "create-game") {
+    return createGameHandler(req);
+  }
   // Handle GET request for a word
-  if (method === 'GET' && segments[0] === 'game' && segments[2] === 'word') {
+  if (method === "GET" && segments[0] === "game" && segments[2] === "word") {
     const gameId = segments[1];
-    console.log('In GET /game/:id/word method');
+    console.log("In GET /game/:id/word method");
 
     const game = getGame(gameId);
     if (!game) {
-      return withCors(new Response('Game not found', { status: 404 }));
+      return withCors(new Response("Game not found", { status: 404 }));
     }
 
     const word = await fetchRandomWord();
@@ -53,11 +52,11 @@ Deno.serve({ port: 8000 }, async req => {
     return withCors(
       new Response(JSON.stringify({ word }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }),
     );
   }
 
   // Fallback for unmatched routes
-  return withCors(new Response('Not Found', { status: 404 }));
+  return withCors(new Response("Not Found", { status: 404 }));
 });
