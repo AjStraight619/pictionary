@@ -37,6 +37,7 @@ export const createPlayer = (
     score: 0,
     isDrawing: false,
     isLeader: isLeader,
+    disconnected: false,
   };
 };
 

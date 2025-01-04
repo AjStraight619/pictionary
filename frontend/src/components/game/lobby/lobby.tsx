@@ -1,9 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCustomWebsocket } from '@/hooks/useCustomWebsocket';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 
-import { Player } from '@/types/lobby';
-import { useEffect, useRef, useState } from 'react';
-import PlayerCard from './player-card';
+import { Player } from "@/types/lobby";
+import { useEffect, useRef, useState } from "react";
+import PlayerCard from "./player-card";
 
 const Lobby = () => {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -11,20 +11,21 @@ const Lobby = () => {
 
   useEffect(() => {
     ref.current++;
-    console.log('Lobby component re-rendered: ', ref.current);
+    console.log("Lobby component re-rendered: ", ref.current);
   });
 
   const { lastMessage, connectionStatus } = useCustomWebsocket({
-    messageTypes: ['game-state', 'player-list'],
+    messageTypes: ["game-state"],
   });
 
   useEffect(() => {
     if (lastMessage) {
-      const parsedMessage = JSON.parse(lastMessage.data)
-      console.log("Parsed message type: ", parsedMessage.type)
-      const players = parsedMessage.payload.players
-      console.log("Players: ", players)
-      setPlayers(players)
+      const parsedMessage = JSON.parse(lastMessage.data);
+      console.log("Parsed message type: ", parsedMessage.type);
+      console.log("Parsed message: ", parsedMessage);
+      const players = parsedMessage.payload.players;
+      console.log("Players: ", players);
+      setPlayers(players);
     }
   }, [lastMessage]);
 
@@ -39,11 +40,15 @@ const Lobby = () => {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-4 grid-rows-2 gap-2 grid-flow-row">
-
-          {players.map(player => (
-            <PlayerCard key={player.id} name={player.name} connectionStatus={connectionStatus} score={player.score} color={player.color} />
+          {players.map((player) => (
+            <PlayerCard
+              key={player.id}
+              name={player.name}
+              connectionStatus={connectionStatus}
+              score={player.score}
+              color={player.color}
+            />
           ))}
-
         </div>
       </CardContent>
     </Card>

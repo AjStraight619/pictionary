@@ -1,38 +1,36 @@
-import { Button } from '@/components/ui/button';
-import { useCustomWebsocket } from '@/hooks/useCustomWebsocket';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useAnimate } from 'motion/react';
 
 type TimerProps = {
-  duration?: number;
-  timerType?: string;
+  timeRemaining: number | null;
+  className?: string;
 };
 
-const Timer = ({ duration = 60, timerType }: TimerProps) => {
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const { lastMessage, sendJsonMessage } = useCustomWebsocket({
-    messageTypes: ['round-timer-update', 'round-timer-ended'],
-  });
+const Timer = ({ timeRemaining, className }: TimerProps) => {
+  const [scope, animate] = useAnimate();
+  const prevTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (lastMessage) {
-      const newTimeRemaining = JSON.parse(lastMessage.data).payload
-        .timeRemaining as number;
-      setTimeRemaining(newTimeRemaining);
+    if (
+      timeRemaining !== null &&
+      timeRemaining <= 5 &&
+      timeRemaining >= 0 &&
+      timeRemaining !== prevTimeRef.current
+    ) {
+      // Trigger scale animation
+      animate(
+        scope.current,
+        { scale: [1, 1.5, 1] },
+        { duration: 0.5, ease: 'easeInOut' },
+      );
     }
-  }, [lastMessage]);
-
-  const startTimer = () => {
-    sendJsonMessage({
-      type: 'start-timer',
-      payload: { duration: 10, timerType: 'round' },
-    });
-  };
+    prevTimeRef.current = timeRemaining;
+  }, [timeRemaining, animate, scope]);
 
   return (
-    <div className="flex flex-row gap-x-2">
-      <p>Time: {timeRemaining}</p>
-      <Button onClick={() => startTimer()}>Start</Button>
-    </div>
+    <p ref={scope} className={className}>
+      {timeRemaining}
+    </p>
   );
 };
 

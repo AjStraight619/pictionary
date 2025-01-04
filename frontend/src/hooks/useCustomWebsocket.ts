@@ -1,8 +1,7 @@
-import { on } from 'events';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router';
-import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { useLocalStorage } from 'usehooks-ts';
+import { useState } from "react";
+import { useParams } from "react-router";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+import { useReadLocalStorage } from "usehooks-ts";
 
 type QueryParams = {
   [key: string]: string | number; // Allows any string key with values of type string or number
@@ -15,6 +14,8 @@ type UseCustomWebsocketArgs = {
   queryParams?: QueryParams;
 };
 
+// TODO: Extend player info and sync with server state
+
 type PlayerInfo = {
   playerId: string;
   name: string;
@@ -24,51 +25,57 @@ export const useCustomWebsocket = ({
   messageTypes,
   queryParams,
 }: UseCustomWebsocketArgs) => {
-  // const [playerId, setPlayerId] = useLocalStorage('playerId', '');
+  const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
 
-  const [playerInfo] = useLocalStorage<PlayerInfo | null>('playerInfo', null);
+  // TODO: Implement reconnect logic (using this for automatic reconnects on mouse, key, movements)
 
-  const [shouldReconnect, setShouldReconnect] = useState(true);
+  // TODO: Implement setShouldReconnect state updater with reconnect logic
 
-  const playerId = playerInfo?.playerId as string;
-  const playerName = playerInfo?.name as string;
+  const [shouldReconnect] = useState(true);
+
+  const userId = playerInfo?.playerId as string;
+  const username = playerInfo?.name as string;
 
   const { id } = useParams();
 
-  const augmentedQueryParams = { ...queryParams, playerId, playerName };
+  const augmentedQueryParams = { ...queryParams, userId, username };
 
   const { sendJsonMessage, lastMessage, readyState, getWebSocket } =
     useWebSocket(`ws://localhost:8000/game/${id}`, {
       queryParams: augmentedQueryParams,
       share: true,
-      shouldReconnect: closeEvent => {
+      shouldReconnect: () => {
         return shouldReconnect;
       },
       reconnectAttempts: 3,
       // Exponential backoff reconnect strategy
-      reconnectInterval: attemptNumber => {
-        console.log('Attempting to reconnect for the ', attemptNumber, ' time');
+      reconnectInterval: (attemptNumber) => {
+        console.log("Attempting to reconnect for the ", attemptNumber, " time");
         return Math.min(Math.pow(2, attemptNumber) * 1000, 10000);
       },
-      onOpen: () => console.log('opened: ', new Date().toLocaleTimeString()),
-      onClose: () => console.log('closed: ', new Date().toLocaleTimeString()),
-      onError: error => console.log('error: ', error),
+      onOpen: () => console.log("opened: ", new Date().toLocaleTimeString()),
+      onClose: () => console.log("closed: ", new Date().toLocaleTimeString()),
+      onError: (error) => console.log("error: ", error),
       onReconnectStop: () =>
-        console.log('reconnect stopped', new Date().toLocaleTimeString()),
+        console.log("reconnect stopped", new Date().toLocaleTimeString()),
       heartbeat: {
         timeout: 60000,
         interval: 10000,
-        message: 'ping',
-        returnMessage: 'pong',
+        message: "ping",
+        returnMessage: "pong",
       },
-      filter: message => {
-        if (message.data === 'pong') {
+      filter: (message) => {
+        if (message.data === "pong") {
+          console.log(
+            "Recieved pong message from client, filtering out message",
+          );
           return false;
         }
 
         const newMessage = JSON.parse(message.data);
 
         // Allow messages of any type in `messageTypes`
+        // If message type is included in types passed to hook return true otherwise return false
         if (!messageTypes.includes(newMessage.type)) {
           return false;
         }
@@ -76,20 +83,24 @@ export const useCustomWebsocket = ({
       },
     });
 
+  // TODO: Test this function to remove someone from WS if away time is too long
+
   const closeWebSocket = () => {
     const webSocket = getWebSocket();
     if (webSocket) {
-      console.log('Closing WebSocket programmatically');
+      console.log("Closing WebSocket programmatically");
       webSocket.close();
     }
   };
 
+  // Connection status of client
+
   const connectionStatus = {
-    [ReadyState.CONNECTING]: 'Connecting',
-    [ReadyState.OPEN]: 'Open',
-    [ReadyState.CLOSING]: 'Closing',
-    [ReadyState.CLOSED]: 'Closed',
-    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
+    [ReadyState.CONNECTING]: "Connecting",
+    [ReadyState.OPEN]: "Open",
+    [ReadyState.CLOSING]: "Closing",
+    [ReadyState.CLOSED]: "Closed",
+    [ReadyState.UNINSTANTIATED]: "Uninstantiated",
   }[readyState];
 
   return {
@@ -99,39 +110,4 @@ export const useCustomWebsocket = ({
     connectionStatus,
     closeWebSocket,
   };
-};
-
-const useInactivity = (onInactive: () => void, timeout: number = 30000) => {
-  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const resetTimer = useCallback(() => {
-    if (inactivityTimerRef.current) {
-      clearTimeout(inactivityTimerRef.current);
-    }
-    inactivityTimerRef.current = setTimeout(() => {
-      onInactive();
-    }, timeout);
-  }, [onInactive, timeout]);
-
-  useEffect(() => {
-    const handleUserActivity = () => {
-      resetTimer();
-    };
-
-    window.addEventListener('mousemove', handleUserActivity);
-    window.addEventListener('keydown', handleUserActivity);
-
-    // Start the timer on mount
-    resetTimer();
-
-    return () => {
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
-      }
-      window.removeEventListener('mousemove', handleUserActivity);
-      window.removeEventListener('keydown', handleUserActivity);
-    };
-  }, [timeout, onInactive, resetTimer]);
-
-  return { resetTimer };
 };

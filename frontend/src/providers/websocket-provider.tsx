@@ -1,6 +1,9 @@
+import { PlayerInfo } from '@/types/lobby';
 import React from 'react';
+import { useParams } from 'react-router';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
+import { useLocalStorage, useReadLocalStorage } from 'usehooks-ts';
 
 type WebSocketContextType = {
   sendJsonMessage: (message: SendJsonMessage) => void;
@@ -11,20 +14,30 @@ type WebSocketContextType = {
 const WebSocketContext = React.createContext<WebSocketContextType | null>(null);
 
 const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
+  const playerInfo = useReadLocalStorage<PlayerInfo | null>('playerInfo');
+
+  const { id } = useParams();
+
+  const userId = playerInfo?.playerId as string;
+  const username = playerInfo?.name as string;
+
+  const queryParams = { userId, username };
+
   const { sendJsonMessage, lastMessage, readyState } = useWebSocket(
-    'ws://localhost:8000/game/123',
+    `ws://localhost:8000/game/${id}`,
     {
-      onOpen: () => console.log('opened'),
-      onClose: () => console.log('closed'),
-      onError: () => console.log('error'),
-      heartbeat: {
-        interval: 5000,
-        message: 'ping',
-        returnMessage: 'pong',
-      },
+      queryParams,
+      share: true,
+      shouldReconnect: () => true,
+      reconnectAttempts: 3,
+      reconnectInterval: attemptNumber =>
+        Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
       filter: message => {
-        console.log('message:', message.data);
-        return true;
+        if (message.data === 'pong') {
+          return false;
+        }
+        const newMessage = JSON.parse(message.data);
+        return messageTypes.includes(newMessage.type);
       },
     },
   );

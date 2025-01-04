@@ -1,10 +1,12 @@
-import { format } from 'jsr:@std/internal/format';
+import { format } from "jsr:@std/internal/format";
+
+format("yo");
 
 export function withCors(response: Response): Response {
   const newHeaders = new Headers(response.headers);
-  newHeaders.set('Access-Control-Allow-Origin', '*');
-  newHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  newHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
+  newHeaders.set("Access-Control-Allow-Origin", "*");
+  newHeaders.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  newHeaders.set("Access-Control-Allow-Headers", "Content-Type");
 
   return new Response(response.body, {
     ...response,
@@ -16,12 +18,12 @@ export function withCors(response: Response): Response {
 function formatTimestamp(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
     2,
-    '0',
-  )}-${String(date.getDate()).padStart(2, '0')} ${String(
+    "0",
+  )}-${String(date.getDate()).padStart(2, "0")} ${String(
     date.getHours(),
-  ).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(
+  ).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(
     date.getSeconds(),
-  ).padStart(2, '0')}`;
+  ).padStart(2, "0")}`;
 }
 
 export const log = (
@@ -32,7 +34,7 @@ export const log = (
   const timestamp = formatTimestamp(new Date());
   const formattedMetadata = JSON.stringify(
     metadata,
-    (key, value) => (key === 'socket' ? 'WebSocket Object' : value), // Replace large objects
+    (key, value) => (key === "socket" ? "WebSocket Object" : value), // Replace large objects
     2, // Pretty-print with 2 spaces
   );
 
@@ -45,19 +47,19 @@ export const logError = (
   message: string,
   metadata: Record<string, unknown> = {},
 ) => {
-  log('ERROR', message, metadata);
+  log("ERROR", message, metadata);
 };
 
 export const logInfo = (
   message: string,
   metadata: Record<string, unknown> = {},
 ) => {
-  log('INFO', message, metadata);
+  log("INFO", message, metadata);
 };
 
 export const logDebug = (
   message: string,
   metadata: Record<string, unknown> = {},
 ) => {
-  log('DEBUG', message, metadata);
+  log("DEBUG", message, metadata);
 };

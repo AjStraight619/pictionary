@@ -1,6 +1,6 @@
-import { useCustomWebsocket } from '@/hooks/useCustomWebsocket';
-import { useEffect, useRef, useState } from 'react';
-import pako from 'pako';
+import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
+import { useEffect, useRef, useState } from "react";
+import pako from "pako";
 
 export type PencilDraft = {
   path: string;
@@ -15,32 +15,36 @@ export const SVGCanvas = () => {
   const [pencilDraft, setPencilDraft] = useState<PencilDraft | null>(null);
 
   const { lastMessage } = useCustomWebsocket({
-    messageTypes: ['drawing', 'shape', 'remove-all', 'remove-element'],
+    messageTypes: ["drawing", "shape", "remove-all", "remove-element"],
   });
 
   const clearSvgContainer = () => {
-    if (svgContainerRef.current) {
-      while (svgContainerRef.current.firstChild) {
-        const firstChild = svgContainerRef.current.firstChild;
-        if (!firstChild) return;
-        try {
-          if (svgContainerRef.current.contains(firstChild)) {
-            svgContainerRef.current.removeChild(firstChild);
-          }
-        } catch (err) {
-          console.error('Error while clearing container: ', err);
-        }
+    if (!svgContainerRef.current) return;
+
+    Array.from(svgContainerRef.current.children).forEach((child) => {
+      try {
+        svgContainerRef.current?.removeChild(child);
+      } catch (err) {
+        console.error("Error while clearing container:", err);
       }
-      svgElementsMap.current.clear();
-    }
+    });
+
+    svgElementsMap.current.clear();
+    setPencilDraft(null);
   };
 
   const deleteObjectById = (id: string) => {
-    const isElementInMap = svgElementsMap.current.delete(id);
-    if (isElementInMap && svgContainerRef.current) {
-      const elementToRemove = svgContainerRef.current?.getElementById(id);
-      if (!elementToRemove) return;
-      elementToRemove.remove();
+    const elementToRemove = svgContainerRef.current?.querySelector(`#${id}`);
+    if (!elementToRemove) {
+      console.warn(`Element with ID ${id} not found or already removed.`);
+      return;
+    }
+
+    try {
+      svgContainerRef.current?.removeChild(elementToRemove);
+      svgElementsMap.current.delete(id);
+    } catch (err) {
+      console.error(`Failed to remove element with ID ${id}:`, err);
     }
   };
 
@@ -53,8 +57,8 @@ export const SVGCanvas = () => {
       console.log(`Updating SVG with ID ${id}`);
       // Replace the entire element to ensure transforms are applied correctly
       const wrapper = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'g',
+        "http://www.w3.org/2000/svg",
+        "g",
       );
       wrapper.innerHTML = svgData;
       const newElement = wrapper.firstChild as SVGElement;
@@ -65,12 +69,12 @@ export const SVGCanvas = () => {
     }
 
     // Create and append a new SVG element if it doesn’t exist
-    const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const wrapper = document.createElementNS("http://www.w3.org/2000/svg", "g");
     wrapper.innerHTML = svgData;
     element = wrapper.firstChild as SVGElement;
 
     if (element) {
-      element.setAttribute('id', id);
+      element.setAttribute("id", id);
       svgContainerRef.current.appendChild(element);
       svgElementsMap.current.set(id, element);
     }
@@ -81,7 +85,7 @@ export const SVGCanvas = () => {
       try {
         const parsedMessage = JSON.parse(lastMessage.data);
         switch (parsedMessage.type) {
-          case 'drawing': {
+          case "drawing": {
             setPencilDraft({
               stroke: parsedMessage.payload.stroke,
               strokeWidth: parsedMessage.payload.strokeWidth,
@@ -90,42 +94,51 @@ export const SVGCanvas = () => {
             break;
           }
 
-          case 'shape': {
+          case "shape": {
             const { id, type } = parsedMessage.payload; // Declare type as const since it’s never reassigned
             let { svg } = parsedMessage.payload; // Use let for svg because it can be reassigned
 
-            if (type === 'path') {
-              svg = pako.inflate(svg, { to: 'string' }); // Decompress the SVG if it's a path
+            if (type === "path") {
+              svg = pako.inflate(svg, { to: "string" }); // Decompress the SVG if it's a path
             }
 
             renderSvg(svg, id);
             setPencilDraft(null);
             break;
           }
-          case 'remove-element': {
+          case "remove-element": {
             const { id: removeElementId } = parsedMessage.payload;
-            console.log('Remove element id: ', removeElementId);
+            console.log("Remove element id: ", removeElementId);
             deleteObjectById(removeElementId);
             break;
           }
 
-          case 'remove-all': {
+          case "remove-all": {
             clearSvgContainer();
             break;
           }
 
           default: {
-            console.log('unknown type, we are breaking');
+            console.log("unknown type, we are breaking");
           }
         }
       } catch (e) {
         console.error(
-          'Dont know what went wrong because try catch is like that: ',
+          "Dont know what went wrong because try catch is like that: ",
           e,
         );
       }
     }
   }, [lastMessage]);
+
+  useEffect(() => {
+    const svgElementsMapSnapshot = svgElementsMap.current;
+
+    return () => {
+      svgElementsMapSnapshot.clear();
+    };
+  }, []);
+
   return (
     <svg
       id="viewer-canvas"

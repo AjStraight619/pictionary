@@ -34,6 +34,7 @@ Deno.serve({ port: 8000 }, async (req: Request) => {
   }
 
   if (method === "POST" && segments[0] === "create-game") {
+    console.log("creating game...");
     return createGameHandler(req);
   }
   // Handle GET request for a word

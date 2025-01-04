@@ -21,8 +21,8 @@ const CanvasComponent = () => {
   const [selectedTool, setSelectedTool] = useState<SelectedTool>(
     SelectedTool.Selector,
   );
-  const canvasHistoryRef = useRef<fabric.Object[][]>([]); // Array of object arrays
-  const historyIndexRef = useRef<number>(-1); // Tracks the current position in history
+  const canvasHistoryRef = useRef<fabric.Object[][]>([]);
+  const historyIndexRef = useRef<number>(-1);
   const pointBufferRef = useRef<[number, number][]>([]);
   const isMouseDownRef = useRef<boolean>(false);
   const pathDataRef = useRef<fabric.Point[]>([]);
@@ -78,55 +78,24 @@ const CanvasComponent = () => {
       const path = options.path;
       handlePathCreated({ path, sendSvgShape });
     });
+
     canvas.on('mouse:up', () => {
       isMouseDownRef.current = false;
       pathDataRef.current = [];
+
       setTimeout(() => {
         if (selectedToolRef.current !== SelectedTool.Pencil) {
-          setTimeout(() => {
-            canvas.selection = true;
-            selectedToolRef.current = SelectedTool.Selector;
-            setSelectedTool(SelectedTool.Selector);
-          }, 300);
+          canvas.selection = true;
+          selectedToolRef.current = SelectedTool.Selector;
+          setSelectedTool(SelectedTool.Selector);
         }
-      });
+      }, 300); // Combine delays into one
     });
 
-    canvas.on('selection:created', options => {
-      //const activeObjects = canvas.getActiveObjects()
-      //const allObjects = canvas.getObjects()
-      //console.log("Active objects: ", activeObjects)
-      //console.log("All objects?: ", allObjects)
-    });
-
-    //canvas.on("object:modified", options => {
-    //  console.log("object modified")
-    //  const activeSelection = options.target
-    //  console.log("Active selection: ", activeSelection)
-    //  canvas.renderAll()
-    //  const objects = canvas.getActiveObjects()
-    //  objects.forEach((obj) => {
-    //    // @ts-ignore
-    //    //obj.setCoords()
-    //    const id = obj.id
-    //    const svgShape = obj.toSVG()
-    //    const xy = obj.getXY()
-    //    // @ts-ignore
-    //    console.log("xy after update: ", obj.id, "\npostion: ", xy)
-    //    const shapeData: ShapeData = {
-    //      id: id,
-    //      svg: svgShape
-    //    }
-    //    sendSvgShape(shapeData)
-    //
-    //  })
-    //})
-
-    canvas.on('object:modified', options => {
-      console.log('object modified');
-
+    canvas.on('object:modified', () => {
       const objects = canvas.getActiveObjects();
       objects.forEach(obj => {
+        // @ts-expect-error do not want to extend types for now
         const id = obj.id;
         let svgShape = obj.toSVG();
 
