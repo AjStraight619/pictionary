@@ -1,8 +1,8 @@
-import { SelectedTool } from '@/types/canvas';
-import React, { SetStateAction } from 'react';
-import * as fabric from 'fabric';
+import { SelectedTool } from "@/types/canvas";
+import React, { SetStateAction } from "react";
+import * as fabric from "fabric";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Circle,
   MousePointer2,
@@ -10,9 +10,24 @@ import {
   Square,
   Trash2,
   Triangle,
-} from 'lucide-react';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
+} from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
+import { useThrottledCallback } from "use-debounce";
+
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
+}
 
 type ToolbarProps = {
   selectedToolRef: React.MutableRefObject<SelectedTool>;
@@ -31,15 +46,22 @@ const Toolbar = ({
 }: ToolbarProps) => {
   if (!canvas) return;
 
+  const handleDeleteAll = debounce(() => {
+    canvas.clear();
+    sendJsonMessage({
+      type: "remove-all",
+    });
+  }, 16);
+
   const handleToolChange = (tool: string) => {
-    console.log('Tool: ', tool);
+    console.log("Tool: ", tool);
     // Map the string value back to the SelectedTool enum
     const selectedToolEnum = tool as SelectedTool;
-    console.log('Selected Tool Enum: ', selectedToolEnum);
+    console.log("Selected Tool Enum: ", selectedToolEnum);
     // Update the selected tool reference
     selectedToolRef.current = selectedToolEnum;
 
-    console.log('SelectedToolRef: ', selectedToolRef.current);
+    console.log("SelectedToolRef: ", selectedToolRef.current);
     // Update the selected tool state
     setSelectedTool(selectedToolEnum);
 
@@ -50,7 +72,7 @@ const Toolbar = ({
     switch (selectedToolEnum) {
       case SelectedTool.Pencil:
         //canvas.isDrawingMode = true;
-        configureBrush(canvas, 'black', 5);
+        configureBrush(canvas, "black", 5);
         break;
 
       case SelectedTool.Eraser:
@@ -78,7 +100,7 @@ const Toolbar = ({
         break;
 
       default:
-        console.warn('Unhandled tool:', tool);
+        console.warn("Unhandled tool:", tool);
         break;
     }
   };
@@ -90,7 +112,7 @@ const Toolbar = ({
           type="single"
           value={selectedTool}
           defaultValue={SelectedTool.Selector}
-          onValueChange={value => handleToolChange(value)}
+          onValueChange={(value) => handleToolChange(value)}
         >
           <ToggleGroupItem value="Selector">
             <MousePointer2 />
@@ -109,16 +131,7 @@ const Toolbar = ({
             <Triangle />
           </ToggleGroupItem>
         </ToggleGroup>
-        <Button
-          onClick={() => {
-            canvas.clear();
-            sendJsonMessage({
-              type: 'remove-all',
-            });
-          }}
-          size="icon"
-          variant="ghost"
-        >
+        <Button onClick={handleDeleteAll} size="icon" variant="ghost">
           <Trash2 />
         </Button>
       </div>
