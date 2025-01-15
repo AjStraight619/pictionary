@@ -1,58 +1,156 @@
-import { useCustomWebsocket } from '@/hooks/useCustomWebsocket';
-import { Mouse } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
+import { useEffect, useRef } from "react";
+import pako from "pako";
+import { useDebouncedCallback } from "use-debounce";
 
-type Cursor = {
-	x: number;
-	y: number;
+export type PencilDraft = {
+  path: string;
+  strokeWidth: number;
+  stroke: string;
 };
 
 const ViewerCanvas = () => {
-	// const [cursors, setCursors] = useState<Cursor[]>([]);
+  const svgContainerRef = useRef<SVGSVGElement>(null);
+  const svgElementsMap = useRef<Map<string, SVGElement>>(new Map());
+  const drawingQueue = useRef<string[]>([]);
 
-	// // Mock: Update cursor positions dynamically (replace with real-time data).
-	// useEffect(() => {
-	//   const mockCursors = [
-	//     { id: 'user1', x: 100, y: 150 },
-	//     { id: 'user2', x: 300, y: 200 },
-	//   ];
-	//   setCursors(mockCursors);
-	// }, []);
+  const { lastMessage } = useCustomWebsocket({
+    messageTypes: ["drawing", "shape", "remove-all", "remove-element"],
+  });
 
-	const [activeCursor, setActiveCursor] = useState<Cursor | null>(null);
+  // Debounced function to process the drawing queue
+  const processDrawingQueue = useDebouncedCallback(() => {
+    if (!svgContainerRef.current || drawingQueue.current.length === 0) return;
 
-	const { lastMessage } = useCustomWebsocket({
-		messageTypes: ['cursor'],
-		queryParams: {},
-	});
+    const combinedPath = drawingQueue.current.join(" ");
+    drawingQueue.current = [];
 
-	useEffect(() => {
+    updateLivePath(combinedPath);
+  }, 0);
 
-		if (lastMessage) {
-			const cursor = JSON.parse(lastMessage.data) as Cursor;
-			setActiveCursor(cursor);
-		}
-	}, [lastMessage]);
+  // Function to update or create the live path element
+  const updateLivePath = (path: string) => {
+    if (!svgContainerRef.current) return;
 
-	return (
-		<div
-			className="bg-gray-100 rounded-lg shadow-lg relative"
-			id="viewer-canvas"
-			style={{ width: '800px', height: '600px' }}
-		>
-			<Mouse
-				style={{
-					position: 'absolute',
-					left: `${activeCursor?.x}px`, // Horizontal position
-					top: `${activeCursor?.y}px`, // Vertical position
-					transform: 'translate(-50%, -50%)', // Center the cursor icon
-					color: 'blue', // Cursor color
-				}}
-			/>
+    let livePath = svgContainerRef.current.querySelector(
+      "path[data-live='true']",
+    ) as SVGPathElement;
 
-			<canvas className="absolute w-full h-full" />
-		</div>
-	);
+    if (!livePath) {
+      livePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      livePath.setAttribute("data-live", "true");
+      livePath.setAttribute("stroke", "#000");
+      livePath.setAttribute("stroke-width", "");
+      livePath.setAttribute("fill", "none");
+      livePath.setAttribute("stroke-linejoin", "round");
+      livePath.setAttribute("stroke-linecap", "round");
+      svgContainerRef.current.appendChild(livePath);
+    }
+
+    livePath.setAttribute("d", path);
+  };
+
+  // Function to clear the entire SVG container
+  const clearSvgContainer = useDebouncedCallback(() => {
+    if (!svgContainerRef.current) return;
+
+    Array.from(svgContainerRef.current.children).forEach((child) => {
+      svgContainerRef.current?.removeChild(child);
+    });
+
+    svgElementsMap.current.clear();
+  }, 16);
+
+  // Function to delete an element by ID
+  const deleteObjectById = (id: string) => {
+    const elementToRemove = svgContainerRef.current?.querySelector(`#${id}`);
+    if (!elementToRemove) {
+      console.warn(`Element with ID ${id} not found or already removed.`);
+      return;
+    }
+
+    try {
+      svgContainerRef.current?.removeChild(elementToRemove);
+      svgElementsMap.current.delete(id);
+    } catch (err) {
+      console.error(`Failed to remove element with ID ${id}:`, err);
+    }
+  };
+
+  // Function to render SVG shapes
+  const renderSvg = (svgData: string, id: string) => {
+    if (!svgContainerRef.current) return;
+
+    let element = svgElementsMap.current.get(id);
+
+    if (!element) {
+      element = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      element.setAttribute("id", id);
+      svgContainerRef.current.appendChild(element);
+      svgElementsMap.current.set(id, element);
+    }
+
+    element.innerHTML = svgData;
+  };
+
+  // Handle incoming WebSocket messages
+  useEffect(() => {
+    if (!lastMessage) return;
+
+    try {
+      const parsedMessage = JSON.parse(lastMessage.data);
+
+      switch (parsedMessage.type) {
+        case "drawing": {
+          const { path } = parsedMessage.payload;
+          drawingQueue.current.push(path);
+          processDrawingQueue();
+          break;
+        }
+        case "shape": {
+          const { id, type } = parsedMessage.payload;
+          let { svg } = parsedMessage.payload;
+
+          if (type === "path") {
+            svg = pako.inflate(svg, { to: "string" });
+          }
+
+          renderSvg(svg, id);
+          break;
+        }
+        case "remove-element": {
+          const { id: removeElementId } = parsedMessage.payload;
+          deleteObjectById(removeElementId);
+          break;
+        }
+        case "remove-all": {
+          clearSvgContainer();
+          break;
+        }
+        default: {
+          console.log("Unknown message type:", parsedMessage.type);
+        }
+      }
+    } catch (e) {
+      console.error("Error processing message:", e);
+    }
+  }, [lastMessage, processDrawingQueue, clearSvgContainer]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      svgElementsMap.current.clear();
+      drawingQueue.current = [];
+    };
+  }, []);
+
+  return (
+    <svg
+      id="viewer-canvas"
+      className="w-[800px] h-[600px] rounded-md bg-gray-100"
+      ref={svgContainerRef}
+    />
+  );
 };
 
 export default ViewerCanvas;
