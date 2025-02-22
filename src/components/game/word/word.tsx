@@ -47,7 +47,7 @@ const WordToGuess = () => {
 
   const { timeRemaining } = useTimer({
     timerType: "guessWordTimer",
-    messageTypes: ["guessWordTimer", "gameState"],
+    messageTypes: ["turnTimer", "gameState"],
   });
 
   useEffect(() => {
@@ -67,7 +67,7 @@ const WordToGuess = () => {
           {
             const revealedLetters =
               newMessage.payload.gameState.revealedLetters.map((code: number) =>
-                String.fromCharCode(code)
+                String.fromCharCode(code),
               );
             setRevealedLetters(revealedLetters);
             const word = newMessage.payload.gameState.wordToGuess;

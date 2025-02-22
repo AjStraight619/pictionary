@@ -15,13 +15,22 @@ import { Button } from "@/components/ui/button";
 import { useTimer } from "@/hooks/useTimer";
 import { useReadLocalStorage } from "usehooks-ts";
 import { PlayerInfo } from "@/types/lobby";
+import { useLocation } from "react-router";
 
 const PreGameLobby = () => {
+  const location = useLocation();
+  const [copied, setCopied] = useState(false);
+
+  function copyToClipboard(text: string) {
+    setCopied(true);
+    navigator.clipboard.writeText(text);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   const { lastMessage, connectionStatus } = useCustomWebsocket({
     messageTypes: ["gameState"],
   });
 
-  //const { lastMessage, connectionStatus } = useGame();
   const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
   const { players } = useGame();
 
@@ -42,7 +51,7 @@ const PreGameLobby = () => {
   };
 
   const isLeader = players.find(
-    (p) => p.isLeader && p.playerId === playerInfo?.playerId
+    (p) => p.isLeader && p.playerId === playerInfo?.playerId,
   );
 
   useEffect(() => {
@@ -91,12 +100,24 @@ const PreGameLobby = () => {
           ))}
         </div>
         <DialogFooter>
+          {isLeader && (
+            <Button
+              onClick={() =>
+                copyToClipboard(location.pathname.split("/").pop()!)
+              }
+            >
+              {copied ? "Copied!" : "Copy Game Link"}
+            </Button>
+          )}
+
           {isLeader ? (
             gameStarting ? (
               <Button onClick={handleCancelGame}>Cancel {timeRemaining}</Button>
             ) : (
               <Button onClick={handleStartGame}>Start Game</Button>
             )
+          ) : gameStarting ? (
+            <p>Game starting {timeRemaining}</p>
           ) : (
             <p>Waiting for leader to start the game...</p>
           )}

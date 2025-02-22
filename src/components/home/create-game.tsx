@@ -12,21 +12,18 @@ import { Label } from "../ui/label";
 import { Button } from "../ui/button";
 import { useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
+import { PlayerInfo } from "@/types/lobby";
 
 type GameOptions = {
-  maxRounds: number;
-  turnTimer: number;
-  selectWordTimer: number;
+  roundLimit: number;
+  turnTimeLimit: number;
+  selectWordTimeLimit: number;
+  maxPlayers: number;
 };
 
 type FormState = {
   playerName: string;
   gameOptions: GameOptions;
-};
-
-export type PlayerInfo = {
-  playerId: string;
-  name: string;
 };
 
 const CreateGameForm = () => {
@@ -39,11 +36,13 @@ const CreateGameForm = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [formState, setFormState] = useState<FormState>({
-    playerName: playerInfo?.name || "",
+    playerName: playerInfo?.username || "",
+    // Default game options
     gameOptions: {
-      maxRounds: 6,
-      turnTimer: 60,
-      selectWordTimer: 20,
+      maxPlayers: 6,
+      roundLimit: 6,
+      turnTimeLimit: 60,
+      selectWordTimeLimit: 20,
     },
   });
 
@@ -70,21 +69,20 @@ const CreateGameForm = () => {
     if (!validateForm()) return;
 
     // Generate gameId and playerId
-    const gameId = crypto.randomUUID();
-    const playerId = crypto.randomUUID();
+    //const gameId = crypto.randomUUID();
+    const playerID = crypto.randomUUID();
 
     // Prepare the payload
     const payload = {
-      gameId,
-      playerId,
-      playerName: formState.playerName,
-      gameOptions: formState.gameOptions,
+      playerID,
+      username: formState.playerName,
+      options: formState.gameOptions,
     };
 
     setIsLoading(true);
     try {
       // Send the game creation request to the server
-      const res = await fetch("http://localhost:8000/create-game", {
+      const res = await fetch("http://localhost:8000/game/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -101,14 +99,17 @@ const CreateGameForm = () => {
       const data = await res.json();
       console.log("Game created successfully:", data);
 
+      const gameID = data.gameID;
+      const message = data.message;
+
       // Store player info locally
       setPlayerInfo({
-        playerId,
-        name: formState.playerName,
+        playerID,
+        username: formState.playerName,
       });
 
       // Navigate to the game page using the created gameId
-      navigate(`/game/${gameId}`);
+      navigate(`/game/${gameID}`);
     } catch (error) {
       console.error("Error creating the game:", error);
       setError("Something went wrong. Please try again later.");
@@ -122,16 +123,17 @@ const CreateGameForm = () => {
       setError("Player name must be between 3 and 12 characters.");
       return false;
     }
-    const { maxRounds, turnTimer, selectWordTimer } = formState.gameOptions;
-    if (maxRounds < 3 || maxRounds > 10) {
+    const { roundLimit, turnTimeLimit, selectWordTimeLimit } =
+      formState.gameOptions;
+    if (roundLimit < 3 || roundLimit > 10) {
       setError("Max Rounds must be between 3 and 10.");
       return false;
     }
-    if (turnTimer < 40 || turnTimer > 80) {
+    if (turnTimeLimit < 40 || turnTimeLimit > 80) {
       setError("Round Timer must be between 40 and 80 seconds.");
       return false;
     }
-    if (selectWordTimer < 10 || selectWordTimer > 30) {
+    if (selectWordTimeLimit < 10 || selectWordTimeLimit > 30) {
       setError("Word Select Timer must be between 10 and 30 seconds.");
       return false;
     }
@@ -167,54 +169,72 @@ const CreateGameForm = () => {
           {/* Game Options */}
           <div className="space-y-1">
             <Label
-              htmlFor="maxRounds"
+              htmlFor="roundLimit"
               className="text-sm font-medium text-gray-600"
             >
-              Max Rounds
+              Round Limit
             </Label>
             <Input
-              id="maxRounds"
-              name="maxRounds"
+              id="roundLimit"
+              name="roundLimit"
               type="number"
               min={3}
               max={10}
-              value={formState.gameOptions.maxRounds}
+              value={formState.gameOptions.roundLimit}
               onChange={handleInputChange}
             />
           </div>
 
           <div className="space-y-1">
             <Label
-              htmlFor="turnTimer"
+              htmlFor="turnTimeLimit"
               className="text-sm font-medium text-gray-600"
             >
               Turn Timer (seconds)
             </Label>
             <Input
-              id="turnTimer"
-              name="turnTimer"
+              id="turnTimeLimit"
+              name="turnTimeLimit"
               type="number"
               min={40}
               max={80}
-              value={formState.gameOptions.turnTimer}
+              value={formState.gameOptions.turnTimeLimit}
               onChange={handleInputChange}
             />
           </div>
 
           <div className="space-y-1">
             <Label
-              htmlFor="selectWordTimer"
+              htmlFor="selectWordTimeLimit"
               className="text-sm font-medium text-gray-600"
             >
               Word Select Timer (seconds)
             </Label>
             <Input
-              id="selectWordTimer"
-              name="selectWordTimer"
+              id="selectWordTimeLimit"
+              name="selectWordTimeLimit"
               type="number"
               min={10}
               max={30}
-              value={formState.gameOptions.selectWordTimer}
+              value={formState.gameOptions.selectWordTimeLimit}
+              onChange={handleInputChange}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label
+              htmlFor="maxPlayers"
+              className="text-sm font-medium text-gray-600"
+            >
+              Max Players
+            </Label>
+            <Input
+              id="maxPlayers"
+              name="maxPlayers"
+              type="number"
+              min={2}
+              max={8}
+              value={formState.gameOptions.maxPlayers}
               onChange={handleInputChange}
             />
           </div>

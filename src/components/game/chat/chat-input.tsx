@@ -21,8 +21,8 @@ const ChatInput = ({ sendJsonMessage }: ChatInputProps) => {
       sendJsonMessage({
         type: "playerGuess",
         payload: {
-          playerId: playerInfo?.playerId,
-          username: playerInfo?.name,
+          playerId: playerInfo?.playerID,
+          username: playerInfo?.username,
           guess: input,
         },
       });

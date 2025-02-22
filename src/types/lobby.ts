@@ -9,6 +9,6 @@ export type Player = {
 };
 
 export type PlayerInfo = {
-  playerId: string;
-  name: string;
+  playerID: string;
+  username: string;
 };

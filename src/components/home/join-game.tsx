@@ -12,15 +12,11 @@ import { Label } from "../ui/label";
 import { Button } from "../ui/button";
 import { useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
+import { PlayerInfo } from "@/types/lobby";
 
 type FormState = {
   playerName: string;
   gameId: string;
-};
-
-export type PlayerInfo = {
-  playerId: string;
-  name: string;
 };
 
 const JoinGameForm = () => {
@@ -33,7 +29,7 @@ const JoinGameForm = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [formState, setFormState] = useState<FormState>({
-    playerName: playerInfo?.name || "",
+    playerName: playerInfo?.username || "",
     gameId: "",
   });
 
@@ -54,12 +50,12 @@ const JoinGameForm = () => {
 
     // Generate gameId and playerId
 
-    const playerId = crypto.randomUUID();
+    const playerID = crypto.randomUUID();
 
     // Prepare the payload
     const payload = {
       gameId: formState.gameId,
-      playerId,
+      playerID,
       playerName: formState.playerName,
     };
 
@@ -85,8 +81,8 @@ const JoinGameForm = () => {
 
       // Store player info locally
       setPlayerInfo({
-        playerId,
-        name: formState.playerName,
+        playerID,
+        username: formState.playerName,
       });
 
       // Navigate to the game page using the created gameId
