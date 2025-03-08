@@ -70,11 +70,9 @@ const CreateGameForm = () => {
 
     // Generate gameId and playerId
     //const gameId = crypto.randomUUID();
-    const playerID = crypto.randomUUID();
 
     // Prepare the payload
     const payload = {
-      playerID,
       username: formState.playerName,
       options: formState.gameOptions,
     };
@@ -100,7 +98,7 @@ const CreateGameForm = () => {
       console.log("Game created successfully:", data);
 
       const gameID = data.gameID;
-      const message = data.message;
+      const playerID = data.playerID;
 
       // Store player info locally
       setPlayerInfo({
@@ -108,7 +106,6 @@ const CreateGameForm = () => {
         username: formState.playerName,
       });
 
-      // Navigate to the game page using the created gameId
       navigate(`/game/${gameID}`);
     } catch (error) {
       console.error("Error creating the game:", error);

@@ -1,9 +1,9 @@
 export type Player = {
-  playerId: string;
+  playerID: string;
   username: string;
   isDrawing: boolean;
   isGuessCorrect: boolean;
-  isLeader: boolean;
+  isHost: boolean;
   score: number;
   color: string;
 };

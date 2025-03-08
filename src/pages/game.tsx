@@ -1,6 +1,4 @@
 import Canvas from "@/components/game/canvas/canvas";
-import DrawerCanvas from "@/components/game/canvas/drawer-canvas";
-import ViewerCanvas from "@/components/game/canvas/viewer-canvas";
 import Chat from "@/components/game/chat/chat";
 import Lobby from "@/components/game/lobby/lobby";
 import PreGameLobby from "@/components/game/lobby/pre-game-lobby";
@@ -9,9 +7,6 @@ import WordSelect from "@/components/game/word/word-select";
 import { GameProvider } from "@/providers/game-provider";
 
 const Game = () => {
-  //const [isLobbyOpen, setIsLobbyOpen] = useState(false);
-  //const [isChatOpen, setIsChatOpen] = useState(false);
-
   return (
     <GameProvider>
       <div className="flex flex-col min-h-screen items-center justify-between p-12">

@@ -28,7 +28,7 @@ const Lobby = () => {
         case "playerLeft": {
           const playerLeftId = parsedMessage.payload;
           const filteredPlayers = players.filter(
-            (p) => p.playerId !== playerLeftId
+            (p) => p.playerID !== playerLeftId,
           );
           setPlayers(filteredPlayers);
           break;
@@ -55,8 +55,8 @@ const Lobby = () => {
         <div className="grid grid-cols-4 grid-rows-2 gap-2 grid-flow-row">
           {players.map((player) => (
             <PlayerCard
-              key={player.playerId}
-              isLeader={player.isLeader}
+              key={player.playerID}
+              isHost={player.isHost}
               isDrawing={player.isDrawing}
               name={player.username}
               connectionStatus={connectionStatus}

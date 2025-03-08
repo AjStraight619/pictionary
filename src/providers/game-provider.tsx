@@ -28,9 +28,9 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isDrawingPlayer = useMemo(() => {
     return players.some(
-      (p) => p.isDrawing && p.playerId === playerInfo?.playerId,
+      (p) => p.isDrawing && p.playerID === playerInfo?.playerID,
     );
-  }, [players, playerInfo?.playerId]);
+  }, [players, playerInfo?.playerID]);
 
   return (
     <GameContext.Provider

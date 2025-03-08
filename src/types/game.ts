@@ -1,9 +1,9 @@
 import { Player } from "./lobby";
 
 export enum GameStatus {
-  StatusNotStarted = 0,
-  StatusInProgress = 1,
-  StatusFinished = 2,
+  NotStarted = 0,
+  InProgress = 1,
+  Finished = 2,
 }
 
 export type GameState = {

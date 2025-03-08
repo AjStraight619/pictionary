@@ -1,14 +1,14 @@
 import { Crown, Pencil, PersonStanding } from "lucide-react";
 
 const PlayerCard = ({
-  isLeader,
+  isHost,
   isDrawing,
   name,
   score,
   color,
   connectionStatus,
 }: {
-  isLeader: boolean;
+  isHost: boolean;
   isDrawing: boolean;
   name: string;
   connectionStatus: string;
@@ -38,7 +38,7 @@ const PlayerCard = ({
 
   return (
     <div
-      className={`px-2 py-1 rounded-md border`}
+      className="px-2 py-1 rounded-md border"
       style={{
         borderColor: color,
         backgroundColor: `${hexToRgba(color, 0.1)}`,
@@ -48,7 +48,7 @@ const PlayerCard = ({
         {/* Left side: Icon, Name, and Connection Status */}
         <div className="flex items-center gap-2">
           {isDrawing ? <Pencil /> : null}
-          {isLeader ? <Crown /> : <PersonStanding />}
+          {isHost ? <Crown /> : <PersonStanding />}
           <div>{name}</div>
           <div className="flex items-center gap-1">
             {/* Connection Status Circle */}

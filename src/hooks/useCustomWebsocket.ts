@@ -20,12 +20,12 @@ export const useCustomWebsocket = ({
 }: UseCustomWebsocketArgs) => {
   const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
 
-  const userId = playerInfo?.playerID as string;
+  const playerID = playerInfo?.playerID as string;
   const username = playerInfo?.username as string;
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const augmentedQueryParams = { ...queryParams, userId, username };
+  const augmentedQueryParams = { ...queryParams, playerID, username };
 
   const { sendJsonMessage, lastMessage, readyState, getWebSocket } =
     useWebSocket(`ws://localhost:8000/game/${id}`, {
@@ -51,6 +51,8 @@ export const useCustomWebsocket = ({
       filter: (message) => {
         try {
           const newMessage = JSON.parse(message.data);
+
+          console.log("newMessage: ", newMessage);
 
           // Propagate only valid message types
           return messageTypes.includes(newMessage.type);

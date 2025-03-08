@@ -28,15 +28,17 @@ const PreGameLobby = () => {
   }
 
   const { lastMessage, connectionStatus } = useCustomWebsocket({
-    messageTypes: ["gameState"],
+    messageTypes: ["gameState", "gameStarted"],
   });
 
   const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
   const { players } = useGame();
 
+  console.log("players: ", players);
+
   const { stopTimer, startTimer, timeRemaining } = useTimer({
-    timerType: "startGameTimer",
-    messageTypes: ["startGameTimer"],
+    timerType: "startGameCountdown",
+    messageTypes: ["startGameCountdown"],
   });
   const [open, setOpen] = useState(false);
   const [gameStarting, setGameStarting] = useState(false);
@@ -50,24 +52,26 @@ const PreGameLobby = () => {
     setGameStarting(false);
   };
 
-  const isLeader = players.find(
-    (p) => p.isLeader && p.playerId === playerInfo?.playerId,
+  const isHost = players.find(
+    (p) => p.isHost && p.playerID === playerInfo?.playerID,
   );
 
   useEffect(() => {
     if (lastMessage) {
       const gameStatus = JSON.parse(lastMessage.data).payload.gameState.status;
 
+      console.log("gameStatus: ", gameStatus);
+
       switch (gameStatus) {
-        case GameStatus.StatusNotStarted:
+        case GameStatus.NotStarted:
           setOpen(true);
           break;
 
-        case GameStatus.StatusInProgress:
+        case GameStatus.InProgress:
           setOpen(false);
           break;
 
-        case GameStatus.StatusFinished:
+        case GameStatus.Finished:
           console.log("Game has finished!");
           break;
 
@@ -89,8 +93,8 @@ const PreGameLobby = () => {
         <div className="grid grid-cols-2 grid-rows-4 gap-2 grid-flow-col">
           {players.map((player) => (
             <PlayerCard
-              key={player.playerId}
-              isLeader={player.isLeader}
+              key={player.playerID}
+              isHost={player.isHost}
               isDrawing={player.isDrawing}
               name={player.username}
               connectionStatus={connectionStatus}
@@ -100,7 +104,7 @@ const PreGameLobby = () => {
           ))}
         </div>
         <DialogFooter>
-          {isLeader && (
+          {isHost && (
             <Button
               onClick={() =>
                 copyToClipboard(location.pathname.split("/").pop()!)
@@ -110,7 +114,7 @@ const PreGameLobby = () => {
             </Button>
           )}
 
-          {isLeader ? (
+          {isHost ? (
             gameStarting ? (
               <Button onClick={handleCancelGame}>Cancel {timeRemaining}</Button>
             ) : (
