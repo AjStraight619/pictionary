@@ -50,6 +50,7 @@ export const useTimer = ({
 
   return {
     timeRemaining,
+    setTimeRemaining,
     startTimer,
     stopTimer,
   };

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useTimer } from "@/hooks/useTimer";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 import {
   Dialog,

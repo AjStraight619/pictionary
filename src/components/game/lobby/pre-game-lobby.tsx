@@ -20,6 +20,8 @@ import { useLocation } from "react-router";
 const PreGameLobby = () => {
   const location = useLocation();
   const [copied, setCopied] = useState(false);
+  const { state } = useGame();
+  const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
 
   function copyToClipboard(text: string) {
     setCopied(true);
@@ -31,12 +33,7 @@ const PreGameLobby = () => {
     messageTypes: ["gameState", "gameStarted"],
   });
 
-  const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
-  const { players } = useGame();
-
-  console.log("players: ", players);
-
-  const { stopTimer, startTimer, timeRemaining } = useTimer({
+  const { stopTimer, startTimer, timeRemaining, setTimeRemaining } = useTimer({
     timerType: "startGameCountdown",
     messageTypes: ["startGameCountdown"],
   });
@@ -48,11 +45,12 @@ const PreGameLobby = () => {
     setGameStarting(true);
   };
   const handleCancelGame = () => {
+    setTimeRemaining(null);
     stopTimer();
     setGameStarting(false);
   };
 
-  const isHost = players.find(
+  const isHost = state.players.find(
     (p) => p.isHost && p.playerID === playerInfo?.playerID,
   );
 
@@ -76,7 +74,7 @@ const PreGameLobby = () => {
           break;
 
         default:
-          console.warn("Unhandled game status:", gameStatus);
+          return;
       }
     }
   }, [lastMessage]);
@@ -91,7 +89,7 @@ const PreGameLobby = () => {
         <DialogTitle>Players</DialogTitle>
         <DialogDescription>Waiting for players to join...</DialogDescription>
         <div className="grid grid-cols-2 grid-rows-4 gap-2 grid-flow-col">
-          {players.map((player) => (
+          {state.players.map((player) => (
             <PlayerCard
               key={player.playerID}
               isHost={player.isHost}
