@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -19,6 +20,17 @@ type CreateGameRequest struct {
 type JoinGameRequest struct {
 	Username string `json:"username"`
 	GameID   string `json:"gameID"`
+}
+
+var numPlayers = 4
+
+func CreateTestPlayers(numPlayers int) []*shared.Player {
+	players := make([]*shared.Player, numPlayers)
+
+	for i := 0; i < numPlayers; i++ {
+		players[i] = g.NewPlayer(uuid.New().String(), fmt.Sprintf("player %d", i), false)
+	}
+	return players
 }
 
 func CreateGameHandler(c echo.Context, hubs *ws.Hubs, games *g.Games) error {
@@ -42,15 +54,20 @@ func CreateGameHandler(c echo.Context, hubs *ws.Hubs, games *g.Games) error {
 	game := g.NewGame(gameID, req.Options, hub)
 	// Add game to the games collection so ServeWs can find it.
 	games.AddGame(game)
-	log.Printf("CreateGameHandler: game added with ID: %s", gameID)
+	game.InitGameEvents()
 
 	hub.OnDisconnect = game.HandleDisconnect
 	player := g.NewPlayer(playerID, req.Username, true)
-	player.Pending = true
 	game.AddPlayer(player)
 
-	go hub.Run()
+	player.Pending = true
 
+	go hub.Run()
+	go game.Run()
+
+	for _, p := range CreateTestPlayers(numPlayers) {
+		game.AddPlayer(p)
+	}
 	return c.JSON(http.StatusOK, map[string]string{"gameID": gameID, "playerID": playerID})
 }
 
