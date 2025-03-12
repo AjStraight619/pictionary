@@ -10,9 +10,7 @@ func CreateMessage(msgType string, payload interface{}) ([]byte, error) {
 		"type":    msgType,
 		"payload": payload,
 	}
-
 	b, err := json.Marshal(message)
-
 	return b, err
 }
 
