@@ -15,9 +15,9 @@ type GameState struct {
 	Options         shared.GameOptions `json:"options"`
 	Status          Status             `json:"status"`
 	Round           *Round             `json:"round"`
+	Turn            *Turn              `json:"turn"`
 	WordToGuess     *shared.Word       `json:"wordToGuess,omitempty"`
-	RevealedLetters []rune             `json:"revealedLetters"`
-	SelectableWords []shared.Word      `json:"selectableWords"`
+	SelectableWords []shared.Word      `json:"selectableWords,omitempty"`
 	IsSelectingWord bool               `json:"isSelectingWord"`
 }
 
@@ -38,9 +38,8 @@ func (g *Game) GetGameState() GameState {
 		Options:         g.Options,
 		Status:          g.Status,
 		Round:           g.Round,
-		WordToGuess:     g.WordToGuess,
+		Turn:            g.CurrentTurn,
 		SelectableWords: g.SelectableWords,
-		RevealedLetters: []rune{},
 		IsSelectingWord: g.isSelectingWord,
 	}
 }
@@ -56,4 +55,13 @@ func (g *Game) BroadcastGameState() {
 
 	}
 	g.Messenger.BroadcastMessage(b)
+}
+
+func (g *Game) String() string {
+	state := g.GetGameState()
+	b, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return "Error marshalling game state: " + err.Error()
+	}
+	return string(b)
 }
