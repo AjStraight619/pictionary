@@ -1,12 +1,18 @@
 package ws
 
-import "sync"
+import (
+	"sync"
+
+	e "github.com/Ajstraight619/pictionary-server/internal/events"
+)
 
 type Hub struct {
-	Broadcast  chan []byte
-	Clients    map[*Client]bool
-	Register   chan *Client
-	Unregister chan *Client
+	Broadcast    chan []byte
+	GameEvents   chan e.GameEvent
+	Clients      map[*Client]bool
+	Register     chan *Client
+	Unregister   chan *Client
+	OnDisconnect func(playerID string)
 }
 
 type Hubs struct {
@@ -17,6 +23,7 @@ type Hubs struct {
 func NewHub() *Hub {
 	return &Hub{
 		Broadcast:  make(chan []byte),
+		GameEvents: make(chan e.GameEvent, 10),
 		Clients:    make(map[*Client]bool),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
@@ -57,6 +64,9 @@ func (h *Hub) Run() {
 			if _, ok := h.Clients[client]; ok {
 				delete(h.Clients, client)
 				close(client.Send)
+				// if h.OnDisconnect != nil {
+				// 	go h.OnDisconnect(client.PlayerID)
+				// }
 			}
 		case message := <-h.Broadcast:
 			for client := range h.Clients {
@@ -69,4 +79,21 @@ func (h *Hub) Run() {
 			}
 		}
 	}
+}
+
+func (h *Hub) BroadcastMessage(message []byte) {
+	h.Broadcast <- message
+}
+
+func (h *Hub) SendToPlayer(playerID string, message []byte) {
+	for client := range h.Clients {
+		if client.PlayerID == playerID {
+			client.Send <- message
+			break
+		}
+	}
+}
+
+func (h *Hub) GameEventChannel() <-chan e.GameEvent {
+	return h.GameEvents
 }
