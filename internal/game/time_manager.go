@@ -1,9 +1,10 @@
 package game
 
 import (
-	"github.com/Ajstraight619/pictionary-server/internal/utils"
 	"log"
 	"time"
+
+	"github.com/Ajstraight619/pictionary-server/internal/utils"
 )
 
 type TimerManager struct {
@@ -19,14 +20,17 @@ func (tm *TimerManager) StartTurnTimer(playerID string) {
 	tm.game.timers["turnTimer"] = timer
 
 	onCancel := func() {
-		log.Println("Turn timer cancelled")
-		tm.game.Round.MarkPlayerAsDrawn(playerID)
-		tm.game.BroadcastGameState()
+		// log.Println("Turn timer cancelled")
+		// tm.game.Round.MarkPlayerAsDrawn(playerID)
+		// tm.game.setWord(nil)
+		// tm.game.BroadcastGameState()
+		tm.game.FlowSignal <- TurnEnded
 	}
 	onFinish := func() {
-		log.Println("Turn timer finished")
-		tm.game.Round.MarkPlayerAsDrawn(playerID)
-		tm.game.BroadcastGameState()
+		// log.Println("Turn timer finished")
+		// tm.game.Round.MarkPlayerAsDrawn(playerID)
+		// tm.game.setWord(nil)
+		// tm.game.BroadcastGameState()
 		tm.game.FlowSignal <- TurnEnded
 	}
 	go func() {
@@ -45,12 +49,13 @@ func (tm *TimerManager) StartTurnTimer(playerID string) {
 }
 
 func (tm *TimerManager) StartWordSelectionTimer(playerID string) {
-	timer := NewTimer("selectWordTimer", 30)
+	timer := NewTimer("selectWordTimer", 8)
 	tm.game.timers["selectWordTimer"] = timer
 	log.Println("Word selection timer started.")
 
 	go func() {
-		time.Sleep(2 * time.Second)
+		// To control pacing of game. Small delays in between different game actions and state updates.
+		time.Sleep(1 * time.Second)
 		for remaining := range timer.StartCountdown(
 			func() {
 				tm.game.handleTimerExpiration()
@@ -59,11 +64,10 @@ func (tm *TimerManager) StartWordSelectionTimer(playerID string) {
 				log.Println("Word selection cancelled. Timer stopped.")
 			},
 		) {
-			msgType := "selectWordTimer"
 			payload := map[string]interface{}{
 				"timeRemaining": remaining,
 			}
-			if b, err := utils.CreateMessage(msgType, payload); err == nil {
+			if b, err := utils.CreateMessage("selectWordTimer", payload); err == nil {
 				tm.game.Messenger.SendToPlayer(playerID, b)
 			} else {
 				log.Println("error marshalling selectWordTimer message:", err)

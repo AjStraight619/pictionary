@@ -3,7 +3,6 @@ package game
 import (
 	"encoding/json"
 	"log"
-	"time"
 
 	e "github.com/Ajstraight619/pictionary-server/internal/events"
 	"github.com/Ajstraight619/pictionary-server/internal/utils"
@@ -20,6 +19,26 @@ func (g *Game) RegisterGameEvent(eventType string, handler EventHandler) {
 
 // InitGameEvents registers the default event handlers for a game.
 func (g *Game) InitGameEvents() {
+	// Send game state to the player when their visibility changes (joining, tabbing back in, etc.)
+	g.RegisterGameEvent(e.GameState, func(payload json.RawMessage) {
+		var pt e.GameStatePayload
+		if err := json.Unmarshal(payload, &pt); err != nil {
+			log.Println("Error unmarshalling GameState payload:", err)
+			return
+		}
+
+		state := g.GetGameState()
+		b, err := json.Marshal(map[string]interface{}{
+			"type":    "gameState",
+			"payload": state,
+		})
+		if err != nil {
+			log.Println("error marshalling game state:", err)
+
+		}
+		g.Messenger.SendToPlayer(pt.PlayerID, b)
+
+	})
 	g.RegisterGameEvent(e.StartTimer, func(payload json.RawMessage) {
 		var pt e.StartTimerPayload
 		if err := json.Unmarshal(payload, &pt); err != nil {
@@ -56,11 +75,8 @@ func (g *Game) InitGameEvents() {
 		log.Printf("Word selected manually: %s", pt.Word.Word)
 
 		g.CancelTimer("selectWordTimer")
-		g.Mu.Lock()
-
-		g.CurrentTurn.WordToGuess = &pt.Word
-		g.isSelectingWord = false
-		g.Mu.Unlock()
+		g.setIsSelectingWord(false)
+		g.setWord(&pt.Word)
 		log.Printf("Word selected manually: %s", pt.Word.Word)
 
 		selectWordPayload := map[string]interface{}{
@@ -76,10 +92,37 @@ func (g *Game) InitGameEvents() {
 		currentDrawer := g.GetCurrentDrawer()
 		g.Messenger.SendToPlayer(currentDrawer.ID, b)
 		g.BroadcastGameState()
+		g.FlowSignal <- TurnStarted
+	})
 
-		time.AfterFunc(1*time.Second, func() {
-			g.FlowSignal <- TurnStarted
-		})
+	g.RegisterGameEvent(e.GameState, func(payload json.RawMessage) {
+		var pt e.GameStatePayload
+
+		if err := json.Unmarshal(payload, &pt); err != nil {
+			log.Println("Error unmarshalling GameState payload:", err)
+			return
+		}
+
+		playerID := pt.PlayerID
+
+		b, err := utils.CreateMessage("gameState", g.GetGameState())
+		if err != nil {
+			log.Println("error marshalling game state:", err)
+			return
+		}
+
+		g.Messenger.SendToPlayer(playerID, b)
+	})
+
+	g.RegisterGameEvent(e.PlayerGuess, func(payload json.RawMessage) {
+		var pt e.PlayerGuessPayload
+
+		if err := json.Unmarshal(payload, &pt); err != nil {
+			log.Println("Error unmarshalling PlayerGuess payload:", err)
+			return
+		}
+
+		g.handlePlayerGuess(pt.PlayerID, pt.Guess)
 	})
 
 }

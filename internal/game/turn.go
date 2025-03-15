@@ -10,18 +10,70 @@ import (
 	"github.com/Ajstraight619/pictionary-server/internal/utils"
 )
 
+type TurnPhase int
+
+const (
+	PhaseWordSelection TurnPhase = iota
+	PhaseDrawing
+)
+
 type Turn struct {
+	CurrentDrawerID         string          `json:"currentDrawerID"`
 	WordToGuess             *shared.Word    `json:"wordToGuess,omitempty"`
 	RevealedLetters         []rune          `json:"revealedLetters"`
 	PlayersGuessedCorrectly map[string]bool `json:"playersGuessedCorrectly"`
+	Phase                   TurnPhase       `json:"phase"`
 }
 
-func NewTurn() *Turn {
+func InitTurn() *Turn {
 	return &Turn{
+		CurrentDrawerID:         "",
 		PlayersGuessedCorrectly: make(map[string]bool),
 		RevealedLetters:         make([]rune, 0),
 		WordToGuess:             nil,
+		Phase:                   PhaseWordSelection,
 	}
+}
+
+func NewTurn(playerID string) *Turn {
+	return &Turn{
+		CurrentDrawerID:         playerID,
+		PlayersGuessedCorrectly: make(map[string]bool),
+		RevealedLetters:         make([]rune, 0),
+		WordToGuess:             nil,
+		Phase:                   PhaseWordSelection,
+	}
+}
+
+func (fm *FlowManager) handleTurnStarted() {
+	fm.game.BroadcastGameState()
+	turn := fm.game.CurrentTurn
+
+	switch turn.Phase {
+	case PhaseWordSelection:
+		if turn.WordToGuess == nil {
+			log.Println("No word selected. Initiating word selection...")
+			fm.game.WordSelector.SelectWord()
+			return
+		}
+		log.Println("Word selected. Switching to drawing phase.")
+		turn.Phase = PhaseDrawing
+		fm.handleTurnStarted()
+	case PhaseDrawing:
+		drawer := fm.game.GetCurrentDrawer()
+		if drawer == nil {
+			log.Println("No current drawer found; cannot start turn.")
+			return
+		}
+		log.Println("Starting drawing phase for drawer", drawer.ID)
+		turn.Start(fm.game, drawer.ID)
+	default:
+		log.Println("Unknown turn phase encountered.")
+	}
+}
+
+func (fm *FlowManager) handleTurnEnded() {
+	fm.game.CurrentTurn.End(fm.game)
 }
 
 func (t *Turn) Start(g *Game, playerID string) {
@@ -31,6 +83,7 @@ func (t *Turn) Start(g *Game, playerID string) {
 		revealedLetters[i] = '_'
 	}
 	t.RevealedLetters = revealedLetters
+	t.CurrentDrawerID = playerID
 	g.TimerManager.StartTurnTimer(playerID)
 }
 
@@ -42,13 +95,7 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 	elapsedTime := turnTimeLimit - timeRemaining
 
 	letterInterval := float64(turnTimeLimit) / float64(totalLetters)
-	targetCount := int(math.Ceil(float64(elapsedTime) / letterInterval))
-	if targetCount < 1 {
-		targetCount = 1
-	}
-	if targetCount > totalLetters {
-		targetCount = totalLetters
-	}
+	targetCount := min(max(int(math.Ceil(float64(elapsedTime)/letterInterval)), 1), totalLetters)
 
 	currentRevealed := 0
 	for _, r := range t.RevealedLetters {
@@ -80,11 +127,7 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 	}
 
 	// Broadcast the updated revealed letters to all players.
-	msgType := "revealedLetter"
-	payload := map[string]interface{}{
-		"revealedLetters": string(t.RevealedLetters),
-	}
-	if b, err := utils.CreateMessage(msgType, payload); err == nil {
+	if b, err := utils.CreateMessage("revealedLetter", t.RevealedLetters); err == nil {
 		g.Messenger.BroadcastMessage(b)
 	} else {
 		log.Println("error marshalling revealedLetter message:", err)
@@ -93,21 +136,28 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 
 func (t *Turn) End(g *Game) {
 	log.Println("Turn ended")
-	g.Mu.Lock()
-	roundComplete := len(g.Round.PlayersDrawn) == len(g.PlayerOrder)
-	for id, p := range g.Players {
-		p.IsDrawing = false
-		log.Printf("Player %s isDrawing set to false", id)
-	}
-	g.Mu.Unlock()
-	g.CurrentTurn = NewTurn()
-
+	g.ClearDrawingPlayers()
+	g.Round.MarkPlayerAsDrawn(t.CurrentDrawerID)
+	// g.Mu.Lock()
+	// roundComplete := len(g.Round.PlayersDrawn) == len(g.PlayerOrder)
+	// g.Mu.Unlock()
+	roundOver := g.Round.IsOver(g)
+	g.setWord(nil)
 	g.BroadcastGameState()
-	if roundComplete {
+	if roundOver {
+		log.Println("Round is over signalling round ended ")
 		g.FlowSignal <- RoundEnded
 	} else {
-		// Delegate to Round for next drawer selection.
 		g.Round.NextDrawer(g)
 		g.FlowSignal <- TurnStarted
 	}
+}
+
+func (t *Turn) allGuessedCorrectly() bool {
+	for _, guessedCorrectly := range t.PlayersGuessedCorrectly {
+		if !guessedCorrectly {
+			return false
+		}
+	}
+	return true
 }

@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Ajstraight619/pictionary-server/internal/db"
-	g "github.com/Ajstraight619/pictionary-server/internal/game"
 	"log"
 	"os"
+
+	"github.com/Ajstraight619/pictionary-server/internal/db"
+	"github.com/Ajstraight619/pictionary-server/internal/shared"
 )
 
 func main() {
@@ -15,7 +16,7 @@ func main() {
 	os.MkdirAll("data", os.ModePerm)
 	db.InitDB(databasePath)
 
-	db.MigrateModels(&g.Word{})
+	db.MigrateModels(&shared.Word{})
 
 	data, err := os.ReadFile("internal/db/words.json")
 
@@ -30,11 +31,11 @@ func main() {
 		log.Fatalf("Failed to parse JSON file: %v", err)
 	}
 
-	var words []g.Word
+	var words []shared.Word
 
 	for category, wordslist := range wordsMap {
 		for _, word := range wordslist {
-			words = append(words, g.Word{
+			words = append(words, shared.Word{
 				Word:     word,
 				Category: category,
 			})

@@ -89,8 +89,8 @@ func NewGame(id string, options shared.GameOptions, messenger m.Messenger) *Game
 	game.TimerManager = NewTimerManager(game)
 	game.WordSelector = NewWordSelector(game)
 	game.FlowManager = NewFlowManager(game)
-	game.Round = NewRound()
-	game.CurrentTurn = NewTurn()
+	game.Round = InitRound()
+	game.CurrentTurn = InitTurn()
 	return game
 }
 
@@ -103,6 +103,10 @@ func (g *Game) Run() {
 			g.handleExternalEvent(event)
 		}
 	}
+}
+
+func (fm *FlowManager) handleGameStarted() {
+	fm.game.FlowSignal <- RoundStarted
 }
 
 func (g *Game) Start() {
@@ -185,5 +189,16 @@ func (g *Game) handleExternalEvent(event e.GameEvent) {
 		go handler(event.Payload)
 		return
 	}
-
 }
+
+func (g *Game) ClearDrawingPlayers() {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+	for _, player := range g.Players {
+		player.IsDrawing = false
+	}
+}
+
+// func setIsDrawing(player *shared.Player, isDrawing bool) {
+// 	player.IsDrawing = isDrawing
+// }

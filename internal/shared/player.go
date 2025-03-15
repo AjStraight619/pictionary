@@ -10,7 +10,7 @@ type ClientInterface interface {
 }
 
 type Player struct {
-	ID             string          `json:"playerID"`
+	ID             string          `json:"ID"`
 	IsHost         bool            `json:"isHost"`
 	Username       string          `json:"username"`
 	Score          int             `json:"score"`

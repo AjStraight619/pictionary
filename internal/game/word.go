@@ -47,7 +47,14 @@ func (ws *WordSelector) SelectWord() {
 		return
 	}
 	ws.game.Messenger.SendToPlayer(currentDrawer.ID, b)
+	ws.game.BroadcastGameState()
 	ws.game.TimerManager.StartWordSelectionTimer(currentDrawer.ID)
+}
+
+func (g *Game) setWord(word *shared.Word) {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+	g.CurrentTurn.WordToGuess = word
 }
 
 func (g *Game) setIsSelectingWord(selecting bool) {
@@ -67,15 +74,24 @@ func (g *Game) setRandomWords(n int) error {
 	return nil
 }
 
+func (g *Game) clearSelectableWords() {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+	g.SelectableWords = []shared.Word{}
+}
+
 func (g *Game) handleTimerExpiration() {
 	if len(g.SelectableWords) > 0 {
 		g.Mu.Lock()
 		randomIndex := rand.Intn(len(g.SelectableWords))
 		randomWord := g.SelectableWords[randomIndex]
 		log.Printf("Timer finished. Automatically selecting word: %s", randomWord.Word)
-		g.CurrentTurn.WordToGuess = &randomWord
-		g.isSelectingWord = false
 		g.Mu.Unlock()
+
+		g.setWord(&randomWord)
+		g.setIsSelectingWord(false)
+		g.clearSelectableWords()
+
 		selectWordPayload := map[string]interface{}{
 			"word":            g.CurrentTurn.WordToGuess,
 			"isSelectingWord": false,

@@ -24,29 +24,15 @@ func NewFlowManager(game *Game) *FlowManager {
 func (fm *FlowManager) HandleFlow(flow FlowEvent) {
 	switch flow {
 	case GameStarted:
-		fm.game.FlowSignal <- RoundStarted
+		fm.handleGameStarted()
 	case RoundStarted:
-		fm.game.Round.Start(fm.game)
+		fm.handleRoundStarted()
 	case TurnStarted:
-		fm.game.BroadcastGameState()
-		if fm.game.CurrentTurn.WordToGuess == nil {
-			log.Println("Word is nil, selecting new word")
-			fm.game.WordSelector.SelectWord()
-		} else {
-			drawer := fm.game.GetCurrentDrawer()
-			if drawer != nil {
-				log.Println("Starting turn for drawer")
-				fm.game.CurrentTurn.Start(fm.game, drawer.ID)
-			} else {
-				log.Println("No current drawer found; cannot start turn.")
-			}
-		}
+		fm.handleTurnStarted()
 	case TurnEnded:
-		fm.game.CurrentTurn.End(fm.game)
+		fm.handleTurnEnded()
 	case RoundEnded:
-		log.Printf("Round %d ended", fm.game.Round.Count)
-		fm.game.Round.Next(fm.game)
-		fm.game.FlowSignal <- RoundStarted
+		fm.handleRoundEnded()
 	case GameEnded:
 		log.Println("Game ended")
 		return
