@@ -1,11 +1,16 @@
 import DrawerCanvas from "./drawer-canvas";
 import ViewerCanvas from "./viewer-canvas";
-import { useGame } from "@/providers/game-provider";
+import { useCurrentDrawerFromPlayers } from "@/hooks/useGameSelector";
+import { useReadLocalStorage } from "usehooks-ts";
+import { PlayerInfo } from "@/types/lobby";
 
 const Canvas = () => {
-  const { isDrawingPlayer } = useGame();
+  const currentDrawerId = useCurrentDrawerFromPlayers();
+  const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
 
-  return <>{isDrawingPlayer ? <DrawerCanvas /> : <ViewerCanvas />}</>;
+  const isCurrentDrawer = playerInfo?.playerID === currentDrawerId;
+
+  return <>{isCurrentDrawer ? <DrawerCanvas /> : <ViewerCanvas />}</>;
 };
 
 export default Canvas;

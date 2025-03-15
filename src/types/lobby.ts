@@ -1,5 +1,5 @@
 export type Player = {
-  playerID: string;
+  ID: string;
   username: string;
   isDrawing: boolean;
   isGuessCorrect: boolean;

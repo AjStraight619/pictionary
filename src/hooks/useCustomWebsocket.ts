@@ -1,14 +1,32 @@
-import { PlayerInfo } from "@/types/lobby";
+import { Player, PlayerInfo } from "@/types/lobby";
 import { useNavigate, useParams } from "react-router";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useReadLocalStorage } from "usehooks-ts";
+import { useEffect } from "react";
+import { GameState, Word } from "@/types/game";
 
 type QueryParams = {
   [key: string]: string | number;
 };
 
+interface GameMessagePayloads {
+  gameState: GameState;
+  revealedLetter: string;
+  drawingPlayerChanged: Player;
+  selectedWord: { isSelectingWord: boolean; word: Word };
+  scoreUpdated: { playerID: string; score: number };
+  openSelectWordModal: { isSelectingWord: boolean; selectableWords: Word[] };
+}
+
+type MessageHandler = (payload: any) => void;
+
+type MessageHandlers = {
+  [K in keyof GameMessagePayloads]?: (payload: GameMessagePayloads[K]) => void;
+};
+
 type UseCustomWebsocketArgs = {
-  messageTypes: string[];
+  messageTypes?: string[];
+  messageHandlers?: MessageHandlers;
   url?: string;
   gameId?: string;
   queryParams?: QueryParams;
@@ -16,15 +34,14 @@ type UseCustomWebsocketArgs = {
 
 export const useCustomWebsocket = ({
   messageTypes,
+  messageHandlers = {},
   queryParams,
 }: UseCustomWebsocketArgs) => {
   const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
-
   const playerID = playerInfo?.playerID as string;
   const username = playerInfo?.username as string;
   const navigate = useNavigate();
   const { id } = useParams();
-
   const augmentedQueryParams = { ...queryParams, playerID, username };
 
   const { sendJsonMessage, lastMessage, readyState, getWebSocket } =
@@ -32,14 +49,14 @@ export const useCustomWebsocket = ({
       queryParams: augmentedQueryParams,
       share: true,
       shouldReconnect: () => true,
-      reconnectAttempts: 3,
+      reconnectAttempts: 100,
       reconnectInterval: (attemptNumber) =>
         Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
       onOpen: () =>
         console.log("WebSocket opened at", new Date().toLocaleTimeString()),
       onClose: (event) =>
         console.log(
-          `WebSocket closed: code ${event.code}, reason: ${event.reason}`,
+          `WebSocket closed: code ${event.code}, reason: ${event.reason}`
         ),
       onError: (error) => console.log("WebSocket error:", error),
       onReconnectStop: () => {
@@ -47,15 +64,11 @@ export const useCustomWebsocket = ({
         //TODO: Trigger a modal here to inform the user that the connection has been lost
         navigate("/");
       },
-
       filter: (message) => {
         try {
           const newMessage = JSON.parse(message.data);
-
-          console.log("newMessage: ", newMessage);
-
           // Propagate only valid message types
-          return messageTypes.includes(newMessage.type);
+          return messageTypes?.includes(newMessage.type) ?? false;
         } catch {
           return false; // Ignore invalid JSON
         }
@@ -69,6 +82,23 @@ export const useCustomWebsocket = ({
         timeout: 59000,
       },
     });
+
+  // Process messages and call appropriate handlers
+  useEffect(() => {
+    if (lastMessage && Object.keys(messageHandlers).length > 0) {
+      try {
+        const parsedMessage = JSON.parse(lastMessage.data);
+        const messageType = parsedMessage.type;
+
+        // If we have a handler for this message type, call it
+        if (messageHandlers[messageType]) {
+          messageHandlers[messageType](parsedMessage.payload);
+        }
+      } catch (error) {
+        console.error("Error processing message:", error);
+      }
+    }
+  }, [lastMessage, messageHandlers]);
 
   const closeWebSocket = () => {
     const webSocket = getWebSocket();

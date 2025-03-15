@@ -1,68 +1,59 @@
-import { Crown, Pencil, PersonStanding } from "lucide-react";
+import { Crown, Pencil } from "lucide-react";
+import { motion } from "framer-motion";
 
-const PlayerCard = ({
-  isHost,
-  isDrawing,
-  name,
-  score,
-  color,
-  connectionStatus,
-}: {
+interface PlayerCardProps {
+  name: string;
+  score: number;
   isHost: boolean;
   isDrawing: boolean;
-  name: string;
-  connectionStatus: string;
-  score: number;
   color: string;
-}) => {
-  // Map connection status to a color
-  const connectionColors: Record<string, string> = {
-    Connecting: "bg-yellow-500",
-    Open: "bg-green-500",
-    Closing: "bg-orange-500",
-    Closed: "bg-red-500",
-    Uninstantiated: "bg-gray-500",
-  };
+}
 
-  const hexToRgba = (hex: string, alpha: number): string => {
-    // Remove the hash symbol if present
-    hex = hex.replace(/^#/, "");
-
-    // Parse r, g, b values
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
+const PlayerCard = ({
+  name,
+  score,
+  isHost,
+  isDrawing,
+  color,
+}: PlayerCardProps) => {
+  // Convert color string to a usable background color with low opacity
+  const bgColor = color ? `${color}20` : "bg-muted"; // 20 is hex for ~12% opacity
+  const textColor = color || "text-foreground";
 
   return (
-    <div
-      className="px-2 py-1 rounded-md border"
-      style={{
-        borderColor: color,
-        backgroundColor: `${hexToRgba(color, 0.1)}`,
-      }}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`rounded-lg border p-3 flex items-center gap-3 ${
+        isDrawing
+          ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+          : ""
+      }`}
+      style={{ backgroundColor: bgColor }}
     >
-      <div className="flex items-center justify-between">
-        {/* Left side: Icon, Name, and Connection Status */}
-        <div className="flex items-center gap-2">
-          {isDrawing ? <Pencil /> : null}
-          {isHost ? <Crown /> : <PersonStanding />}
-          <div>{name}</div>
-          <div className="flex items-center gap-1">
-            {/* Connection Status Circle */}
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                connectionColors[connectionStatus] || "bg-gray-400"
-              }`}
-            ></span>
-          </div>
-        </div>
-
-        <div>{score}</div>
+      {/* Avatar/Initial */}
+      <div
+        className="h-9 w-9 rounded-full flex items-center justify-center text-white"
+        style={{ backgroundColor: color || "#6366f1" }}
+      >
+        {name.charAt(0).toUpperCase()}
       </div>
-    </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1">
+          <p className="font-medium truncate" style={{ color: textColor }}>
+            {name}
+          </p>
+          {isHost && (
+            <Crown className="h-3.5 w-3.5 text-yellow-400 flex-shrink-0" />
+          )}
+          {isDrawing && (
+            <Pencil className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground truncate">Score: {score}</p>
+      </div>
+    </motion.div>
   );
 };
 

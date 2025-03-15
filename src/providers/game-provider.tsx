@@ -1,46 +1,28 @@
-import { GameStatus } from "@/types/game";
-import { Player, PlayerInfo } from "@/types/lobby";
-import React, {
-  createContext,
-  SetStateAction,
-  useContext,
-  useReducer,
-} from "react";
-import { useReadLocalStorage } from "usehooks-ts";
-
-type GameContextType = {
-  players: Player[];
-  setPlayers: React.Dispatch<SetStateAction<Player[]>>;
-  gameStatus?: GameStatus;
-  isDrawingPlayer?: boolean;
-};
-
-export type GameOptions = {};
-
-export type Round = {
-  // define your round type
-  count: number;
-  currentDrawerIdx: number;
-  // etc.
-};
-
-type GameState = {
-  id: string;
-  players: Player[];
-  playerOrder: string[];
-  options: GameOptions;
-  gameStatus: GameStatus;
-  round: Round | null;
-  wordToGuess: string;
-  revealedLetters: string[];
-};
+import { GameState, GameStatus, Turn, TurnPhase, Word } from "@/types/game";
+import { Player } from "@/types/lobby";
+import React, { createContext, useContext, useReducer } from "react";
 
 type Action =
   | { type: "GAME_STATE_UPDATE"; payload: GameState }
   | { type: "PLAYER_JOINED"; payload: Player }
-  | { type: "PLAYER_LEFT"; payload: string };
+  | { type: "PLAYER_LEFT"; payload: string }
+  | { type: "ADD_REVEALED_LETTER"; payload: string }
+  | { type: "DRAWING_PLAYER_CHANGED"; payload: Player }
+  | { type: "SELECTED_WORD"; payload: { word: Word; isSelectingWord: boolean } }
+  | {
+      type: "SELECT_WORD_MODAL";
+      payload: { isSelectingWord: boolean; selectableWords: Word[] };
+    }
+  | { type: "SCORE_UPDATED"; payload: { playerID: string; score: number } };
 
-//const GameContext = createContext<GameContextType | null>(null);
+function setSelectedWord(turn: Turn, word: Word): Turn {
+  return {
+    ...turn,
+    wordToGuess: word,
+    revealedLetters: [],
+    phase: TurnPhase.PhaseDrawing,
+  };
+}
 
 const gameReducer = (state: GameState, action: Action): GameState => {
   switch (action.type) {
@@ -51,8 +33,53 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case "PLAYER_LEFT":
       return {
         ...state,
-        players: state.players.filter((p) => p.playerID !== action.payload),
+        players: state.players.filter((p) => p.ID !== action.payload),
       };
+    case "ADD_REVEALED_LETTER":
+      return {
+        ...state,
+        revealedLetters: [...state.revealedLetters, action.payload],
+      };
+
+    case "DRAWING_PLAYER_CHANGED":
+      return {
+        ...state,
+        players: state.players.map((p) => ({
+          ...p,
+          isDrawing: p.ID === action.payload.ID,
+        })),
+      };
+
+    case "SELECTED_WORD":
+      // TODO: make this cleaner
+      return {
+        ...state,
+        turn: state.turn
+          ? setSelectedWord(state.turn, action.payload.word)
+          : {
+              wordToGuess: { word: "", category: "", id: "" },
+              revealedLetters: [],
+              phase: TurnPhase.PhaseWordSelection,
+            },
+        isSelectingWord: false,
+      };
+    case "SELECT_WORD_MODAL":
+      return {
+        ...state,
+        isSelectingWord: true,
+        selectableWords: action.payload.selectableWords,
+      };
+
+    case "SCORE_UPDATED":
+      return {
+        ...state,
+        players: state.players.map((p) =>
+          p.ID === action.payload.playerID
+            ? { ...p, score: action.payload.score }
+            : p
+        ),
+      };
+
     default:
       return state;
   }
@@ -64,35 +91,22 @@ const GameContext = createContext<{
 } | null>(null);
 
 export const GameProvider = ({ children }: { children: React.ReactNode }) => {
-  //const [players, setPlayers] = useState<Player[]>([]);
-  //const [gameStatus, setGameStatus] = useState<GameStatus | undefined>(
-  //  undefined,
-  //);
   const [state, dispatch] = useReducer(gameReducer, {
     id: "",
     players: [],
-    gameStatus: GameStatus.NotStarted,
+    status: GameStatus.InProgress,
     playerOrder: [],
-    options: {},
+    options: { roundLimit: 8, turnTimeLimit: 60, selectWordTimeLimit: 30 },
     round: null,
-    wordToGuess: "",
+    turn: null,
     revealedLetters: [],
+    selectableWords: [],
+    isSelectingWord: false,
   });
-  //const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
-
-  //const isDrawingPlayer = useMemo(() => {
-  //  return players.some(
-  //    (p) => p.isDrawing && p.playerID === playerInfo?.playerID,
-  //  );
-  //}, [players, playerInfo?.playerID]);
 
   return (
     <GameContext.Provider
       value={{
-        //players,
-        //setPlayers,
-        //gameStatus,
-        //isDrawingPlayer,
         state,
         dispatch,
       }}

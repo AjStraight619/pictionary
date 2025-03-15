@@ -1,34 +1,62 @@
 import { useGame } from "@/providers/game-provider";
-import { useEffect, useState } from "react";
-import { isEqual } from "lodash";
+import { GameState } from "@/types/game";
+import { Player } from "@/types/lobby";
+import { useMemo } from "react";
 
-// Generic hook to subscribe to specific parts of the game state
-export function useGameSelector<T>(selector: (state: any) => T) {
+export function useGameSelector<T>(selector: (state: GameState) => T): T {
   const { state } = useGame();
-  const [selectedState, setSelectedState] = useState(() => selector(state));
-
-  useEffect(() => {
-    const newSelectedState = selector(state);
-    if (!isEqual(newSelectedState, selectedState)) {
-      setSelectedState(newSelectedState);
-    }
-  }, [state, selector, selectedState]);
-
-  return selectedState;
+  return useMemo(() => selector(state), [state, selector]);
 }
 
-export function usePlayers() {
+export function usePlayers(): GameState["players"] {
   return useGameSelector((state) => state.players);
 }
 
-export function useGameStatus() {
-  return useGameSelector((state) => state.gameStatus);
+export function useGameStatus(): GameState["status"] {
+  return useGameSelector((state) => state.status);
 }
 
-export function useCurrentRound() {
+export function useCurrentRound(): GameState["round"] {
   return useGameSelector((state) => state.round);
 }
 
-export function useWordToGuess() {
-  return useGameSelector((state) => state.wordToGuess);
+export function useWordToGuess():
+  | NonNullable<GameState["turn"]>["wordToGuess"]
+  | null {
+  return useGameSelector((state) =>
+    state.turn ? state.turn.wordToGuess : null
+  );
+}
+
+export function useCurrentDrawer():
+  | NonNullable<GameState["round"]>["currentDrawerID"]
+  | null {
+  return useGameSelector((state) =>
+    state.round ? state.round.currentDrawerID : null
+  );
+}
+
+export function useRevealedLetters(): GameState["revealedLetters"] {
+  return useGameSelector((state) => state.revealedLetters);
+}
+
+export function useHost(): Player | null {
+  return useGameSelector(
+    (state) => state.players.find((player) => player.isHost) || null
+  );
+}
+
+export function useCurrentDrawerFromPlayers(): string | null {
+  return useGameSelector((state) => {
+    const current = state.players.find((p) => p.isDrawing);
+    return current ? current.ID : null;
+  });
+}
+
+export function useSelectableWords(): GameState["selectableWords"] {
+  return useGameSelector((state) => state.selectableWords);
+}
+
+export function useIsSelectingWord(): GameState["isSelectingWord"] {
+  return useGameSelector((state) => state.isSelectingWord);
 }

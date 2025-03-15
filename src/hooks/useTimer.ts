@@ -13,7 +13,7 @@ export const useTimer = ({
   defaultTime = null,
 }: UseTimerOptions) => {
   const [timeRemaining, setTimeRemaining] = useState<number | null>(
-    defaultTime,
+    defaultTime
   );
 
   const { lastMessage, sendJsonMessage } = useCustomWebsocket({
@@ -30,7 +30,6 @@ export const useTimer = ({
     }
   }, [lastMessage]);
 
-  // Start timer on server, providing a timeRemaining if needed
   const startTimer = () => {
     sendJsonMessage({
       type: "startTimer",

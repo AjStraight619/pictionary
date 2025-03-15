@@ -38,7 +38,7 @@ const onPencilDown = (
   canvas: fabric.Canvas,
   options: fabric.TPointerEventInfo<fabric.TPointerEvent>,
   isMouseDownRef: React.MutableRefObject<boolean>,
-  pathDataRef: React.MutableRefObject<fabric.Point[]>,
+  pathDataRef: React.MutableRefObject<fabric.Point[]>
 ) => {
   canvas.isDrawingMode = true;
   isMouseDownRef.current = true;
@@ -54,7 +54,7 @@ const addShapeToCanvas = (
   shape: fabric.FabricObject | null,
   shapeId: string,
   shapeType: ShapeType,
-  sendSvgShape: (shapeData: ShapeData) => void,
+  sendSvgShape: (shapeData: ShapeData) => void
 ) => {
   if (!shape) return;
   canvas.add(shape);
@@ -74,7 +74,7 @@ const onShapeDown = (
   options: fabric.TPointerEventInfo<fabric.TPointerEvent>,
   canvas: fabric.Canvas,
   sendSvgShape: (shapeData: ShapeData) => void,
-  lastUsedColorRef: React.MutableRefObject<string>,
+  lastUsedColorRef: React.MutableRefObject<string>
 ) => {
   const pointer = canvas.getViewportPoint(options.e);
   const shapeId = crypto.randomUUID();
@@ -162,7 +162,7 @@ export const handleCanvasMouseDown = ({
         options,
 
         isMouseDownRef,
-        pathDataRef,
+        pathDataRef
       );
       break;
 
@@ -234,7 +234,7 @@ export const handleObjectModified = ({
     // Replace the object's transform in the SVG with our computed absolute transform.
     svgShape = svgShape.replace(
       /transform="matrix\([^)]+\)"/,
-      absoluteTransform,
+      absoluteTransform
     );
 
     const shapeData = { id, svg: svgShape };
@@ -347,6 +347,8 @@ export const handleKeyDownEvents = ({
     console.warn("Canvas is not ready");
     return;
   }
+
+  if (canvas.targets.length === 0) return; // No target elements return early
 
   // Handle delete and backspace keys for object removal
   if (e.key === "Delete" || e.key === "Backspace") {

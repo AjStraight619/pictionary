@@ -1,7 +1,7 @@
-import { Routes, Route } from 'react-router';
-import Layout from '@/layout';
-import Home from './pages/home';
-import Game from './pages/game';
+import { Routes, Route } from "react-router";
+import Layout from "@/layout";
+import Home from "./pages/home";
+import Game from "./pages/game";
 
 const App = () => {
   return (

@@ -1,13 +1,6 @@
-import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 import { useEffect, useRef, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import ChatInput from "./chat-input";
+import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 
 type ChatMessage = {
   username: string;
@@ -17,11 +10,7 @@ type ChatMessage = {
 const Chat = () => {
   const [chats, setChats] = useState<ChatMessage[]>([]);
 
-  const { lastMessage, sendJsonMessage } = useCustomWebsocket({
-    messageTypes: ["playerGuess"],
-  });
-
-  const cardContentRef = useRef<HTMLDivElement>(null);
+  const { lastMessage } = useCustomWebsocket({ messageTypes: ["playerGuess"] });
 
   useEffect(() => {
     if (lastMessage) {
@@ -30,35 +19,43 @@ const Chat = () => {
     }
   }, [lastMessage]);
 
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (cardContentRef.current) {
+    if (messagesContainerRef.current) {
       // Scroll the container to the bottom
-      cardContentRef.current.scrollTop = cardContentRef.current.scrollHeight;
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
     }
   }, [chats]);
 
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle>Chat</CardTitle>
-      </CardHeader>
-      <CardContent
-        ref={cardContentRef}
-        className="min-h-[10rem] max-h-[10rem] overflow-y-auto"
+    <div className="flex flex-col h-full">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-2"
       >
         {chats.map((chat, index) => (
-          <div key={index} className="break-words">
-            <p>
-              <strong>{chat.username}</strong>: {chat.guess}
-            </p>
+          <div
+            key={index}
+            className="break-words bg-muted/30 rounded-lg p-2 text-sm"
+          >
+            <span className="font-semibold text-purple-400">
+              {chat.username}
+            </span>
+            <span className="text-muted-foreground">: {chat.guess}</span>
           </div>
         ))}
-      </CardContent>
-
-      <CardFooter>
-        <ChatInput sendJsonMessage={sendJsonMessage} />
-      </CardFooter>
-    </Card>
+        {chats.length === 0 && (
+          <div className="text-center text-muted-foreground text-sm py-8">
+            No messages yet. Start guessing!
+          </div>
+        )}
+      </div>
+      <div className="p-3 border-t">
+        <ChatInput />
+      </div>
+    </div>
   );
 };
 

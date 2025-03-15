@@ -1,11 +1,10 @@
 import { SelectedTool } from "@/types/canvas";
-import React, { SetStateAction, useEffect, useState } from "react";
+import React, { SetStateAction, useState } from "react";
 import * as fabric from "fabric";
 
 import { Button } from "@/components/ui/button";
 import {
   Circle,
-  Dot,
   MousePointer2,
   PaintBucket,
   Pencil,
@@ -38,13 +37,13 @@ const COLORS = [
 
 const BRUSH_SIZES = [5, 7, 9];
 
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number,
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
+function debounce<Args extends unknown[], Return>(
+  func: (...args: Args) => Return,
+  wait: number
+): (...args: Args) => void {
+  let timeout: ReturnType<typeof setTimeout>;
 
-  return (...args: Parameters<T>) => {
+  return (...args: Args) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
       func(...args);
@@ -71,10 +70,10 @@ const Toolbar = ({
   lastUsedColorRef,
   lastUsedBrushSizeRef,
 }: ToolbarProps) => {
-  if (!canvas) return;
-
   const [currentColor, setCurrentColor] = useState("#000000");
   const [currentBrushSize, setCurrentBrushSize] = useState(5);
+
+  if (!canvas) return;
 
   const handleDeleteAll = debounce(() => {
     canvas.clear();
@@ -132,7 +131,7 @@ const Toolbar = ({
         configureBrush(
           canvas,
           lastUsedColorRef.current,
-          lastUsedBrushSizeRef.current,
+          lastUsedBrushSizeRef.current
         );
         break;
 
@@ -210,7 +209,7 @@ export default Toolbar;
 const configureBrush = (
   canvas: fabric.Canvas,
   color: string,
-  width: number,
+  width: number
 ) => {
   if (!canvas.freeDrawingBrush) {
     canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);

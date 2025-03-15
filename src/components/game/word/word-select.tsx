@@ -1,94 +1,83 @@
 import { Button } from "@/components/ui/button";
 import { useTimer } from "@/hooks/useTimer";
-import { useEffect, useState } from "react";
-import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-
-type SelectableWord = {
-  id: string;
-  word: string;
-};
+import {
+  useSelectableWords,
+  useIsSelectingWord,
+  useCurrentDrawerFromPlayers,
+} from "@/hooks/useGameSelector";
+import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
+import type { Word } from "@/types/game";
+import { useState } from "react";
+import { useReadLocalStorage } from "usehooks-ts";
+import type { PlayerInfo } from "@/types/lobby";
+import { Clock } from "lucide-react";
+import { motion } from "framer-motion";
 
 const WordSelect = () => {
-  const [open, setOpen] = useState(false);
+  const selectableWords = useSelectableWords();
+  const isSelectingWord = useIsSelectingWord();
+  const currentDrawer = useCurrentDrawerFromPlayers();
+  const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
 
-  const [selectableWords, setSelectableWords] = useState<SelectableWord[]>([]);
+  const isDrawer = currentDrawer === playerInfo?.playerID;
 
-  const { timeRemaining, startTimer, stopTimer } = useTimer({
-    messageTypes: ["selectWordTimer"],
+  const [open, setOpen] = useState(isSelectingWord);
+
+  const { timeRemaining, stopTimer } = useTimer({
     timerType: "selectWordTimer",
+    messageTypes: ["selectWordTimer"],
   });
 
-  const { lastMessage, sendJsonMessage } = useCustomWebsocket({
-    messageTypes: ["gameState", "openSelectWordModal", "closeSelectWordModal"],
-  });
+  const { sendJsonMessage } = useCustomWebsocket({ messageTypes: [] });
 
-  //const { lastMessage, sendJsonMessage } = useGame();
-
-  useEffect(() => {
-    if (lastMessage) {
-      const newMessage = JSON.parse(lastMessage.data);
-      const messageType = newMessage.type;
-
-      switch (messageType) {
-        case "openSelectWordModal": {
-          const words = newMessage.payload.selectableWords;
-          console.log("Words: ", words);
-          setSelectableWords(words);
-          openModal();
-          break;
-        }
-
-        case "closeSelectWordModal":
-          closeModal();
-          break;
-
-        default:
-          return;
-      }
-    }
-  }, [lastMessage]);
-
-  const openModal = () => {
-    setOpen(true);
-    startTimer();
-  };
-
-  const closeModal = (chosenWord?: string) => {
-    setOpen(false);
+  const handleSelectWord = (chosenWord: Word) => {
     stopTimer();
-
-    if (!chosenWord) {
-      return;
-    }
-
+    setOpen(false);
     sendJsonMessage({
       type: "selectWord",
-      payload: {
-        word: chosenWord,
-      },
+      payload: { word: chosenWord },
     });
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open && isDrawer} onOpenChange={setOpen}>
       <DialogContent
         hideCloseButton={true}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
+        className="sm:max-w-md"
       >
-        <DialogTitle>Select a word {timeRemaining}</DialogTitle>
-        <DialogDescription>Choose a word to draw</DialogDescription>
-        <div className="grid grid-cols-2 gap-4">
-          {selectableWords.map((word) => (
-            <Button key={word.id} onClick={() => closeModal(word.word)}>
-              {word.word}
-            </Button>
+        <DialogTitle className="flex items-center justify-between">
+          <span>Select a word to draw</span>
+          <div className="flex items-center gap-2 px-3 py-1 bg-muted rounded-full">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </div>
+        </DialogTitle>
+        <DialogDescription>
+          Choose one of these words to draw for other players to guess
+        </DialogDescription>
+        <div className="grid grid-cols-1 gap-3 pt-2">
+          {selectableWords?.map((word, index) => (
+            <motion.div
+              key={word.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Button
+                onClick={() => handleSelectWord(word)}
+                className="w-full h-12 text-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+              >
+                {word.word}
+              </Button>
+              <div>{timeRemaining}</div>
+            </motion.div>
           ))}
         </div>
       </DialogContent>
