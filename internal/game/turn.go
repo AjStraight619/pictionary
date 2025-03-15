@@ -49,6 +49,8 @@ func (fm *FlowManager) handleTurnStarted() {
 	fm.game.BroadcastGameState()
 	turn := fm.game.CurrentTurn
 
+	log.Printf("Turn started: %v", turn)
+
 	switch turn.Phase {
 	case PhaseWordSelection:
 		if turn.WordToGuess == nil {
@@ -138,13 +140,12 @@ func (t *Turn) End(g *Game) {
 	log.Println("Turn ended")
 	g.ClearDrawingPlayers()
 	g.Round.MarkPlayerAsDrawn(t.CurrentDrawerID)
-	// g.Mu.Lock()
-	// roundComplete := len(g.Round.PlayersDrawn) == len(g.PlayerOrder)
-	// g.Mu.Unlock()
-	roundOver := g.Round.IsOver(g)
+	g.Mu.Lock()
+	roundComplete := len(g.Round.PlayersDrawn) == len(g.PlayerOrder)
+	g.Mu.Unlock()
 	g.setWord(nil)
 	g.BroadcastGameState()
-	if roundOver {
+	if roundComplete {
 		log.Println("Round is over signalling round ended ")
 		g.FlowSignal <- RoundEnded
 	} else {

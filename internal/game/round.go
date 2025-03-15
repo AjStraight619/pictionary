@@ -9,10 +9,10 @@ import (
 )
 
 type Round struct {
-	CurrentDrawerIdx int
-	Count            int
-	PlayersDrawn     []string
-	CurrentDrawerID  string
+	CurrentDrawerIdx int      `json:"-"`
+	Count            int      `json:"count"`
+	PlayersDrawn     []string `json:"playersDrawn"`
+	CurrentDrawerID  string   `json:"currentDrawerID"`
 }
 
 func InitRound() *Round {
@@ -45,11 +45,7 @@ func (r *Round) Start(g *Game) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
 
-	if r.Count > 0 {
-		// If we're restarting an existing round, reset its state.
-		r.Reset()
-	} else {
-		// For the very first round, set Count to 1 (or leave as 0 if that's preferred).
+	if r.Count == 0 { // Only set the count on the very first round.
 		r.Count = 1
 	}
 	r.setInitialDrawer(g)
@@ -59,8 +55,8 @@ func (r *Round) Start(g *Game) {
 func (r *Round) Next(g *Game) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
-	r.Reset()
-	g.FlowSignal <- TurnStarted
+	r.Reset() // Increment round count here.
+	g.FlowSignal <- RoundStarted
 }
 
 func (r *Round) setInitialDrawer(g *Game) {
@@ -71,7 +67,7 @@ func (r *Round) setInitialDrawer(g *Game) {
 	g.Players[firstID].IsDrawing = true
 	r.CurrentDrawerID = firstID
 	r.CurrentDrawerIdx = 0
-
+	g.CurrentTurn = NewTurn(firstID)
 	msgType := "drawingPlayerChanged"
 	payload := g.Players[firstID]
 	if b, err := utils.CreateMessage(msgType, payload); err == nil {
@@ -117,8 +113,6 @@ func (r *Round) MarkPlayerAsDrawn(playerID string) {
 }
 
 func (r *Round) IsOver(g *Game) bool {
-	g.Mu.RLock()
-	defer g.Mu.RUnlock()
 	return len(r.PlayersDrawn) == len(g.PlayerOrder)
 }
 

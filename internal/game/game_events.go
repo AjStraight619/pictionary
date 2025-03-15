@@ -19,26 +19,7 @@ func (g *Game) RegisterGameEvent(eventType string, handler EventHandler) {
 
 // InitGameEvents registers the default event handlers for a game.
 func (g *Game) InitGameEvents() {
-	// Send game state to the player when their visibility changes (joining, tabbing back in, etc.)
-	g.RegisterGameEvent(e.GameState, func(payload json.RawMessage) {
-		var pt e.GameStatePayload
-		if err := json.Unmarshal(payload, &pt); err != nil {
-			log.Println("Error unmarshalling GameState payload:", err)
-			return
-		}
 
-		state := g.GetGameState()
-		b, err := json.Marshal(map[string]interface{}{
-			"type":    "gameState",
-			"payload": state,
-		})
-		if err != nil {
-			log.Println("error marshalling game state:", err)
-
-		}
-		g.Messenger.SendToPlayer(pt.PlayerID, b)
-
-	})
 	g.RegisterGameEvent(e.StartTimer, func(payload json.RawMessage) {
 		var pt e.StartTimerPayload
 		if err := json.Unmarshal(payload, &pt); err != nil {

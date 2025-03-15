@@ -198,7 +198,3 @@ func (g *Game) ClearDrawingPlayers() {
 		player.IsDrawing = false
 	}
 }
-
-// func setIsDrawing(player *shared.Player, isDrawing bool) {
-// 	player.IsDrawing = isDrawing
-// }
