@@ -60,3 +60,14 @@ export function useSelectableWords(): GameState["selectableWords"] {
 export function useIsSelectingWord(): GameState["isSelectingWord"] {
   return useGameSelector((state) => state.isSelectingWord);
 }
+
+export function useGameOptions(): GameState["options"] {
+  return useGameSelector((state) => state.options);
+}
+
+export function useCurrentDrawingPlayer(): Player | null {
+  return useGameSelector((state) => {
+    const current = state.players.find((p) => p.isDrawing);
+    return current ? current : null;
+  });
+}

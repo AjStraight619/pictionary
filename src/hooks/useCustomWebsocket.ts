@@ -1,27 +1,17 @@
-import { Player, PlayerInfo } from "@/types/lobby";
+import { PlayerInfo } from "@/types/lobby";
 import { useNavigate, useParams } from "react-router";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useReadLocalStorage } from "usehooks-ts";
 import { useEffect } from "react";
-import { GameState, Word } from "@/types/game";
 
 type QueryParams = {
   [key: string]: string | number;
 };
 
-interface GameMessagePayloads {
-  gameState: GameState;
-  revealedLetter: string;
-  drawingPlayerChanged: Player;
-  selectedWord: { isSelectingWord: boolean; word: Word };
-  scoreUpdated: { playerID: string; score: number };
-  openSelectWordModal: { isSelectingWord: boolean; selectableWords: Word[] };
-}
-
 type MessageHandler = (payload: any) => void;
 
 type MessageHandlers = {
-  [K in keyof GameMessagePayloads]?: (payload: GameMessagePayloads[K]) => void;
+  [messageType: string]: MessageHandler;
 };
 
 type UseCustomWebsocketArgs = {
@@ -49,7 +39,7 @@ export const useCustomWebsocket = ({
       queryParams: augmentedQueryParams,
       share: true,
       shouldReconnect: () => true,
-      reconnectAttempts: 100,
+      reconnectAttempts: 5,
       reconnectInterval: (attemptNumber) =>
         Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
       onOpen: () =>

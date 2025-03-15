@@ -9,25 +9,20 @@ import {
 import {
   useSelectableWords,
   useIsSelectingWord,
-  useCurrentDrawerFromPlayers,
 } from "@/hooks/useGameSelector";
 import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 import type { Word } from "@/types/game";
 import { useState } from "react";
-import { useReadLocalStorage } from "usehooks-ts";
-import type { PlayerInfo } from "@/types/lobby";
 import { Clock } from "lucide-react";
 import { motion } from "framer-motion";
+import { useIsCurrentDrawer } from "@/hooks/useIsCurrentDrawer";
 
 const WordSelect = () => {
   const selectableWords = useSelectableWords();
   const isSelectingWord = useIsSelectingWord();
-  const currentDrawer = useCurrentDrawerFromPlayers();
-  const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
+  const isCurrentDrawer = useIsCurrentDrawer();
 
-  const isDrawer = currentDrawer === playerInfo?.playerID;
-
-  const [open, setOpen] = useState(isSelectingWord);
+  const [_, setOpen] = useState(isSelectingWord);
 
   const { timeRemaining, stopTimer } = useTimer({
     timerType: "selectWordTimer",
@@ -46,7 +41,7 @@ const WordSelect = () => {
   };
 
   return (
-    <Dialog open={open && isDrawer} onOpenChange={setOpen}>
+    <Dialog open={isSelectingWord && isCurrentDrawer} onOpenChange={setOpen}>
       <DialogContent
         hideCloseButton={true}
         onPointerDownOutside={(e) => e.preventDefault()}
@@ -57,6 +52,7 @@ const WordSelect = () => {
           <span>Select a word to draw</span>
           <div className="flex items-center gap-2 px-3 py-1 bg-muted rounded-full">
             <Clock className="h-4 w-4 text-muted-foreground" />
+            <div>{timeRemaining}</div>
           </div>
         </DialogTitle>
         <DialogDescription>
@@ -74,9 +70,8 @@ const WordSelect = () => {
                 onClick={() => handleSelectWord(word)}
                 className="w-full h-12 text-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
               >
-                {word.word}
+                {word.word.toLowerCase()}
               </Button>
-              <div>{timeRemaining}</div>
             </motion.div>
           ))}
         </div>

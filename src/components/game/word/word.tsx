@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { useRevealedLetters, useCurrentDrawer } from "@/hooks/useGameSelector";
+import { useRevealedLetters } from "@/hooks/useGameSelector";
 import { Word as TWord } from "@/types/game";
+import { useIsCurrentDrawer } from "@/hooks/useIsCurrentDrawer";
 
 // Animation variants
 const letterVariants = {
@@ -12,7 +13,7 @@ type WordProps = {
 };
 const Word = ({ word }: WordProps) => {
   const revealedLetters = useRevealedLetters();
-  const isCurrentDrawer = useCurrentDrawer();
+  const isCurrentDrawer = useIsCurrentDrawer();
 
   return (
     <div className="flex space-x-1">

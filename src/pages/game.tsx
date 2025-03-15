@@ -1,41 +1,8 @@
-// import Canvas from "@/components/game/canvas/canvas";
-// import Chat from "@/components/game/chat/chat";
-// import GameStateUpdater from "@/components/game/game-state-updater";
-// import Lobby from "@/components/game/lobby/lobby";
-// import PreGameLobby from "@/components/game/lobby/pre-game-lobby";
-// import WordToGuess from "@/components/game/word/word";
-// import WordSelect from "@/components/game/word/word-select";
-// import { GameProvider } from "@/providers/game-provider";
-
-// const Game = () => {
-//   return (
-//     <GameProvider>
-//       <GameStateUpdater />
-//       <div className="flex flex-col min-h-screen items-center justify-between p-12">
-//         <div className="flex flex-row items-stretch justify-center w-full container gap-x-4 min-h-[12rem] max-h-[12rem]">
-//           <PreGameLobby />
-//           <WordSelect />
-//           <div className="hidden md:block w-full">
-//             <Lobby />
-//           </div>
-//           <div className="hidden md:block h-full">
-//             <Chat />
-//           </div>
-//         </div>
-//         <WordToGuess />
-//         <Canvas />
-//       </div>
-//     </GameProvider>
-//   );
-// };
-
-// export default Game;
-
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, Users, X, Pencil, Clock } from "lucide-react";
+import { MessageSquare, Users, X, Pencil } from "lucide-react";
 import PreGameLobby from "@/components/game/lobby/pre-game-lobby";
 import { GameProvider } from "@/providers/game-provider";
 import Turn from "@/components/game/turn/turn";
@@ -73,7 +40,6 @@ export default function Test() {
     <GameProvider>
       <GameStateUpdater />
       <div className="flex flex-col h-screen bg-gradient-to-b from-background to-background/80 dark overflow-hidden">
-        {/* Game Header */}
         <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
           <div className="container flex h-14 items-center">
             <div className="flex items-center gap-2 mr-4">
@@ -83,7 +49,6 @@ export default function Test() {
               </span>
             </div>
 
-            {/* Mobile sidebar toggle */}
             <div className="flex md:hidden ml-auto">
               <Button
                 variant="outline"
@@ -98,25 +63,15 @@ export default function Test() {
                 )}
               </Button>
             </div>
-
-            {/* Timer display */}
-            <div className="hidden md:flex items-center gap-2 ml-auto">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Round 2/10</span>
-            </div>
           </div>
         </header>
 
-        {/* Main Game Area */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Canvas and Word Area */}
           <div className="flex flex-col flex-1 overflow-hidden">
-            {/* Turn component (contains Word and game status) */}
             <div className="p-4 pb-2">
               <Turn />
             </div>
 
-            {/* Canvas Area - Taking all available space */}
             <div className="flex-1 p-4 pt-2 overflow-hidden flex items-center justify-center">
               <div className="w-full h-full max-w-full max-h-full flex items-center justify-center bg-card rounded-lg border shadow-sm overflow-hidden">
                 <Canvas />
@@ -124,7 +79,6 @@ export default function Test() {
             </div>
           </div>
 
-          {/* Sidebar - Desktop */}
           <div className="hidden md:flex flex-col w-[320px] border-l border-border/40 bg-background/95 overflow-hidden">
             <Tabs defaultValue="chat" className="h-full flex flex-col">
               <div className="flex items-center justify-between p-3 border-b">
@@ -153,7 +107,6 @@ export default function Test() {
             </Tabs>
           </div>
 
-          {/* Mobile Sidebar */}
           <AnimatePresence>
             {sidebarOpen && (
               <motion.div
@@ -204,7 +157,6 @@ export default function Test() {
           </AnimatePresence>
         </div>
 
-        {/* Word Selection Dialog */}
         <WordSelect />
       </div>
     </GameProvider>

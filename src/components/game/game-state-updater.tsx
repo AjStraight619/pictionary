@@ -59,7 +59,10 @@ const GameStateUpdater = () => {
     const handleVisibilityChange = () => {
       console.log("Visibility changed...");
       if (document.visibilityState === "visible") {
-        sendJsonMessage({ type: "gameState", payload: playerInfo?.playerID });
+        sendJsonMessage({
+          type: "gameState",
+          payload: { playerID: playerInfo?.playerID },
+        });
       }
     };
 
