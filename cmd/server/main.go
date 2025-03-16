@@ -42,6 +42,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Ajstraight619/pictionary-server/internal/config"
 	"github.com/Ajstraight619/pictionary-server/internal/db"
 	"github.com/Ajstraight619/pictionary-server/internal/handlers"
 	"github.com/Ajstraight619/pictionary-server/internal/server"
@@ -50,7 +51,7 @@ import (
 )
 
 func main() {
-	// Initialize the game server
+	cfg := config.GetConfig()
 	gameServer := server.NewGameServer()
 
 	e := echo.New()
@@ -60,15 +61,13 @@ func main() {
 	db.InitDB("data/game.db")
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:5173"},
+		AllowOrigins: cfg.AllowedOrigins,
 		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodOptions},
 		AllowHeaders: []string{"Origin", "Content-Type", "Accept"},
 	}))
 
-	// Register routes with gameServer instead of separate games and hubs
 	handlers.RegisterRoutes(e, gameServer)
 
-	// Handle graceful shutdown
 	go func() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -86,5 +85,5 @@ func main() {
 		}
 	}()
 
-	e.Logger.Fatal(e.Start(":8000"))
+	e.Logger.Fatal(e.Start(":" + cfg.Port))
 }
