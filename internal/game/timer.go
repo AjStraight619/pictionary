@@ -13,6 +13,7 @@ type Timer struct {
 	remaining int
 	isRunning bool
 	mu        sync.RWMutex
+	ctx       context.Context // Store the context
 	cancel    context.CancelFunc
 }
 
@@ -21,12 +22,16 @@ type TimerMessage struct {
 	Remaining int    `json:"remaining"`
 }
 
-func NewTimer(timerType string, duration int) *Timer {
+func NewTimer(ctx context.Context, timerType string, duration int) *Timer {
+
+	timerCtx, cancel := context.WithCancel(ctx)
 	return &Timer{
 		Type:      timerType,
 		duration:  duration,
 		remaining: duration,
 		isRunning: false,
+		ctx:       timerCtx, // Store the context
+		cancel:    cancel,
 	}
 
 }
@@ -35,9 +40,6 @@ func (t *Timer) StartCountdown(onFinish func(), onCancel func()) <-chan int {
 	t.mu.Lock()
 	t.isRunning = true
 	t.remaining = t.duration
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.cancel = cancel
 	t.mu.Unlock()
 
 	tickCh := make(chan int, 1)
@@ -63,12 +65,11 @@ func (t *Timer) StartCountdown(onFinish func(), onCancel func()) <-chan int {
 				t.remaining--
 				remaining := t.remaining
 				t.mu.Unlock()
-				// Non-blocking send to tickCh:
 				select {
 				case tickCh <- remaining:
 				default:
 				}
-			case <-ctx.Done():
+			case <-t.ctx.Done():
 				// Timer was cancelled.
 				t.mu.Lock()
 				t.isRunning = false

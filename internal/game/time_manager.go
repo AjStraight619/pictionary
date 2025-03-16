@@ -15,22 +15,52 @@ func NewTimerManager(game *Game) *TimerManager {
 	return &TimerManager{game: game}
 }
 
+func (tm *TimerManager) StartGameCountdown(timerType string, duration int) {
+	timer := NewTimer(tm.game.ctx, timerType, duration)
+	tm.game.timers[timerType] = timer
+
+	onFinish := func() {
+		log.Println("Game countdown finished")
+		tm.game.Mu.Lock()
+		tm.game.Status = InProgress
+		tm.game.Mu.Unlock()
+		tm.game.Start()
+	}
+
+	onCancel := func() {
+		log.Println("Game countdown cancelled")
+		tm.game.Mu.Lock()
+		tm.game.Status = NotStarted
+		tm.game.Mu.Unlock()
+		tm.game.CancelTimer(timerType)
+	}
+
+	go func() {
+		for remaining := range timer.StartCountdown(onFinish, onCancel) {
+			msgType := "startGameCountdown"
+			payload := map[string]interface{}{
+				"timeRemaining": remaining,
+			}
+			log.Println("Broadcasting game countdown:", remaining)
+
+			b, err := utils.CreateMessage(msgType, payload)
+			if err != nil {
+				log.Println("error marshalling message")
+				return
+			}
+			tm.game.Messenger.BroadcastMessage(b)
+		}
+	}()
+}
+
 func (tm *TimerManager) StartTurnTimer(playerID string) {
-	timer := NewTimer("turnTimer", 10)
+	timer := NewTimer(tm.game.ctx, "turnTimer", 10)
 	tm.game.timers["turnTimer"] = timer
 
 	onCancel := func() {
-		// log.Println("Turn timer cancelled")
-		// tm.game.Round.MarkPlayerAsDrawn(playerID)
-		// tm.game.setWord(nil)
-		// tm.game.BroadcastGameState()
 		tm.game.FlowSignal <- TurnEnded
 	}
 	onFinish := func() {
-		// log.Println("Turn timer finished")
-		// tm.game.Round.MarkPlayerAsDrawn(playerID)
-		// tm.game.setWord(nil)
-		// tm.game.BroadcastGameState()
 		tm.game.FlowSignal <- TurnEnded
 	}
 	go func() {
@@ -49,7 +79,7 @@ func (tm *TimerManager) StartTurnTimer(playerID string) {
 }
 
 func (tm *TimerManager) StartWordSelectionTimer(playerID string) {
-	timer := NewTimer("selectWordTimer", 8)
+	timer := NewTimer(tm.game.ctx, "selectWordTimer", 8)
 	tm.game.timers["selectWordTimer"] = timer
 	log.Println("Word selection timer started.")
 
