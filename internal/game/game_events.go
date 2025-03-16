@@ -27,7 +27,7 @@ func (g *Game) InitGameEvents() {
 			return
 		}
 		if pt.TimerType == "startGameCountdown" {
-			g.StartGameCountdown(pt.TimerType, 5)
+			g.TimerManager.StartGameCountdown(pt.TimerType, 5)
 		}
 	})
 
@@ -70,7 +70,7 @@ func (g *Game) InitGameEvents() {
 			log.Println("error marshalling selectedWord message:", err)
 			return
 		}
-		currentDrawer := g.GetCurrentDrawer()
+		currentDrawer := g.Round.GetCurrentDrawer(g.Players, g.PlayerOrder)
 		g.Messenger.SendToPlayer(currentDrawer.ID, b)
 		g.BroadcastGameState()
 		g.FlowSignal <- TurnStarted
@@ -106,4 +106,16 @@ func (g *Game) InitGameEvents() {
 		g.handlePlayerGuess(pt.PlayerID, pt.Guess)
 	})
 
+}
+
+func (g *Game) handleExternalEvent(event e.GameEvent) {
+	g.Mu.RLock()
+	handler, exists := g.GameEvents[event.Type]
+	g.Mu.RUnlock()
+
+	if exists {
+		log.Printf("Dispatching custom handler for event type: %s", event.Type)
+		go handler(event.Payload)
+		return
+	}
 }
