@@ -7,6 +7,14 @@ import (
 	"github.com/Ajstraight619/pictionary-server/internal/shared"
 )
 
+type Status int
+
+const (
+	NotStarted Status = iota
+	InProgress
+	Finished
+)
+
 type GameState struct {
 	ID              string             `json:"id"`
 	Players         []*shared.Player   `json:"players"`
@@ -17,7 +25,6 @@ type GameState struct {
 	Round           *Round             `json:"round"`
 	Turn            *Turn              `json:"turn"`
 	WordToGuess     *shared.Word       `json:"wordToGuess,omitempty"`
-	SelectableWords []shared.Word      `json:"selectableWords,omitempty"`
 	IsSelectingWord bool               `json:"isSelectingWord"`
 }
 
@@ -39,14 +46,13 @@ func (g *Game) GetGameState() GameState {
 		Status:          g.Status,
 		Round:           g.Round,
 		Turn:            g.CurrentTurn,
-		SelectableWords: g.SelectableWords,
-		IsSelectingWord: g.isSelectingWord,
+		IsSelectingWord: g.CurrentTurn.IsSelectingWord,
 	}
 }
 
 func (g *Game) BroadcastGameState() {
 	state := g.GetGameState()
-	b, err := json.Marshal(map[string]interface{}{
+	b, err := json.Marshal(map[string]any{
 		"type":    "gameState",
 		"payload": state,
 	})

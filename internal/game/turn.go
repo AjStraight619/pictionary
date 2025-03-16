@@ -4,6 +4,7 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"slices"
 	"time"
 
 	"github.com/Ajstraight619/pictionary-server/internal/shared"
@@ -23,6 +24,8 @@ type Turn struct {
 	RevealedLetters         []rune          `json:"revealedLetters"`
 	PlayersGuessedCorrectly map[string]bool `json:"playersGuessedCorrectly"`
 	Phase                   TurnPhase       `json:"phase"`
+	IsSelectingWord         bool            `json:"isSelectingWord"`
+	SelectableWords         []shared.Word   `json:"selectableWords,omitempty"`
 }
 
 func InitTurn() *Turn {
@@ -32,6 +35,7 @@ func InitTurn() *Turn {
 		RevealedLetters:         make([]rune, 0),
 		WordToGuess:             nil,
 		Phase:                   PhaseWordSelection,
+		SelectableWords:         make([]shared.Word, 0),
 	}
 }
 
@@ -42,40 +46,8 @@ func NewTurn(playerID string) *Turn {
 		RevealedLetters:         make([]rune, 0),
 		WordToGuess:             nil,
 		Phase:                   PhaseWordSelection,
+		SelectableWords:         make([]shared.Word, 0),
 	}
-}
-
-func (fm *FlowManager) handleTurnStarted() {
-	fm.game.BroadcastGameState()
-	turn := fm.game.CurrentTurn
-
-	log.Printf("Turn started: %v", turn)
-
-	switch turn.Phase {
-	case PhaseWordSelection:
-		if turn.WordToGuess == nil {
-			log.Println("No word selected. Initiating word selection...")
-			fm.game.WordSelector.SelectWord()
-			return
-		}
-		log.Println("Word selected. Switching to drawing phase.")
-		turn.Phase = PhaseDrawing
-		fm.handleTurnStarted()
-	case PhaseDrawing:
-		drawer := fm.game.GetCurrentDrawer()
-		if drawer == nil {
-			log.Println("No current drawer found; cannot start turn.")
-			return
-		}
-		log.Println("Starting drawing phase for drawer", drawer.ID)
-		turn.Start(fm.game, drawer.ID)
-	default:
-		log.Println("Unknown turn phase encountered.")
-	}
-}
-
-func (fm *FlowManager) handleTurnEnded() {
-	fm.game.CurrentTurn.End(fm.game)
 }
 
 func (t *Turn) Start(g *Game, playerID string) {
@@ -124,8 +96,8 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 		randIdx := randSource.Intn(len(unrevealedIndices))
 		indexToReveal := unrevealedIndices[randIdx]
 		t.RevealedLetters[indexToReveal] = letters[indexToReveal]
-		// Remove the index from the slice.
-		unrevealedIndices = append(unrevealedIndices[:randIdx], unrevealedIndices[randIdx+1:]...)
+		// Remove the index from the slice
+		unrevealedIndices = slices.Delete(unrevealedIndices, randIdx, randIdx+1)
 	}
 
 	// Broadcast the updated revealed letters to all players.
