@@ -100,11 +100,15 @@ func levenshteinDistance(s1, s2 string) int {
 }
 
 func SendGuessMessage(g *Game, playerID, result string) {
+
+	playerColor := g.getPlayerColor(playerID)
+	log.Printf("Sending guess message for player %s with color %s", playerID, playerColor)
 	payload := map[string]interface{}{
 		"guess":    result,
 		"username": g.Players[playerID].Username,
+		"color":    playerColor,
 	}
-	if b, err := utils.CreateMessage("guess", payload); err == nil {
+	if b, err := utils.CreateMessage("playerGuess", payload); err == nil {
 		g.Messenger.BroadcastMessage(b)
 	} else {
 		log.Println("error marshalling guessFeedback message:", err)

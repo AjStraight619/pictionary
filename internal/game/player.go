@@ -6,7 +6,18 @@ import (
 	"github.com/Ajstraight619/pictionary-server/internal/shared"
 )
 
-func NewPlayer(id, username string, isHost bool) *shared.Player {
+var defaultColors = []string{
+	"#FF0000",
+	"#00FF00",
+	"#0000FF",
+	"#FFFF00",
+	"#FF00FF",
+	"#00FFFF",
+	"#FFA500",
+	"#800080",
+}
+
+func (g *Game) NewPlayer(id, username string, isHost bool) *shared.Player {
 	return &shared.Player{
 		ID:        id,
 		Username:  username,
@@ -65,4 +76,30 @@ func (g *Game) GetPlayerByID(playerID string) *shared.Player {
 	}
 	log.Printf("GetPlayerByID: player with ID %s not found. Current players: %+v", playerID, g.PlayerOrder)
 	return nil
+}
+
+func (g *Game) getPlayerColor(playerID string) string {
+	if player, exists := g.Players[playerID]; exists {
+		return player.Color
+	}
+	return "#FFFFFF"
+}
+
+func (g *Game) CheckForHost() bool {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+	for _, player := range g.Players {
+		if player.IsHost {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *Game) ClearDrawingPlayers() {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+	for _, player := range g.Players {
+		player.IsDrawing = false
+	}
 }

@@ -31,16 +31,6 @@ func (r *Round) Reset() {
 	r.CurrentDrawerID = ""
 }
 
-func (fm *FlowManager) handleRoundStarted() {
-	fm.game.BroadcastGameState()
-	fm.game.Round.Start(fm.game)
-}
-
-func (fm *FlowManager) handleRoundEnded() {
-	log.Printf("Round %d ended", fm.game.Round.Count)
-	fm.game.Round.Next(fm.game)
-}
-
 func (r *Round) Start(g *Game) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
@@ -55,7 +45,7 @@ func (r *Round) Start(g *Game) {
 func (r *Round) Next(g *Game) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
-	r.Reset() // Increment round count here.
+	r.Reset()
 	g.FlowSignal <- RoundStarted
 }
 
@@ -103,6 +93,14 @@ func (r *Round) NextDrawer(g *Game) *shared.Player {
 		log.Println("error marshalling message:", err)
 	}
 	return g.Players[newID]
+}
+
+func (r *Round) GetCurrentDrawer(players map[string]*shared.Player, playerOrder []string) *shared.Player {
+	if len(playerOrder) == 0 {
+		return nil
+	}
+	currentID := playerOrder[r.CurrentDrawerIdx]
+	return players[currentID]
 }
 
 func (r *Round) MarkPlayerAsDrawn(playerID string) {
