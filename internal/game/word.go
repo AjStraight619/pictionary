@@ -32,16 +32,15 @@ func (ws *WordSelector) SelectWord() {
 
 	selectionPayload := WordSelectionPayload{
 		IsSelectingWord: true,
-		SelectableWords: ws.game.SelectableWords,
+		SelectableWords: ws.game.CurrentTurn.SelectableWords,
 	}
 
-	msgType := "openSelectWordModal"
-	b, err := utils.CreateMessage(msgType, selectionPayload)
+	b, err := utils.CreateMessage("openSelectWordModal", selectionPayload)
 	if err != nil {
 		log.Println("error marshalling message:", err)
 		return
 	}
-	currentDrawer := ws.game.GetCurrentDrawer()
+	currentDrawer := ws.game.Round.GetCurrentDrawer(ws.game.Players, ws.game.PlayerOrder)
 	if currentDrawer == nil {
 		log.Println("No current drawer found.")
 		return
@@ -60,7 +59,7 @@ func (g *Game) setWord(word *shared.Word) {
 func (g *Game) setIsSelectingWord(selecting bool) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
-	g.isSelectingWord = selecting
+	g.CurrentTurn.IsSelectingWord = selecting
 }
 
 func (g *Game) setRandomWords(n int) error {
@@ -70,21 +69,21 @@ func (g *Game) setRandomWords(n int) error {
 	if err != nil {
 		return err
 	}
-	g.SelectableWords = words
+	g.CurrentTurn.SelectableWords = words
 	return nil
 }
 
 func (g *Game) clearSelectableWords() {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
-	g.SelectableWords = []shared.Word{}
+	g.CurrentTurn.SelectableWords = []shared.Word{}
 }
 
 func (g *Game) handleTimerExpiration() {
-	if len(g.SelectableWords) > 0 {
+	if len(g.CurrentTurn.SelectableWords) > 0 {
 		g.Mu.Lock()
-		randomIndex := rand.Intn(len(g.SelectableWords))
-		randomWord := g.SelectableWords[randomIndex]
+		randomIndex := rand.Intn(len(g.CurrentTurn.SelectableWords))
+		randomWord := g.CurrentTurn.SelectableWords[randomIndex]
 		log.Printf("Timer finished. Automatically selecting word: %s", randomWord.Word)
 		g.Mu.Unlock()
 
@@ -102,7 +101,7 @@ func (g *Game) handleTimerExpiration() {
 			log.Println("error marshalling selectedWord message:", err)
 			return
 		}
-		currentDrawer := g.GetCurrentDrawer()
+		currentDrawer := g.Round.GetCurrentDrawer(g.Players, g.PlayerOrder)
 		g.Messenger.SendToPlayer(currentDrawer.ID, b)
 		g.BroadcastGameState()
 		time.AfterFunc(1*time.Second, func() {
