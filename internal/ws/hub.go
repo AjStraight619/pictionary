@@ -1,12 +1,15 @@
 package ws
 
 import (
+	"context"
+	"log"
 	"sync"
 
 	e "github.com/Ajstraight619/pictionary-server/internal/events"
 )
 
 type Hub struct {
+	ctx          context.Context
 	Broadcast    chan []byte
 	GameEvents   chan e.GameEvent
 	Clients      map[*Client]bool
@@ -20,8 +23,9 @@ type Hubs struct {
 	Hubs map[string]*Hub
 }
 
-func NewHub() *Hub {
+func NewHub(ctx context.Context) *Hub {
 	return &Hub{
+		ctx:        ctx,
 		Broadcast:  make(chan []byte),
 		GameEvents: make(chan e.GameEvent, 10),
 		Clients:    make(map[*Client]bool),
@@ -56,6 +60,8 @@ func (h *Hubs) RemoveHub(gameID string) {
 }
 
 func (h *Hub) Run() {
+	defer h.cleanup()
+
 	for {
 		select {
 		case client := <-h.Register:
@@ -77,6 +83,9 @@ func (h *Hub) Run() {
 					delete(h.Clients, client)
 				}
 			}
+		case <-h.ctx.Done():
+			log.Printf("Hub is shutting down...")
+			return
 		}
 	}
 }
@@ -96,4 +105,17 @@ func (h *Hub) SendToPlayer(playerID string, message []byte) {
 
 func (h *Hub) GameEventChannel() <-chan e.GameEvent {
 	return h.GameEvents
+}
+
+func (h *Hub) cleanup() {
+	// Close all client connections
+	for client := range h.Clients {
+		close(client.Send)
+		client.Conn.Close()
+		delete(h.Clients, client)
+	}
+
+	// Clean up channels
+	close(h.Broadcast)
+	close(h.GameEvents)
 }

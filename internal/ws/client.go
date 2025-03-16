@@ -1,16 +1,13 @@
 package ws
 
 import (
+	"context"
 	"encoding/json"
 	"log"
-	"net/http"
 	"time"
 
 	e "github.com/Ajstraight619/pictionary-server/internal/events"
-	g "github.com/Ajstraight619/pictionary-server/internal/game"
-	"github.com/Ajstraight619/pictionary-server/internal/utils"
 	"github.com/gorilla/websocket"
-	"github.com/labstack/echo/v4"
 )
 
 const (
@@ -23,37 +20,32 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Maximum message size allowed from peer.
-
+	// Maximum message size allowed from peer. // This is going to be the compressed drawing data.
 	maxMessageSize = 20480
 )
 
 var (
 	newline = []byte{'\n'}
-	space   = []byte{' '}
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
 
 type Client struct {
 	Hub      *Hub
 	Send     chan []byte
 	Conn     *websocket.Conn
 	PlayerID string
+	ctx      context.Context
+	cancel   context.CancelFunc
 }
 
 func NewClient(hub *Hub, conn *websocket.Conn, playerID string) *Client {
+	ctx, cancel := context.WithCancel(hub.ctx)
 	return &Client{
 		Hub:      hub,
 		Send:     make(chan []byte, 256),
 		Conn:     conn,
 		PlayerID: playerID,
+		ctx:      ctx,
+		cancel:   cancel,
 	}
 }
 
@@ -61,6 +53,7 @@ func (c *Client) Read() {
 	defer func() {
 		log.Printf("Client.Read: unregistering and closing connection for player %s", c.PlayerID)
 		c.Hub.Unregister <- c
+		c.cancel()
 		c.Conn.Close()
 	}()
 	c.Conn.SetReadLimit(maxMessageSize)
@@ -69,6 +62,15 @@ func (c *Client) Read() {
 		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
+
+	recognizedEvents := map[string]bool{
+		e.GameState:   true,
+		e.PlayerGuess: true,
+		e.StartTimer:  true,
+		e.StopTimer:   true,
+		e.SelectWord:  true,
+	}
+
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
@@ -77,16 +79,21 @@ func (c *Client) Read() {
 		}
 
 		var gameEvent e.GameEvent
+		// Try to parse the message as a GameEvent.
 		if err := json.Unmarshal(message, &gameEvent); err == nil && gameEvent.Type != "" {
-			select {
-			case c.Hub.GameEvents <- gameEvent:
-			default:
-				// If the channel is full or not ready, you might log and continue.
-				log.Printf("Client.Read: GameEvents channel full, discarding event for player %s", c.PlayerID)
+			// Only handle if it's a recognized event
+			if recognizedEvents[gameEvent.Type] {
+				select {
+				case <-c.ctx.Done():
+					log.Printf("Client.Read: context cancelled for player %s", c.PlayerID)
+					return
+				case c.Hub.GameEvents <- gameEvent:
+					log.Printf("Client.Read: Dispatched game event %s for player %s", gameEvent.Type, c.PlayerID)
+					continue // Skip broadcasting; it is handled internally.
+				default:
+					log.Printf("Client.Read: GameEvents channel full, discarding event for player %s", c.PlayerID)
+				}
 			}
-		} else {
-			// Not a valid event; broadcast or process as a normal message.
-			c.Hub.Broadcast <- message
 		}
 
 		c.Hub.Broadcast <- message
@@ -103,6 +110,9 @@ func (c *Client) Write() {
 	}()
 	for {
 		select {
+		case <-c.ctx.Done():
+			log.Printf("Client.Write: context cancelled for player %s", c.PlayerID)
+			return
 		case message, ok := <-c.Send:
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
@@ -121,7 +131,7 @@ func (c *Client) Write() {
 			}
 			// Drain queued messages.
 			n := len(c.Send)
-			for i := 0; i < n; i++ {
+			for range n {
 				w.Write(newline)
 				additional := <-c.Send
 				if _, err := w.Write(additional); err != nil {
@@ -141,76 +151,6 @@ func (c *Client) Write() {
 			}
 		}
 	}
-}
-
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
-
-func ServeWs(c echo.Context, hubs *Hubs, games *g.Games) error {
-	gameID := c.Param("id")
-	log.Printf("ServeWs: received gameID: %s", gameID)
-
-	game, exists := games.GetGameByID(gameID)
-	if !exists {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Game not found"})
-	}
-
-	hub, exists := hubs.GetHub(gameID)
-	if !exists {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Hub not found"})
-	}
-
-	playerID := c.QueryParam("playerID")
-	username := c.QueryParam("username")
-
-	if playerID == "" || username == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "PlayerID and Username are required"})
-	}
-
-	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Unable to upgrade connection"})
-	}
-
-	// Update the player's connection status in the game state.
-	player := game.GetPlayerByID(playerID)
-	if player == nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Player not found"})
-	}
-	player.Pending = false
-	player.Connected = true
-	player.Client = NewClient(hub, conn, playerID)
-
-	if wsClient, ok := player.Client.(*Client); ok {
-		hub.Register <- wsClient
-	} else {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Internal server error"})
-	}
-
-	go player.Client.Write()
-	go player.Client.Read()
-
-	msgType := "playerJoined"
-	payload := map[string]interface{}{
-		"player": player,
-	}
-
-	b, err := utils.CreateMessage(msgType, payload)
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Internal server error"})
-	}
-
-	hub.Broadcast <- b
-
-	// Temporary fix to make sure the game state the ws connection is
-	time.AfterFunc(200*time.Millisecond, func() {
-		log.Println("game state:", game)
-		game.BroadcastGameState()
-	})
-
-	return nil
 }
 
 func (c *Client) SendMessage(data []byte) error {
