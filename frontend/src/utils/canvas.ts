@@ -248,7 +248,6 @@ export const handleCanvasMouseMove = ({
   isMouseDownRef,
   pathDataRef,
   lastUsedColorRef,
-  lastUsedBrushSizeRef,
 }: {
   options: fabric.TPointerEventInfo<fabric.TPointerEvent>;
   selectedToolRef: React.MutableRefObject<SelectedTool>;
@@ -257,7 +256,6 @@ export const handleCanvasMouseMove = ({
   isMouseDownRef: React.MutableRefObject<boolean>;
   pathDataRef: React.MutableRefObject<fabric.Point[]>;
   lastUsedColorRef: React.MutableRefObject<string>;
-  lastUsedBrushSizeRef: React.MutableRefObject<number>;
 }) => {
   const { x, y } = options.viewportPoint;
 
@@ -293,7 +291,7 @@ export const handleCanvasMouseMove = ({
       const freeHandData: FreeHandData = {
         type: "pencil",
         stroke: lastUsedColorRef.current,
-        strokeWidth: lastUsedBrushSizeRef.current,
+        strokeWidth: 5,
         path: pathString,
       };
 

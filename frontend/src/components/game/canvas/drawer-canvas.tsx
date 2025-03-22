@@ -24,8 +24,6 @@ const DrawerCanvas = () => {
   const [selectedTool, setSelectedTool] = useState<SelectedTool>(
     SelectedTool.Selector
   );
-  const canvasHistoryRef = useRef<fabric.Object[][]>([]);
-  const historyIndexRef = useRef<number>(-1);
   const isMouseDownRef = useRef<boolean>(false);
   const pathDataRef = useRef<fabric.Point[]>([]);
   const lastUsedColorRef = useRef<string>("#000000");
@@ -97,7 +95,6 @@ const DrawerCanvas = () => {
         isMouseDownRef,
         pathDataRef,
         lastUsedColorRef,
-        lastUsedBrushSizeRef,
       });
     });
 
@@ -110,7 +107,6 @@ const DrawerCanvas = () => {
         isMouseDownRef,
         pathDataRef,
         lastUsedColorRef,
-        lastUsedBrushSizeRef,
       });
     });
 
@@ -137,8 +133,6 @@ const DrawerCanvas = () => {
       handleKeyDownEvents({
         e,
         canvas,
-        historyIndexRef,
-        canvasHistoryRef,
         sendJsonMessage,
       });
     });
@@ -158,8 +152,6 @@ const DrawerCanvas = () => {
         handleKeyDownEvents({
           e,
           canvas,
-          historyIndexRef,
-          canvasHistoryRef,
           sendJsonMessage,
         });
       });
