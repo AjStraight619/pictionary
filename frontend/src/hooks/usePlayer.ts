@@ -3,4 +3,5 @@ import { useReadLocalStorage } from "usehooks-ts";
 
 export const usePlayer = () => {
   const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
+  return { playerInfo };
 };

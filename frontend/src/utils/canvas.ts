@@ -138,7 +138,6 @@ export const handleCanvasMouseDown = ({
   isMouseDownRef,
   pathDataRef,
   lastUsedColorRef,
-  lastUsedBrushSizeRef,
 }: {
   options: fabric.TPointerEventInfo<fabric.TPointerEvent>;
   selectedToolRef: React.MutableRefObject<SelectedTool>;
@@ -148,7 +147,6 @@ export const handleCanvasMouseDown = ({
   isMouseDownRef: React.MutableRefObject<boolean>;
   pathDataRef: React.MutableRefObject<fabric.Point[]>;
   lastUsedColorRef: React.MutableRefObject<string>;
-  lastUsedBrushSizeRef: React.MutableRefObject<number>;
 }) => {
   canvas.isDrawingMode = false;
 
@@ -332,14 +330,10 @@ export const handlePathCreated = ({
 export const handleKeyDownEvents = ({
   e,
   canvas,
-  historyIndexRef,
-  canvasHistoryRef,
   sendJsonMessage,
 }: {
   e: KeyboardEvent;
   canvas: fabric.Canvas | null;
-  historyIndexRef: React.MutableRefObject<number>;
-  canvasHistoryRef: React.MutableRefObject<fabric.FabricObject[][]>;
   sendJsonMessage: SendJsonMessage;
 }) => {
   // Validate the canvas instance and its `contextTop`
