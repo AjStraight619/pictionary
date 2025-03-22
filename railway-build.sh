@@ -2,9 +2,9 @@
 set -e
 
 # Install dependencies
-echo "Installing SQLite dependencies..."
+echo "Installing build dependencies..."
 apt-get update
-apt-get install -y sqlite3 libsqlite3-dev
+apt-get install -y sqlite3 libsqlite3-dev gcc build-essential
 
 # Create data directory
 echo "Creating data directory..."
