@@ -247,7 +247,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen dark bg-gradient-to-b from-background to-secondary/20">
+    <div className="min-h-screen dark bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-indigo-900 to-blue-950">
       <div className="container px-4 py-8 mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -256,17 +256,31 @@ export default function Home() {
           className="flex justify-between items-center mb-12"
         >
           <div className="flex items-center gap-2">
-            <Pencil className="h-6 w-6 text-purple-400" />
-            <h1 className="text-2xl font-bold">Pictionary Pals</h1>
+            <Pencil className="h-8 w-8 text-yellow-400" />
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500">
+              Pictionary Pals
+            </h1>
           </div>
           <div className="flex gap-4">
-            <Button variant="ghost" size="sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-yellow-400 hover:text-yellow-300 hover:bg-purple-800/50"
+            >
               How to Play
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-yellow-400 hover:text-yellow-300 hover:bg-purple-800/50"
+            >
               About
             </Button>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-yellow-400 text-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300"
+            >
               Sign In
             </Button>
           </div>
@@ -279,17 +293,17 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="space-y-6"
           >
-            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">
+            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">
               Draw, Guess, Laugh!
             </h2>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-yellow-100">
               The ultimate online Pictionary experience. Create a room, invite
               your friends, and let the drawing battles begin!
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 size="lg"
-                className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                className="gap-2 bg-gradient-to-r from-yellow-400 to-pink-500 hover:from-yellow-500 hover:to-pink-600 text-black font-bold shadow-[0_0_15px_rgba(255,214,0,0.5)] hover:shadow-[0_0_20px_rgba(255,214,0,0.7)] transition-all duration-300"
                 onClick={handleQuickPlay}
                 disabled={isLoading}
               >
@@ -305,12 +319,12 @@ export default function Home() {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-purple-400 text-purple-400 hover:text-purple-500 hover:border-purple-500"
+                className="border-yellow-400 text-yellow-400 hover:text-yellow-300 hover:border-yellow-300 hover:bg-purple-900/30"
               >
                 Learn More
               </Button>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="flex items-center gap-2 text-yellow-300">
               <Users className="h-4 w-4" />
               <span className="text-sm">1,234 players online now</span>
             </div>
@@ -320,7 +334,7 @@ export default function Home() {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="bg-card rounded-xl shadow-lg border"
+            className="bg-indigo-950/80 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] border-2 border-indigo-500/50"
           >
             <Tabs
               defaultValue="create"
@@ -333,9 +347,19 @@ export default function Home() {
               }}
               className="w-full"
             >
-              <TabsList className="grid grid-cols-2 w-full">
-                <TabsTrigger value="create">Create Game</TabsTrigger>
-                <TabsTrigger value="join">Join Game</TabsTrigger>
+              <TabsList className="grid grid-cols-2 w-full bg-indigo-900 p-1">
+                <TabsTrigger
+                  value="create"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-pink-500 data-[state=active]:text-black data-[state=active]:font-bold"
+                >
+                  Create Game
+                </TabsTrigger>
+                <TabsTrigger
+                  value="join"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-pink-500 data-[state=active]:text-black data-[state=active]:font-bold"
+                >
+                  Join Game
+                </TabsTrigger>
               </TabsList>
 
               {/* Create Game Tab */}
@@ -344,7 +368,9 @@ export default function Home() {
                 className="p-6 space-y-4 min-h-[320px]"
               >
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">Create a New Game</h3>
+                  <h3 className="text-xl font-bold text-yellow-400">
+                    Create a New Game
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     Set up a room and invite your friends to play!
                   </p>
@@ -454,7 +480,7 @@ export default function Home() {
 
                   <Button
                     type="submit"
-                    className="w-full gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                    className="w-full gap-2 bg-gradient-to-r from-yellow-400 to-pink-500 hover:from-yellow-500 hover:to-pink-600 text-black font-bold shadow-[0_0_10px_rgba(255,214,0,0.3)] hover:shadow-[0_0_15px_rgba(255,214,0,0.5)] transition-all duration-300"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -472,7 +498,9 @@ export default function Home() {
               {/* Join Game Tab */}
               <TabsContent value="join" className="p-6 space-y-4 min-h-[320px]">
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">Join Existing Game</h3>
+                  <h3 className="text-xl font-bold text-yellow-400">
+                    Join Existing Game
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     Enter a game code to join your friends!
                   </p>
@@ -517,7 +545,7 @@ export default function Home() {
 
                   <Button
                     type="submit"
-                    className="w-full gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                    className="w-full gap-2 bg-gradient-to-r from-yellow-400 to-pink-500 hover:from-yellow-500 hover:to-pink-600 text-black font-bold shadow-[0_0_10px_rgba(255,214,0,0.3)] hover:shadow-[0_0_15px_rgba(255,214,0,0.5)] transition-all duration-300"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -541,26 +569,28 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="py-16"
         >
-          <h3 className="text-2xl font-bold text-center mb-8">How It Works</h3>
+          <h3 className="text-3xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500">
+            How It Works
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
                 title: "Create or Join",
                 description:
                   "Start a new game room or join an existing one with a game code",
-                icon: <Users className="h-10 w-10 text-purple-400" />,
+                icon: <Users className="h-10 w-10 text-yellow-400" />,
               },
               {
                 title: "Draw & Guess",
                 description:
                   "Take turns drawing while others try to guess what you're creating",
-                icon: <Pencil className="h-10 w-10 text-indigo-400" />,
+                icon: <Pencil className="h-10 w-10 text-pink-400" />,
               },
               {
                 title: "Win Points",
                 description:
                   "Score points for correct guesses and artistic masterpieces",
-                icon: <Play className="h-10 w-10 text-fuchsia-400" />,
+                icon: <Play className="h-10 w-10 text-purple-400" />,
               },
             ].map((item, index) => (
               <motion.div
@@ -569,13 +599,17 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.8 + index * 0.2 }}
               >
-                <Card className="border-t-4 border-t-primary/80 hover:shadow-lg transition-shadow">
+                <Card className="bg-indigo-950/80 border-2 border-indigo-500/50 hover:shadow-[0_0_15px_rgba(139,92,246,0.5)] transition-all duration-300">
                   <CardHeader className="pb-2">
                     <div className="mb-2">{item.icon}</div>
-                    <CardTitle>{item.title}</CardTitle>
+                    <CardTitle className="text-yellow-400">
+                      {item.title}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription>{item.description}</CardDescription>
+                    <CardDescription className="text-yellow-100">
+                      {item.description}
+                    </CardDescription>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -584,29 +618,31 @@ export default function Home() {
         </motion.div>
       </div>
 
-      <footer className="border-t bg-card/50">
+      <footer className="border-t border-indigo-500/50 bg-indigo-950/80">
         <div className="container px-4 py-6 mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
-              <Pencil className="h-5 w-5 text-purple-400" />
-              <span className="font-semibold">Pictionary Pals</span>
+              <Pencil className="h-5 w-5 text-yellow-400" />
+              <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">
+                Pictionary Pals
+              </span>
             </div>
             <div className="flex gap-6">
               <Link
                 to="#"
-                className="text-sm text-muted-foreground hover:text-foreground"
+                className="text-sm text-yellow-400/70 hover:text-yellow-400"
               >
                 Privacy Policy
               </Link>
               <Link
                 to="#"
-                className="text-sm text-muted-foreground hover:text-foreground"
+                className="text-sm text-yellow-400/70 hover:text-yellow-400"
               >
                 Terms of Service
               </Link>
               <Link
                 to="#"
-                className="text-sm text-muted-foreground hover:text-foreground"
+                className="text-sm text-yellow-400/70 hover:text-yellow-400"
               >
                 Contact
               </Link>
