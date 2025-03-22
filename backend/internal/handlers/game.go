@@ -26,8 +26,9 @@ var numPlayers = 2
 func CreateTestPlayers(numPlayers int, game *game.Game) []*shared.Player {
 	players := make([]*shared.Player, numPlayers)
 
-	for i := 0; i < numPlayers; i++ {
+	for i := range numPlayers {
 		players[i] = game.NewPlayer(uuid.New().String(), fmt.Sprintf("player %d", i), false)
+		players[i].Ready = true
 	}
 	return players
 }
