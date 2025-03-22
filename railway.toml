@@ -1,0 +1,12 @@
+[build]
+builder = "nixpacks"
+buildCommand = "cd backend && go build -o ../main ./cmd/server/main.go"
+
+[deploy]
+startCommand = "./main"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+
+[env]
+PORT = "8080"
+RAILWAY_ENVIRONMENT_NAME = "production" 
