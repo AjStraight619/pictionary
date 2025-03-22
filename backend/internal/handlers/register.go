@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/Ajstraight619/pictionary-server/internal/server"
 	"github.com/labstack/echo/v4"
 )
@@ -22,7 +24,12 @@ func RegisterRoutes(e *echo.Echo, server *server.GameServer) {
 	// 	return CreateGameStateHandler(c, server)
 	// })
 
-	// e.GET("/health", func(c echo.Context) error {
-	// 	return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
-	// })
+	// Root path for Railway health check
+	e.GET("/", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	})
+
+	e.GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
+	})
 }
