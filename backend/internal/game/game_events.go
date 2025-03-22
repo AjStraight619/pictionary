@@ -106,6 +106,43 @@ func (g *Game) InitGameEvents() {
 		g.handlePlayerGuess(pt.PlayerID, pt.Guess)
 	})
 
+	g.RegisterGameEvent(e.PlayerReady, func(payload json.RawMessage) {
+		var pt e.PlayerReadyPayload
+
+		if err := json.Unmarshal(payload, &pt); err != nil {
+			log.Println("Error unmarshalling PlayerReady payload:", err)
+			return
+		}
+
+		// Mark the player as ready
+		player := g.GetPlayerByID(pt.PlayerID)
+		if player == nil {
+			log.Printf("Player with ID %s not found", pt.PlayerID)
+			return
+		}
+
+		player.Ready = true
+		log.Printf("Player %s (%s) is now ready", player.Username, player.ID)
+
+		g.BroadcastGameState()
+
+		// Check if all players are ready
+		allReady := true
+		g.Mu.RLock()
+		for _, p := range g.Players {
+			if !p.Ready {
+				allReady = false
+				break
+			}
+		}
+		g.Mu.RUnlock()
+
+		// If all players are ready and there's at least 2 players, host can start the game
+		if allReady && len(g.Players) >= 2 {
+			log.Println("All players are ready, host can start the game")
+		}
+	})
+
 }
 
 func (g *Game) handleExternalEvent(event e.GameEvent) {

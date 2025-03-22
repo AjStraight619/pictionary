@@ -69,6 +69,7 @@ func (c *Client) Read() {
 		e.StartTimer:  true,
 		e.StopTimer:   true,
 		e.SelectWord:  true,
+		e.PlayerReady: true,
 	}
 
 	for {
