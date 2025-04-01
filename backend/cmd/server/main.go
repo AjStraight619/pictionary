@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Ajstraight619/pictionary-server/internal/config"
+	"github.com/Ajstraight619/pictionary-server/config"
 	"github.com/Ajstraight619/pictionary-server/internal/db"
 	"github.com/Ajstraight619/pictionary-server/internal/handlers"
 	"github.com/Ajstraight619/pictionary-server/internal/server"
@@ -43,9 +43,12 @@ func main() {
 	db.InitDB(dbPath)
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: cfg.AllowedOrigins,
-		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodOptions},
-		AllowHeaders: []string{"Origin", "Content-Type", "Accept"},
+		AllowOrigins:     cfg.AllowedOrigins,
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		AllowCredentials: true,
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
+		MaxAge:           86400, // 24 hours for preflight request caching
 	}))
 
 	handlers.RegisterRoutes(e, gameServer)
