@@ -21,7 +21,6 @@ const PreGameLobby = () => {
   const location = useLocation();
   const [copied, setCopied] = useState(false);
   const players = usePlayers();
-  console.log("players", players);
   const gameStatus = useGameStatus();
   const host = useHost();
   const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");

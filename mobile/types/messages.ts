@@ -32,6 +32,9 @@ export type MessagePayloadMap = {
   playerReady: {
     playerID: string;
   };
+  playerToggleReady: {
+    playerID: string;
+  };
 };
 
 export type MessageHandlers = {

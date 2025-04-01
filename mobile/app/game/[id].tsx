@@ -452,7 +452,7 @@ export default function GameScreen() {
             style={styles.readyButton}
             onPress={() => {
               if (wsRef.current) {
-                wsRef.current.send("playerReady", {
+                wsRef.current.send("playerToggleReady", {
                   playerID: playerInfo.playerID,
                 });
               }
@@ -463,11 +463,18 @@ export default function GameScreen() {
         )}
 
         {playerInfo && isPlayerReady && (
-          <View style={styles.alreadyReadyContainer}>
-            <Text style={styles.alreadyReadyText}>
-              You are ready! Waiting for other players...
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={styles.cancelReadyButton}
+            onPress={() => {
+              if (wsRef.current) {
+                wsRef.current.send("playerToggleReady", {
+                  playerID: playerInfo.playerID,
+                });
+              }
+            }}
+          >
+            <Text style={styles.cancelReadyButtonText}>Cancel Ready</Text>
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -757,16 +764,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#93C5FD",
     opacity: 0.7,
   },
-  alreadyReadyContainer: {
+  cancelReadyButton: {
+    backgroundColor: "#EF4444",
+    borderRadius: 8,
     padding: 16,
     alignItems: "center",
-    backgroundColor: "rgba(16, 185, 129, 0.1)",
-    borderRadius: 8,
   },
-  alreadyReadyText: {
+  cancelReadyButtonText: {
+    color: "#FFF",
     fontSize: 16,
-    color: "#10B981",
-    fontWeight: "500",
+    fontWeight: "bold",
   },
   forceStartButton: {
     backgroundColor: "#EF4444",
