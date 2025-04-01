@@ -1,11 +1,11 @@
-export interface PlayerInfo {
+export type PlayerInfo = {
   playerID: string;
   username: string;
-}
+};
 
-export interface GameOptions {
+export type GameOptions = {
   roundLimit: number;
   turnTimeLimit: number;
   selectWordTimeLimit: number;
-  maxPlayers: number;
-}
+  maxPlayers?: number;
+};

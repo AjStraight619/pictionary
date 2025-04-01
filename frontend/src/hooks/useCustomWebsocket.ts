@@ -76,11 +76,10 @@ export const useCustomWebsocket = ({
         const messageType = parsedMessage.type as keyof MessagePayloadMap;
 
         // If we have a handler for this message type, call it with properly typed payload
-        if (messageHandlers[messageType]) {
-          const handler = messageHandlers[messageType];
-          if (handler) {
-            handler(parsedMessage.payload);
-          }
+        const handler = messageHandlers[messageType];
+        if (handler) {
+          // @ts-expect-error: We know the payload is correct for this message type
+          handler(parsedMessage.payload);
         }
       } catch (error) {
         console.error("Error processing message:", error);

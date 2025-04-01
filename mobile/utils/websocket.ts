@@ -5,10 +5,10 @@ import { getPlayerInfo } from "./storage";
 // Use the WebSocket URL from config
 const WS_URL = config.ws.url;
 
-interface WebSocketMessage {
+type WebSocketMessage = {
   type: string;
   payload: any;
-}
+};
 
 export class GameWebSocket {
   private ws: WebSocket | null = null;

@@ -15,17 +15,17 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { GameWebSocket } from "../utils/websocket";
 
-interface ChatMessage {
+type ChatMessage = {
   username: string;
   guess: string;
-  id?: string; // Add an ID field for deduplication
-}
+  id?: string; // Optional ID for deduplication
+};
 
-interface GameChatProps {
+type GameChatProps = {
   username: string;
   websocket: GameWebSocket;
   playerID: string;
-}
+};
 
 const GameChat: React.FC<GameChatProps> = ({
   username,

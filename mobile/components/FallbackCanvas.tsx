@@ -19,17 +19,16 @@ const { width } = Dimensions.get("window");
 const CANVAS_HEIGHT = width * 0.8; // 4:3 aspect ratio
 const STROKE_WIDTH = 4;
 
-interface DrawingCanvasProps {
+type DrawingCanvasProps = {
   isDrawing: boolean;
   onDrawingData?: (path: string, color: string, strokeWidth: number) => void;
-}
+};
 
-interface PathData {
-  d: string;
-  stroke: string;
+type PathData = {
+  path: string;
+  color: string;
   strokeWidth: number;
-  key: string;
-}
+};
 
 const FallbackCanvas: React.FC<DrawingCanvasProps> = ({
   isDrawing,
@@ -51,10 +50,9 @@ const FallbackCanvas: React.FC<DrawingCanvasProps> = ({
     // Create a test drawing - make it large and bright red for visibility
     const testPath = "M50,50 L250,50 L250,200 L50,200 Z";
     const newPath: PathData = {
-      d: testPath,
-      stroke: "#FF0000", // Bright red
+      path: testPath,
+      color: "#FF0000", // Bright red
       strokeWidth: 8, // Thicker line
-      key: `path-${Date.now()}`,
     };
 
     // Clear existing paths and add the test path
@@ -96,10 +94,9 @@ const FallbackCanvas: React.FC<DrawingCanvasProps> = ({
         // Temporary hack to see if paths render: Always add current state to paths array
         // This will be less efficient but helps diagnose rendering issues
         const tempPath: PathData = {
-          d: updatedPath,
-          stroke: currentColor,
+          path: updatedPath,
+          color: currentColor,
           strokeWidth: STROKE_WIDTH,
-          key: `temp-${Date.now()}`,
         };
         setPaths((prevPaths) => [...prevPaths, tempPath]);
       }
@@ -128,10 +125,9 @@ const FallbackCanvas: React.FC<DrawingCanvasProps> = ({
 
         // Add the completed path to the paths array
         const newPath: PathData = {
-          d: pathRef.current,
-          stroke: currentColor,
+          path: pathRef.current,
+          color: currentColor,
           strokeWidth: STROKE_WIDTH,
-          key: `path-${Date.now()}`,
         };
 
         setPaths((prevPaths) => {
@@ -176,7 +172,7 @@ const FallbackCanvas: React.FC<DrawingCanvasProps> = ({
   console.log("SVG Canvas - isDrawing:", isDrawing);
   console.log("SVG Canvas - paths count:", paths.length);
   if (paths.length > 0) {
-    console.log("First SVG path:", paths[0].d.substring(0, 30) + "...");
+    console.log("First SVG path:", paths[0].path.substring(0, 30) + "...");
   }
 
   return (
@@ -204,9 +200,9 @@ const FallbackCanvas: React.FC<DrawingCanvasProps> = ({
 
                 {paths.map((path) => (
                   <Path
-                    key={path.key}
-                    d={path.d}
-                    stroke={path.stroke}
+                    key={path.path}
+                    d={path.path}
+                    stroke={path.color}
                     strokeWidth={path.strokeWidth}
                     fill="none"
                     strokeLinejoin="round"

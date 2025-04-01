@@ -17,16 +17,16 @@ const { width } = Dimensions.get("window");
 const CANVAS_HEIGHT = width * 0.8; // 4:3 aspect ratio
 const STROKE_WIDTH = 4;
 
-interface DrawingCanvasProps {
+type DrawingCanvasProps = {
   isDrawing: boolean;
   onDrawingData?: (path: string, color: string, strokeWidth: number) => void;
-}
+};
 
-interface PathData {
+type PathData = {
   path: string;
   color: string;
   strokeWidth: number;
-}
+};
 
 const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   isDrawing,

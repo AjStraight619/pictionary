@@ -1,21 +1,30 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
-interface WebSocketMessage {
+type WebSocketMessage = {
+  type: string;
+  payload: any;
+};
+
+type ReceivedMessage = {
   data: string;
   type: string;
-}
+};
 
-interface UseCustomWebsocketOptions {
+type UseCustomWebsocketOptions = {
   messageTypes?: string[];
   url?: string;
-}
+  onOpen?: () => void;
+  onClose?: () => void;
+  onError?: (error: any) => void;
+  onMessage?: (data: WebSocketMessage) => void;
+};
 
 const useCustomWebsocket = ({
   messageTypes = [],
   url = "ws://localhost:8080/ws", // Default WebSocket server URL
 }: UseCustomWebsocketOptions = {}) => {
   const [isConnected, setIsConnected] = useState(false);
-  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
+  const [lastMessage, setLastMessage] = useState<ReceivedMessage | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Connect to WebSocket

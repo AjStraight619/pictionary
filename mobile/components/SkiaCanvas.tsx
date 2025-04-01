@@ -30,13 +30,17 @@ enum DrawingTool {
   Triangle = "triangle",
 }
 
-interface DrawingCanvasProps {
+type DrawingCanvasProps = {
   isDrawing: boolean;
+  width: number;
+  height: number;
   onDrawingData?: (path: string, color: string, strokeWidth: number) => void;
-}
+};
 
 const SkiaCanvas: React.FC<DrawingCanvasProps> = ({
   isDrawing,
+  width,
+  height,
   onDrawingData,
 }) => {
   // Canvas state
