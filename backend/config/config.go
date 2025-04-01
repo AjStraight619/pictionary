@@ -15,7 +15,7 @@ func GetConfig() *Config {
 			Port:        os.Getenv("PORT"),
 			Environment: "production",
 			AllowedOrigins: []string{
-				"",               // Add your production frontend URL here
+				"https://pictionary-tan.vercel.app",
 				"exp://exp.host", // Allow connections from the Expo app in production
 			},
 		}
