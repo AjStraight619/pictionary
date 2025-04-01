@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { useLocalStorage } from "usehooks-ts";
 import type { PlayerInfo } from "@/types/lobby";
 import { DoodleElements } from "@/components/home/doodle-elements";
+import { API_URL } from "@/utils/config";
 
 type GameOptions = {
   roundLimit: number;
@@ -67,7 +68,7 @@ export default function Home() {
         },
       };
 
-      const res = await fetch("http://localhost:8000/game/create", {
+      const res = await fetch(`${API_URL}/game/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -145,7 +146,7 @@ export default function Home() {
       };
 
       // Send the game creation request to the server
-      const res = await fetch("http://localhost:8080/game/create", {
+      const res = await fetch(`${API_URL}/game/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -205,7 +206,7 @@ export default function Home() {
       };
 
       // Send the join game request to the server
-      const res = await fetch("http://localhost:8080/join-game", {
+      const res = await fetch(`${API_URL}/game/join`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

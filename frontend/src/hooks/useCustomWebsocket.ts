@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useReadLocalStorage } from "usehooks-ts";
 import { useEffect } from "react";
+import { WS_URL } from "@/utils/config";
 
 type QueryParams = {
   [key: string]: string | number;
@@ -30,7 +31,7 @@ export const useCustomWebsocket = ({
   const augmentedQueryParams = { ...queryParams, playerID, username };
 
   const { sendJsonMessage, lastMessage, readyState, getWebSocket } =
-    useWebSocket(`ws://localhost:8080/game/${id}`, {
+    useWebSocket(`${WS_URL}/${id}`, {
       queryParams: augmentedQueryParams,
       share: true,
       shouldReconnect: () => true,

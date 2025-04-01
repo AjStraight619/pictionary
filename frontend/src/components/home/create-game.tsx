@@ -13,6 +13,7 @@ import { Button } from "../ui/button";
 import { useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 import { PlayerInfo } from "@/types/lobby";
+import { API_URL } from "@/utils/config";
 
 type GameOptions = {
   roundLimit: number;
@@ -30,7 +31,7 @@ const CreateGameForm = () => {
   const navigate = useNavigate();
   const [playerInfo, setPlayerInfo] = useLocalStorage<PlayerInfo | null>(
     "playerInfo",
-    null,
+    null
   );
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,7 +81,7 @@ const CreateGameForm = () => {
     setIsLoading(true);
     try {
       // Send the game creation request to the server
-      const res = await fetch("http://localhost:8000/game/create", {
+      const res = await fetch(`${API_URL}/game/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
