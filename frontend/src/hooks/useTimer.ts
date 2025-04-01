@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useCustomWebsocket } from "./useCustomWebsocket";
+import { MessagePayloadMap } from "@/types/messages";
 
 type UseTimerOptions = {
   timerType: string;
-  messageTypes: string[];
+  messageTypes: Array<keyof MessagePayloadMap>;
   defaultTime?: number | null;
 };
 

@@ -53,6 +53,10 @@ export type MessagePayloadMap = {
 
   // Game control messages
   startGame: { force?: boolean };
+
+  // Add these timer-related message types
+  selectWordTimer: { timeRemaining?: number };
+  turnTimer: { timeRemaining?: number };
 };
 
 /**

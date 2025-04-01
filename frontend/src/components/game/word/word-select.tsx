@@ -22,7 +22,7 @@ const WordSelect = () => {
   const isSelectingWord = useIsSelectingWord();
   const isCurrentDrawer = useIsCurrentDrawer();
 
-  const [_, setOpen] = useState(isSelectingWord);
+  const [, setOpen] = useState(isSelectingWord);
 
   const { timeRemaining, stopTimer } = useTimer({
     timerType: "selectWordTimer",
