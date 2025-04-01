@@ -2,11 +2,13 @@ import { motion } from "framer-motion";
 import {
   useCurrentDrawingPlayer,
   useCurrentRound,
+  useGameStatus,
 } from "@/hooks/useGameSelector";
 import { useTimer } from "@/hooks/useTimer";
 import { Clock } from "lucide-react";
 import { useWordToGuess } from "@/hooks/useGameSelector";
 import Word from "@/components/game/word/word";
+import { GameStatus } from "@/types/game";
 
 const containerVariants = {
   initial: { opacity: 0 },
@@ -17,11 +19,16 @@ const Turn = () => {
   const currentRound = useCurrentRound();
   const currentWord = useWordToGuess();
   const playerDrawing = useCurrentDrawingPlayer();
+  const gameStatus = useGameStatus();
 
   const { timeRemaining } = useTimer({
     timerType: "turnTimer",
     messageTypes: ["turnTimer"],
   });
+
+  if (gameStatus !== GameStatus.InProgress) {
+    return null;
+  }
 
   if (!currentWord) {
     return (
