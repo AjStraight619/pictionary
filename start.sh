@@ -62,26 +62,32 @@ print_success "Backend dependencies installed successfully."
 cd ..
 
 # Start servers
-print_info "Starting servers..."
+print_info "Starting servers in separate Ghostty windows..."
 
-# Start backend server in the background
-print_info "Starting Go backend server..."
-cd backend || exit
-go run cmd/server/main.go &
-BACKEND_PID=$!
-cd ..
+# Create temporary scripts for each server
+BACKEND_SCRIPT="/tmp/pictionary_backend.sh"
+FRONTEND_SCRIPT="/tmp/pictionary_frontend.sh"
 
-# Wait for backend to start
-sleep 2
-print_success "Backend server started with PID: $BACKEND_PID"
+# Create backend script
+cat > "$BACKEND_SCRIPT" << EOF
+#!/bin/bash
+cd "$PWD/backend" && go run cmd/server/main.go
+EOF
+chmod +x "$BACKEND_SCRIPT"
 
-# Start frontend server
-print_info "Starting frontend dev server..."
-cd frontend || exit
-npm run dev
+# Create frontend script
+cat > "$FRONTEND_SCRIPT" << EOF
+#!/bin/bash
+cd "$PWD/frontend" && npm run dev
+EOF
+chmod +x "$FRONTEND_SCRIPT"
 
-# When npm run dev is terminated, also kill the backend
-kill $BACKEND_PID
-print_info "Shutting down backend server..."
+# Open Ghostty terminals for each server
+print_info "Starting Go backend server in a new Ghostty window..."
+open -a Ghostty "$BACKEND_SCRIPT"
 
-print_success "All servers stopped. Goodbye!"
+print_info "Starting frontend dev server in a new Ghostty window..."
+open -a Ghostty "$FRONTEND_SCRIPT"
+
+print_success "All servers started in separate Ghostty windows!"
+print_info "Close the terminal windows to stop the servers."

@@ -11,8 +11,6 @@ import { useLocalSearchParams } from "expo-router";
 import { GameWebSocket } from "../../utils/websocket";
 import { getPlayerInfo } from "../../utils/storage";
 import { GameState, GameStatus, TurnPhase, Word } from "../../types/game";
-import { Player } from "../../types/lobby";
-import FallbackCanvas from "../../components/FallbackCanvas";
 import SkiaCanvas from "../../components/SkiaCanvas";
 import GameChat from "../../components/GameChat";
 import { Ionicons } from "@expo/vector-icons";
@@ -407,28 +405,46 @@ export default function GameScreen() {
         {playerInfo &&
           gameState?.players.find((p) => p.ID === playerInfo.playerID)
             ?.isHost && (
-            <TouchableOpacity
-              style={[
-                styles.startGameButton,
-                !gameState.players.every((p) => p.ready) &&
-                  styles.startGameButtonDisabled,
-              ]}
-              disabled={!gameState.players.every((p) => p.ready)}
-              onPress={() => {
-                if (wsRef.current && gameState.players.every((p) => p.ready)) {
-                  wsRef.current.send("startTimer", {
-                    timerType: "startGameCountdown",
-                    duration: 5,
-                  });
-                }
-              }}
-            >
-              <Text style={styles.startGameButtonText}>
-                {gameState.players.every((p) => p.ready)
-                  ? "Start Game"
-                  : "Waiting for all players to be ready"}
-              </Text>
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                style={[
+                  styles.startGameButton,
+                  !gameState.players.every((p) => p.ready) &&
+                    styles.startGameButtonDisabled,
+                ]}
+                disabled={!gameState.players.every((p) => p.ready)}
+                onPress={() => {
+                  if (
+                    wsRef.current &&
+                    gameState.players.every((p) => p.ready)
+                  ) {
+                    wsRef.current.send("startTimer", {
+                      timerType: "startGameCountdown",
+                      duration: 5,
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.startGameButtonText}>
+                  {gameState.players.every((p) => p.ready)
+                    ? "Start Game"
+                    : "Waiting for all players to be ready"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.forceStartButton]}
+                onPress={() => {
+                  if (wsRef.current) {
+                    wsRef.current.send("startGame", {
+                      force: true,
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.forceStartButtonText}>Force Start</Text>
+              </TouchableOpacity>
+            </>
           )}
 
         {playerInfo && !isPlayerReady && (
@@ -751,5 +767,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#10B981",
     fontWeight: "500",
+  },
+  forceStartButton: {
+    backgroundColor: "#EF4444",
+    borderRadius: 8,
+    padding: 16,
+    alignItems: "center",
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  forceStartButtonText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  forceStartDescription: {
+    color: "#FFF",
+    fontSize: 12,
+    marginTop: 4,
   },
 });

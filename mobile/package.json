@@ -42,7 +42,8 @@
     "react-native-skia": "^0.0.1",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "react-native-svg": "15.8.0"
+    "react-native-svg": "15.8.0",
+    "expo-linear-gradient": "~14.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

@@ -26,7 +26,9 @@ export type MessagePayloadMap = {
   stopTimer: {
     timerType: string;
   };
-  startGame: Record<string, never>; // Empty object
+  startGame: {
+    force?: boolean;
+  };
   playerReady: {
     playerID: string;
   };

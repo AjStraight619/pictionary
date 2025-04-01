@@ -11,21 +11,21 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-interface Player {
+type Player = {
   id: string;
   username: string;
   score: number;
   isReady: boolean;
   isHost: boolean;
-}
+};
 
-interface GameOptions {
+type GameOptions = {
   roundTime: number;
   rounds: number;
   language: string;
-}
+};
 
-interface GameLobbyProps {
+type GameLobbyProps = {
   gameId: string;
   players: Player[];
   currentPlayerId: string;
@@ -34,7 +34,7 @@ interface GameLobbyProps {
   onStartGame: () => void;
   onUpdateOptions: (options: Partial<GameOptions>) => void;
   onLeaveGame: () => void;
-}
+};
 
 const GameLobby: React.FC<GameLobbyProps> = ({
   gameId,

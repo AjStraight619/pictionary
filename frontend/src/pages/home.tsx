@@ -15,6 +15,7 @@ import { Pencil, Users, Play, ArrowRight, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLocalStorage } from "usehooks-ts";
 import type { PlayerInfo } from "@/types/lobby";
+import { DoodleElements } from "@/components/home/doodle-elements";
 
 type GameOptions = {
   roundLimit: number;
@@ -144,7 +145,7 @@ export default function Home() {
       };
 
       // Send the game creation request to the server
-      const res = await fetch("http://localhost:8000/game/create", {
+      const res = await fetch("http://localhost:8080/game/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -204,7 +205,7 @@ export default function Home() {
       };
 
       // Send the join game request to the server
-      const res = await fetch("http://localhost:8000/join-game", {
+      const res = await fetch("http://localhost:8080/join-game", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -247,45 +248,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen dark bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-indigo-900 to-blue-950">
-      <div className="container px-4 py-8 mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex justify-between items-center mb-12"
-        >
-          <div className="flex items-center gap-2">
-            <Pencil className="h-8 w-8 text-yellow-400" />
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500">
-              Pictionary Pals
-            </h1>
-          </div>
-          <div className="flex gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-yellow-400 hover:text-yellow-300 hover:bg-purple-800/50"
-            >
-              How to Play
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-yellow-400 hover:text-yellow-300 hover:bg-purple-800/50"
-            >
-              About
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-yellow-400 text-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300"
-            >
-              Sign In
-            </Button>
-          </div>
-        </motion.div>
+    <div className="min-h-screen dark bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-indigo-900 to-blue-950 relative overflow-hidden">
+      {/* Cartoon Clouds Background */}
+      <DoodleElements />
 
+      <div className="container px-4 py-8 mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center py-12">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -325,8 +292,8 @@ export default function Home() {
               </Button>
             </div>
             <div className="flex items-center gap-2 text-yellow-300">
-              <Users className="h-4 w-4" />
-              <span className="text-sm">1,234 players online now</span>
+              {/* <Users className="h-4 w-4" />
+              <span className="text-sm">1,234 players online now</span> */}
             </div>
           </motion.div>
 
@@ -617,42 +584,83 @@ export default function Home() {
           </div>
         </motion.div>
       </div>
-
-      <footer className="border-t border-indigo-500/50 bg-indigo-950/80">
-        <div className="container px-4 py-6 mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Pencil className="h-5 w-5 text-yellow-400" />
-              <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">
-                Pictionary Pals
-              </span>
-            </div>
-            <div className="flex gap-6">
-              <Link
-                to="#"
-                className="text-sm text-yellow-400/70 hover:text-yellow-400"
-              >
-                Privacy Policy
-              </Link>
-              <Link
-                to="#"
-                className="text-sm text-yellow-400/70 hover:text-yellow-400"
-              >
-                Terms of Service
-              </Link>
-              <Link
-                to="#"
-                className="text-sm text-yellow-400/70 hover:text-yellow-400"
-              >
-                Contact
-              </Link>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Pictionary Pals. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
+
+const Navbar = () => (
+  <motion.div
+    initial={{ opacity: 0, y: -20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5 }}
+    className="flex justify-between items-center mb-12"
+  >
+    <div className="flex items-center gap-2">
+      <Pencil className="h-8 w-8 text-yellow-400" />
+      <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500">
+        Pictionary Pals
+      </h1>
+    </div>
+    <div className="flex gap-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-yellow-400 hover:text-yellow-300 hover:bg-purple-800/50"
+      >
+        How to Play
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-yellow-400 hover:text-yellow-300 hover:bg-purple-800/50"
+      >
+        About
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className="border-yellow-400 text-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300"
+      >
+        Sign In
+      </Button>
+    </div>
+  </motion.div>
+);
+
+const Footer = () => (
+  <footer className="border-t border-indigo-500/50 bg-indigo-950/80">
+    <div className="container px-4 py-6 mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Pencil className="h-5 w-5 text-yellow-400" />
+          <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">
+            Pictionary Pals
+          </span>
+        </div>
+        <div className="flex gap-6">
+          <Link
+            to="#"
+            className="text-sm text-yellow-400/70 hover:text-yellow-400"
+          >
+            Privacy Policy
+          </Link>
+          <Link
+            to="#"
+            className="text-sm text-yellow-400/70 hover:text-yellow-400"
+          >
+            Terms of Service
+          </Link>
+          <Link
+            to="#"
+            className="text-sm text-yellow-400/70 hover:text-yellow-400"
+          >
+            Contact
+          </Link>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Pictionary Pals. All rights reserved.
+        </div>
+      </div>
+    </div>
+  </footer>
+);

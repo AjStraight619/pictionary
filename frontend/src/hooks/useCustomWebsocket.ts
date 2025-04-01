@@ -35,7 +35,7 @@ export const useCustomWebsocket = ({
   const augmentedQueryParams = { ...queryParams, playerID, username };
 
   const { sendJsonMessage, lastMessage, readyState, getWebSocket } =
-    useWebSocket(`ws://localhost:8000/game/${id}`, {
+    useWebSocket(`ws://localhost:8080/game/${id}`, {
       queryParams: augmentedQueryParams,
       share: true,
       shouldReconnect: () => true,
