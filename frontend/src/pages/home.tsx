@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pencil, Users, Play, ArrowRight, Loader2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useLocalStorage } from "usehooks-ts";
 import type { PlayerInfo } from "@/types/lobby";
 import { DoodleElements } from "@/components/home/doodle-elements";
@@ -349,6 +349,7 @@ export default function Home() {
                       Your Nickname
                     </label>
                     <Input
+                      className="border-white"
                       id="username"
                       placeholder="Enter your nickname"
                       value={username}
@@ -483,6 +484,7 @@ export default function Home() {
                     </label>
                     <Input
                       id="join-username"
+                      className="border-white"
                       placeholder="Enter your nickname"
                       value={username}
                       onChange={(e) => {
@@ -497,6 +499,7 @@ export default function Home() {
                     </label>
                     <Input
                       id="game-code"
+                      className="border-white"
                       placeholder="Enter game code"
                       value={gameCode}
                       onChange={(e) => {
@@ -588,79 +591,79 @@ export default function Home() {
   );
 }
 
-const Navbar = () => (
-  <motion.div
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-    className="flex justify-between items-center mb-12"
-  >
-    <div className="flex items-center gap-2">
-      <Pencil className="h-8 w-8 text-yellow-400" />
-      <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500">
-        Pictionary Pals
-      </h1>
-    </div>
-    <div className="flex gap-4">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-yellow-400 hover:text-yellow-300 hover:bg-purple-800/50"
-      >
-        How to Play
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-yellow-400 hover:text-yellow-300 hover:bg-purple-800/50"
-      >
-        About
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        className="border-yellow-400 text-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300"
-      >
-        Sign In
-      </Button>
-    </div>
-  </motion.div>
-);
+// const Navbar = () => (
+//   <motion.div
+//     initial={{ opacity: 0, y: -20 }}
+//     animate={{ opacity: 1, y: 0 }}
+//     transition={{ duration: 0.5 }}
+//     className="flex justify-between items-center mb-12"
+//   >
+//     <div className="flex items-center gap-2">
+//       <Pencil className="h-8 w-8 text-yellow-400" />
+//       <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500">
+//         Pictionary Pals
+//       </h1>
+//     </div>
+//     <div className="flex gap-4">
+//       <Button
+//         variant="ghost"
+//         size="sm"
+//         className="text-yellow-400 hover:text-yellow-300 hover:bg-purple-800/50"
+//       >
+//         How to Play
+//       </Button>
+//       <Button
+//         variant="ghost"
+//         size="sm"
+//         className="text-yellow-400 hover:text-yellow-300 hover:bg-purple-800/50"
+//       >
+//         About
+//       </Button>
+//       <Button
+//         variant="outline"
+//         size="sm"
+//         className="border-yellow-400 text-yellow-400 hover:bg-yellow-400/10 hover:text-yellow-300"
+//       >
+//         Sign In
+//       </Button>
+//     </div>
+//   </motion.div>
+// );
 
-const Footer = () => (
-  <footer className="border-t border-indigo-500/50 bg-indigo-950/80">
-    <div className="container px-4 py-6 mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Pencil className="h-5 w-5 text-yellow-400" />
-          <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">
-            Pictionary Pals
-          </span>
-        </div>
-        <div className="flex gap-6">
-          <Link
-            to="#"
-            className="text-sm text-yellow-400/70 hover:text-yellow-400"
-          >
-            Privacy Policy
-          </Link>
-          <Link
-            to="#"
-            className="text-sm text-yellow-400/70 hover:text-yellow-400"
-          >
-            Terms of Service
-          </Link>
-          <Link
-            to="#"
-            className="text-sm text-yellow-400/70 hover:text-yellow-400"
-          >
-            Contact
-          </Link>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Pictionary Pals. All rights reserved.
-        </div>
-      </div>
-    </div>
-  </footer>
-);
+// const Footer = () => (
+//   <footer className="border-t border-indigo-500/50 bg-indigo-950/80">
+//     <div className="container px-4 py-6 mx-auto">
+//       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+//         <div className="flex items-center gap-2">
+//           <Pencil className="h-5 w-5 text-yellow-400" />
+//           <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">
+//             Pictionary Pals
+//           </span>
+//         </div>
+//         <div className="flex gap-6">
+//           <Link
+//             to="#"
+//             className="text-sm text-yellow-400/70 hover:text-yellow-400"
+//           >
+//             Privacy Policy
+//           </Link>
+//           <Link
+//             to="#"
+//             className="text-sm text-yellow-400/70 hover:text-yellow-400"
+//           >
+//             Terms of Service
+//           </Link>
+//           <Link
+//             to="#"
+//             className="text-sm text-yellow-400/70 hover:text-yellow-400"
+//           >
+//             Contact
+//           </Link>
+//         </div>
+//         <div className="text-sm text-muted-foreground">
+//           © {new Date().getFullYear()} Pictionary Pals. All rights reserved.
+//         </div>
+//       </div>
+//     </div>
+//   </footer>
+// );
