@@ -58,8 +58,12 @@ func CreateGameHandler(c echo.Context, server *server.GameServer) error {
 	game.AddPlayer(player)
 	player.Pending = true
 
-	for _, p := range CreateTestPlayers(numPlayers, game) {
-		game.AddPlayer(p)
+	// Only add test players in development mode
+	env := c.Get("environment")
+	if env == "development" || env == "" { // Default to adding test players if env is not set
+		for _, p := range CreateTestPlayers(numPlayers, game) {
+			game.AddPlayer(p)
+		}
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{

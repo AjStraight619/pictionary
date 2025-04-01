@@ -26,6 +26,14 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// Add environment to context
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set("environment", cfg.Environment)
+			return next(c)
+		}
+	})
+
 	// Ensure data directory exists
 	dataDir := "data"
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
