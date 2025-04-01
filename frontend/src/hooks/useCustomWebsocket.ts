@@ -1,4 +1,5 @@
 import { PlayerInfo } from "@/types/lobby";
+import { MessageHandlers, MessagePayloadMap } from "@/types/messages";
 import { useNavigate, useParams } from "react-router";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useReadLocalStorage } from "usehooks-ts";
@@ -8,14 +9,8 @@ type QueryParams = {
   [key: string]: string | number;
 };
 
-type MessageHandler = (payload: any) => void;
-
-type MessageHandlers = {
-  [messageType: string]: MessageHandler;
-};
-
 type UseCustomWebsocketArgs = {
-  messageTypes?: string[];
+  messageTypes?: Array<keyof MessagePayloadMap>;
   messageHandlers?: MessageHandlers;
   url?: string;
   gameId?: string;
@@ -78,11 +73,14 @@ export const useCustomWebsocket = ({
     if (lastMessage && Object.keys(messageHandlers).length > 0) {
       try {
         const parsedMessage = JSON.parse(lastMessage.data);
-        const messageType = parsedMessage.type;
+        const messageType = parsedMessage.type as keyof MessagePayloadMap;
 
-        // If we have a handler for this message type, call it
+        // If we have a handler for this message type, call it with properly typed payload
         if (messageHandlers[messageType]) {
-          messageHandlers[messageType](parsedMessage.payload);
+          const handler = messageHandlers[messageType];
+          if (handler) {
+            handler(parsedMessage.payload);
+          }
         }
       } catch (error) {
         console.error("Error processing message:", error);
@@ -106,8 +104,17 @@ export const useCustomWebsocket = ({
     [ReadyState.UNINSTANTIATED]: "Uninstantiated",
   }[readyState];
 
+  // Type-safe function to send messages
+  const sendTypedMessage = <K extends keyof MessagePayloadMap>(
+    type: K,
+    payload: MessagePayloadMap[K]
+  ) => {
+    sendJsonMessage({ type, payload });
+  };
+
   return {
     sendJsonMessage,
+    sendTypedMessage,
     lastMessage,
     readyState,
     connectionStatus,

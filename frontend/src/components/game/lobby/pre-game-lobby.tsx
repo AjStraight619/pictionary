@@ -15,11 +15,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import PlayerCard from "./player-card";
+import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 
 const PreGameLobby = () => {
   const location = useLocation();
   const [copied, setCopied] = useState(false);
   const players = usePlayers();
+  console.log("players", players);
   const gameStatus = useGameStatus();
   const host = useHost();
   const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
@@ -30,6 +32,10 @@ const PreGameLobby = () => {
   });
 
   const open = gameStatus === GameStatus.NotStarted;
+
+  const { sendTypedMessage } = useCustomWebsocket({
+    messageTypes: ["playerReady", "playerToggleReady"],
+  });
 
   function copyToClipboard(text: string) {
     setCopied(true);
@@ -50,6 +56,14 @@ const PreGameLobby = () => {
     setGameStarting(false);
   };
 
+  const toggleReady = () => {
+    if (playerInfo?.playerID) {
+      sendTypedMessage("playerToggleReady", {
+        playerID: playerInfo.playerID,
+      });
+    }
+  };
+
   // Instead of manually searching, use our host hook:
   const isHost = host && host.ID === playerInfo?.playerID;
 
@@ -62,7 +76,11 @@ const PreGameLobby = () => {
       >
         <DialogTitle>Players</DialogTitle>
         <DialogDescription>Waiting for players to join...</DialogDescription>
-        <div className="grid grid-cols-2 grid-rows-4 gap-2 grid-flow-col">
+        <div
+          className={`grid gap-2 ${
+            players.length > 4 ? "grid-cols-2 grid-flow-col" : "grid-cols-1"
+          }`}
+        >
           {players.map((player) => (
             <PlayerCard
               key={player.ID}
@@ -71,31 +89,43 @@ const PreGameLobby = () => {
               name={player.username}
               score={player.score}
               color={player.color}
+              isReady={player.ready}
             />
           ))}
         </div>
         <DialogFooter>
-          {isHost && (
-            <Button
-              onClick={() =>
-                copyToClipboard(location.pathname.split("/").pop()!)
-              }
-            >
-              {copied ? "Copied!" : "Copy Game Link"}
+          <div className="flex justify-between w-full">
+            <Button onClick={toggleReady}>
+              {players.find((p) => p.ID === playerInfo?.playerID)?.ready
+                ? "Cancel Ready"
+                : "Ready"}
             </Button>
-          )}
+            <div className="space-x-2">
+              {isHost && (
+                <Button
+                  onClick={() =>
+                    copyToClipboard(location.pathname.split("/").pop()!)
+                  }
+                >
+                  {copied ? "Copied!" : "Copy Game Link"}
+                </Button>
+              )}
 
-          {isHost ? (
-            gameStarting ? (
-              <Button onClick={handleCancelGame}>Cancel {timeRemaining}</Button>
-            ) : (
-              <Button onClick={handleStartGame}>Start Game</Button>
-            )
-          ) : gameStarting ? (
-            <p>Game starting {timeRemaining}</p>
-          ) : (
-            <p>Waiting for leader to start the game...</p>
-          )}
+              {isHost ? (
+                gameStarting ? (
+                  <Button onClick={handleCancelGame}>
+                    Cancel {timeRemaining}
+                  </Button>
+                ) : (
+                  <Button onClick={handleStartGame}>Start Game</Button>
+                )
+              ) : gameStarting ? (
+                <p>Game starting {timeRemaining}</p>
+              ) : (
+                <p>Waiting for leader to start the game...</p>
+              )}
+            </div>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -143,6 +143,45 @@ func (g *Game) InitGameEvents() {
 		}
 	})
 
+	g.RegisterGameEvent(e.PlayerToggleReady, func(payload json.RawMessage) {
+		var pt e.PlayerToggleReadyPayload
+
+		if err := json.Unmarshal(payload, &pt); err != nil {
+			log.Println("Error unmarshalling PlayerToggleReady payload:", err)
+			return
+		}
+
+		// Get the player
+		player := g.GetPlayerByID(pt.PlayerID)
+		if player == nil {
+			log.Printf("Player with ID %s not found", pt.PlayerID)
+			return
+		}
+
+		// Toggle the ready state
+		player.Ready = !player.Ready
+		log.Printf("Player %s (%s) ready state toggled to: %v", player.Username, player.ID, player.Ready)
+
+		// Broadcast the updated game state
+		g.BroadcastGameState()
+
+		// Check if all players are ready
+		allReady := true
+		g.Mu.RLock()
+		for _, p := range g.Players {
+			if !p.Ready {
+				allReady = false
+				break
+			}
+		}
+		g.Mu.RUnlock()
+
+		// If all players are ready and there's at least 2 players, host can start the game
+		if allReady && len(g.Players) >= 2 {
+			log.Println("All players are ready, host can start the game")
+		}
+	})
+
 }
 
 func (g *Game) handleExternalEvent(event e.GameEvent) {

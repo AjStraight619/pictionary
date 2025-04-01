@@ -64,12 +64,13 @@ func (c *Client) Read() {
 	})
 
 	recognizedEvents := map[string]bool{
-		e.GameState:   true,
-		e.PlayerGuess: true,
-		e.StartTimer:  true,
-		e.StopTimer:   true,
-		e.SelectWord:  true,
-		e.PlayerReady: true,
+		e.GameState:         true,
+		e.PlayerGuess:       true,
+		e.StartTimer:        true,
+		e.StopTimer:         true,
+		e.SelectWord:        true,
+		e.PlayerReady:       true,
+		e.PlayerToggleReady: true,
 	}
 
 	for {

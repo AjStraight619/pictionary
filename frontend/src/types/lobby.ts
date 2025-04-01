@@ -6,6 +6,7 @@ export type Player = {
   isHost: boolean;
   score: number;
   color: string;
+  ready: boolean;
 };
 
 export type PlayerInfo = {

@@ -1,13 +1,14 @@
-import { Crown, Pencil } from "lucide-react";
+import { Check, Crown, Pencil, X } from "lucide-react";
 import { motion } from "framer-motion";
 
-interface PlayerCardProps {
+type PlayerCardProps = {
   name: string;
   score: number;
   isHost: boolean;
   isDrawing: boolean;
   color: string;
-}
+  isReady?: boolean;
+};
 
 const PlayerCard = ({
   name,
@@ -15,6 +16,7 @@ const PlayerCard = ({
   isHost,
   isDrawing,
   color,
+  isReady,
 }: PlayerCardProps) => {
   // Convert color string to a usable background color with low opacity
   const bgColor = color ? `${color}20` : "bg-muted"; // 20 is hex for ~12% opacity
@@ -53,6 +55,13 @@ const PlayerCard = ({
         </div>
         <p className="text-xs text-muted-foreground truncate">Score: {score}</p>
       </div>
+
+      {/* Ready indicator moved to end of card */}
+      {isReady ? (
+        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+      ) : (
+        <X className="h-4 w-4 text-red-500 flex-shrink-0" />
+      )}
     </motion.div>
   );
 };

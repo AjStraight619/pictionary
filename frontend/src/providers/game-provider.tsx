@@ -13,7 +13,8 @@ type Action =
       type: "SELECT_WORD_MODAL";
       payload: { isSelectingWord: boolean; selectableWords: Word[] };
     }
-  | { type: "SCORE_UPDATED"; payload: { playerID: string; score: number } };
+  | { type: "SCORE_UPDATED"; payload: { playerID: string; score: number } }
+  | { type: "PLAYER_READY"; payload: { playerID: string } };
 
 function setSelectedWord(turn: Turn, word: Word): Turn {
   return {
@@ -80,6 +81,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         ),
       };
 
+    case "PLAYER_READY":
+      return {
+        ...state,
+        players: state.players.map((p) =>
+          p.ID === action.payload.playerID ? { ...p, isReady: true } : p
+        ),
+      };
     default:
       return state;
   }

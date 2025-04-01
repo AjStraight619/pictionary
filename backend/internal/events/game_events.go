@@ -39,11 +39,16 @@ type PlayerReadyPayload struct {
 	PlayerID string `json:"playerID"`
 }
 
+type PlayerToggleReadyPayload struct {
+	PlayerID string `json:"playerID"`
+}
+
 const (
-	GameState   = "gameState"
-	PlayerGuess = "playerGuess"
-	StartTimer  = "startTimer"
-	StopTimer   = "stopTimer"
-	SelectWord  = "selectWord"
-	PlayerReady = "playerReady"
+	GameState         = "gameState"
+	PlayerGuess       = "playerGuess"
+	StartTimer        = "startTimer"
+	StopTimer         = "stopTimer"
+	SelectWord        = "selectWord"
+	PlayerReady       = "playerReady"
+	PlayerToggleReady = "playerToggleReady"
 )

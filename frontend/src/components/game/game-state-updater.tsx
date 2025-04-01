@@ -1,56 +1,60 @@
 import { useEffect, useMemo } from "react";
 import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 import { useGame } from "@/providers/game-provider";
-import { Player, PlayerInfo } from "@/types/lobby";
-import { GameState, Word } from "@/types/game";
+import { PlayerInfo } from "@/types/lobby";
+import { MessageHandlers } from "@/types/messages";
 import { useReadLocalStorage } from "usehooks-ts";
 
 const GameStateUpdater = () => {
   const { dispatch } = useGame();
   const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
 
-  const messageHandlers = useMemo(
+  const messageHandlers: MessageHandlers = useMemo(
     () => ({
       // When the full game state is sent:
-      gameState: (payload: GameState) => {
+      gameState: (payload) => {
         console.log("gameState update: ", payload);
         dispatch({ type: "GAME_STATE_UPDATE", payload });
       },
-      revealedLetter: (payload: string) => {
+      revealedLetter: (payload) => {
         dispatch({
           type: "ADD_REVEALED_LETTER",
           payload,
         });
       },
-      drawingPlayerChanged: (payload: Player) => {
+      drawingPlayerChanged: (payload) => {
         dispatch({ type: "DRAWING_PLAYER_CHANGED", payload });
       },
 
-      selectedWord: (payload: { isSelectingWord: boolean; word: Word }) => {
+      selectedWord: (payload) => {
         dispatch({ type: "SELECTED_WORD", payload });
       },
 
-      scoreUpdated: (payload: { playerID: string; score: number }) => {
+      scoreUpdated: (payload) => {
         dispatch({ type: "SCORE_UPDATED", payload });
       },
 
-      openSelectWordModal: (payload: {
-        isSelectingWord: boolean;
-        selectableWords: Word[];
-      }) => {
+      playerReady: (payload) => {
+        dispatch({ type: "PLAYER_READY", payload });
+      },
+
+      openSelectWordModal: (payload) => {
         dispatch({ type: "SELECT_WORD_MODAL", payload });
       },
     }),
-
     [dispatch]
   );
-  const { sendJsonMessage } = useCustomWebsocket({
+
+  const { sendTypedMessage } = useCustomWebsocket({
     messageTypes: [
       "gameState",
+      "gameStateRequest",
       "revealedLetter",
       "drawingPlayerChanged",
       "selectedWord",
       "openSelectWordModal",
+      "scoreUpdated",
+      "playerReady",
     ],
     messageHandlers,
   });
@@ -58,11 +62,8 @@ const GameStateUpdater = () => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       console.log("Visibility changed...");
-      if (document.visibilityState === "visible") {
-        sendJsonMessage({
-          type: "gameState",
-          payload: { playerID: playerInfo?.playerID },
-        });
+      if (document.visibilityState === "visible" && playerInfo?.playerID) {
+        sendTypedMessage("gameStateRequest", { playerID: playerInfo.playerID });
       }
     };
 
@@ -71,7 +72,7 @@ const GameStateUpdater = () => {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [playerInfo?.playerID, sendJsonMessage]);
+  }, [playerInfo?.playerID, sendTypedMessage]);
 
   return null;
 };
