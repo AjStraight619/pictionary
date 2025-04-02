@@ -182,6 +182,20 @@ func (g *Game) InitGameEvents() {
 		}
 	})
 
+	g.RegisterGameEvent(e.CursorUpdate, func(payload json.RawMessage) {
+		var pt e.CursorUpdatePayload
+
+		if err := json.Unmarshal(payload, &pt); err != nil {
+			log.Println("Error unmarshalling CursorUpdate payload:", err)
+			return
+		}
+
+		// ! Actual implementation: g.Messenger.SendToOthers(pt.PlayerID, payload)
+
+		// For testing with myself..
+		g.Messenger.SendToPlayer(pt.PlayerID, payload)
+	})
+
 }
 
 func (g *Game) handleExternalEvent(event e.GameEvent) {

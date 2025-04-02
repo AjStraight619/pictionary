@@ -43,6 +43,16 @@ type PlayerToggleReadyPayload struct {
 	PlayerID string `json:"playerID"`
 }
 
+type CursorUpdatePayload struct {
+	PlayerID string `json:"playerID"`
+	Cursor   Cursor `json:"cursor"`
+}
+
+type Cursor struct {
+	X int `json:"x"`
+	Y int `json:"y"`
+}
+
 const (
 	GameState         = "gameState"
 	PlayerGuess       = "playerGuess"
@@ -51,4 +61,5 @@ const (
 	SelectWord        = "selectWord"
 	PlayerReady       = "playerReady"
 	PlayerToggleReady = "playerToggleReady"
+	CursorUpdate      = "cursorUpdate"
 )

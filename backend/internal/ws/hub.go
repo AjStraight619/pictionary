@@ -94,6 +94,14 @@ func (h *Hub) BroadcastMessage(message []byte) {
 	h.Broadcast <- message
 }
 
+func (h *Hub) SendToOthers(playerID string, message []byte) {
+	for client := range h.Clients {
+		if client.PlayerID != playerID {
+			client.Send <- message
+		}
+	}
+}
+
 func (h *Hub) SendToPlayer(playerID string, message []byte) {
 	for client := range h.Clients {
 		if client.PlayerID == playerID {
@@ -145,8 +153,7 @@ func safeCloseClientChannel(client *Client) {
 	}
 }
 
-// Helper function to safely close a channel
-func safeCloseChannel(ch interface{}, name string) {
+func safeCloseChannel(ch any, name string) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("Recovered from panic closing %s channel: %v", name, r)
