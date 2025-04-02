@@ -29,6 +29,11 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    
+    /* Pictionary theme colors */
+    --pictionary-yellow: 47 95% 53%;  /* #FACC15 */
+    --pictionary-pink: 330 84% 60%;   /* #EC4899 */
+    --pictionary-purple: 269 97% 65%; /* #A855F7 */
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -68,4 +73,46 @@
     background-repeat: repeat;
     background-size: auto;
   }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(1deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+.animate-float {
+  animation: float 20s ease-in-out infinite;
+}
+
+/* Utility classes for Pictionary gradients */
+.text-gradient-pictionary {
+  color: transparent;
+  background-clip: text;
+  background-image: linear-gradient(to right, #FACC15, #EC4899, #A855F7);
+}
+
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(to right, #FACC15, #EC4899, #A855F7);
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }

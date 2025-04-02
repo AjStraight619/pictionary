@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+
 export default function Score({ score }: { score: number }) {
   return (
     <motion.div
@@ -6,7 +7,7 @@ export default function Score({ score }: { score: number }) {
       animate={{ scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="score">{score}</div>
+      <div className="text-xs text-muted-foreground truncate">{score}</div>
     </motion.div>
   );
 }

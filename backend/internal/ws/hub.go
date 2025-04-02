@@ -108,14 +108,77 @@ func (h *Hub) GameEventChannel() <-chan e.GameEvent {
 }
 
 func (h *Hub) cleanup() {
+	log.Println("Hub cleanup starting...")
+
 	// Close all client connections
 	for client := range h.Clients {
-		close(client.Send)
+		// Safe close of client send channel
+		safeCloseClientChannel(client)
 		client.Conn.Close()
 		delete(h.Clients, client)
 	}
 
-	// Clean up channels
-	close(h.Broadcast)
-	close(h.GameEvents)
+	// Safely close Broadcast channel
+	safeCloseChannel(h.Broadcast, "Broadcast")
+
+	// Safely close GameEvents channel
+	safeCloseChannel(h.GameEvents, "GameEvents")
+
+	log.Println("Hub cleanup completed")
+}
+
+// Helper function to safely close a client's send channel
+func safeCloseClientChannel(client *Client) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Recovered from panic closing client channel: %v", r)
+		}
+	}()
+
+	select {
+	case _, ok := <-client.Send:
+		if ok {
+			close(client.Send)
+		}
+	default:
+		close(client.Send)
+	}
+}
+
+// Helper function to safely close a channel
+func safeCloseChannel(ch interface{}, name string) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Recovered from panic closing %s channel: %v", name, r)
+		}
+	}()
+
+	switch c := ch.(type) {
+	case chan []byte:
+		select {
+		case _, ok := <-c:
+			if ok {
+				close(c)
+				log.Printf("%s channel closed successfully", name)
+			} else {
+				log.Printf("%s channel was already closed", name)
+			}
+		default:
+			close(c)
+			log.Printf("%s channel closed successfully", name)
+		}
+	case chan e.GameEvent:
+		select {
+		case _, ok := <-c:
+			if ok {
+				close(c)
+				log.Printf("%s channel closed successfully", name)
+			} else {
+				log.Printf("%s channel was already closed", name)
+			}
+		default:
+			close(c)
+			log.Printf("%s channel closed successfully", name)
+		}
+	}
 }

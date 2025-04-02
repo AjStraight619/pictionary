@@ -17,6 +17,17 @@ const GameStateUpdater = () => {
         dispatch({ type: "GAME_STATE_UPDATE", payload });
       },
       revealedLetter: (payload) => {
+        // Count revealed letters (non-underscore characters)
+        const revealedCount = Array.isArray(payload)
+          ? payload.filter((char: string) => char !== "_").length
+          : 0;
+
+        console.log(
+          "✨ Letter reveal update:",
+          revealedCount,
+          "letters revealed so far"
+        );
+
         dispatch({
           type: "ADD_REVEALED_LETTER",
           payload,
@@ -31,6 +42,7 @@ const GameStateUpdater = () => {
       },
 
       scoreUpdated: (payload) => {
+        console.log("💰 Score update received:", payload);
         dispatch({ type: "SCORE_UPDATED", payload });
       },
 

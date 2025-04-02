@@ -26,7 +26,7 @@ const Turn = () => {
     messageTypes: ["turnTimer"],
   });
 
-  if (gameStatus !== GameStatus.InProgress) {
+  if (gameStatus === GameStatus.NotStarted) {
     return null;
   }
 

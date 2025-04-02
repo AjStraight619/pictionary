@@ -15,18 +15,42 @@ func (g *Game) cleanup() {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
 
+	log.Printf("Cleaning up game %s...", g.ID)
+
 	// Cancel all timers
-	for _, timer := range g.timers {
+	for timerName, timer := range g.timers {
+		log.Printf("Cancelling timer: %s", timerName)
 		timer.Cancel()
 	}
+	g.timers = make(map[string]*Timer)
 
-	// Close channels safely
+	// Safe channel closing with protection against double-close
 	if g.FlowSignal != nil {
-		close(g.FlowSignal)
-	}
+		// Use recover in case channel is already closed
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("Recovered from panic while closing FlowSignal channel: %v", r)
+			}
+		}()
 
-	// Clear all game state
-	g.Status = Finished
+		// Mark game as finished
+		g.Status = Finished
+
+		select {
+		case _, ok := <-g.FlowSignal:
+			if ok {
+				close(g.FlowSignal)
+				g.FlowSignal = nil
+				log.Println("FlowSignal channel closed successfully")
+			} else {
+				log.Println("FlowSignal channel was already closed")
+			}
+		default:
+			close(g.FlowSignal)
+			g.FlowSignal = nil
+			log.Println("FlowSignal channel closed successfully")
+		}
+	}
 
 	// Notify all players BEFORE we clear state
 	message := map[string]interface{}{
@@ -35,12 +59,16 @@ func (g *Game) cleanup() {
 	}
 	if b, err := utils.CreateMessage("gameEnded", message); err == nil {
 		g.Messenger.BroadcastMessage(b)
+	} else {
+		log.Printf("Error creating gameEnded message: %v", err)
 	}
 
 	// Notify lifecycle handler that game is done
 	if g.lifecycle != nil {
 		g.lifecycle.OnGameEnded(g.ID)
 	}
+
+	log.Printf("Game %s cleanup completed", g.ID)
 }
 
 func (g *Game) Run() {
@@ -53,7 +81,6 @@ func (g *Game) Run() {
 		case event := <-g.Messenger.GameEventChannel():
 			g.handleExternalEvent(event)
 		case <-g.ctx.Done():
-			// The game is being shut down
 			log.Printf("Game %s is shutting down...", g.ID)
 			return
 		}

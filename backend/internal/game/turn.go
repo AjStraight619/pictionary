@@ -66,11 +66,27 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 	totalLetters := len(letters)
 	turnTimeLimit := g.Options.TurnTimeLimit
 
+	// Don't proceed if word is only 1-2 letters
+	if totalLetters <= 3 {
+		return
+	}
+
 	elapsedTime := turnTimeLimit - timeRemaining
 
-	letterInterval := float64(turnTimeLimit) / float64(totalLetters)
-	targetCount := min(max(int(math.Ceil(float64(elapsedTime)/letterInterval)), 1), totalLetters)
+	// Cap the maximum percentage of letters to reveal (70%)
+	maxLettersToReveal := int(float64(totalLetters) * 0.7)
 
+	// Non-linear reveal progression - slower at start, faster toward end
+	// Using square root function to create a curve that reveals fewer letters early
+	progressPercentage := math.Sqrt(float64(elapsedTime) / float64(turnTimeLimit))
+	targetCount := min(int(math.Ceil(progressPercentage*float64(totalLetters))), maxLettersToReveal)
+
+	// Ensure at least one letter is revealed after 25% of the time
+	if elapsedTime > turnTimeLimit/4 && targetCount == 0 {
+		targetCount = 1
+	}
+
+	// Count currently revealed letters
 	currentRevealed := 0
 	for _, r := range t.RevealedLetters {
 		if r != '_' {
@@ -78,20 +94,42 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 		}
 	}
 
+	// If we've already revealed enough letters, exit
 	if currentRevealed >= targetCount {
 		return
 	}
 
 	lettersToReveal := targetCount - currentRevealed
 
+	// Prioritize revealing spaces and common letters first
 	unrevealedIndices := make([]int, 0, totalLetters)
+	priorityIndices := make([]int, 0)
+
+	// Collect unrevealed indices
 	for i, r := range t.RevealedLetters {
 		if r == '_' {
-			unrevealedIndices = append(unrevealedIndices, i)
+			// Prioritize spaces
+			if letters[i] == ' ' {
+				priorityIndices = append(priorityIndices, i)
+			} else {
+				unrevealedIndices = append(unrevealedIndices, i)
+			}
 		}
 	}
 
 	randSource := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Reveal priority indices first (spaces)
+	for i := 0; i < lettersToReveal && len(priorityIndices) > 0; i++ {
+		randIdx := randSource.Intn(len(priorityIndices))
+		indexToReveal := priorityIndices[randIdx]
+		t.RevealedLetters[indexToReveal] = letters[indexToReveal]
+		// Remove the index from the slice
+		priorityIndices = slices.Delete(priorityIndices, randIdx, randIdx+1)
+		lettersToReveal--
+	}
+
+	// Reveal remaining letters from normal indices
 	for i := 0; i < lettersToReveal && len(unrevealedIndices) > 0; i++ {
 		randIdx := randSource.Intn(len(unrevealedIndices))
 		indexToReveal := unrevealedIndices[randIdx]

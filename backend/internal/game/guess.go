@@ -31,16 +31,41 @@ func (g *Game) handlePlayerGuess(playerID string, guess string) {
 	}
 
 	if guess == g.CurrentTurn.WordToGuess.Word {
+		// Calculate score to add
+		// scoreToAdd := CalculateScore(g)
+
+		scoreToAdd := 100
+
+		// Update player's score
 		g.CurrentTurn.PlayersGuessedCorrectly[playerID] = true
-		g.Players[playerID].Score += CalculateScore(g)
-		SendGuessMessage(g, playerID, fmt.Sprintf("%s guessed correctly!", g.Players[playerID].Username)) // Send correct message to not give away the answer
+		g.Players[playerID].Score += scoreToAdd
+
+		// Send guess feedback message
+		SendGuessMessage(g, playerID, fmt.Sprintf("%s guessed correctly!", g.Players[playerID].Username))
+
+		// Send dedicated score update
+		scoreUpdatePayload := map[string]interface{}{
+			"playerID": playerID,
+			"score":    g.Players[playerID].Score,
+		}
+		if b, err := utils.CreateMessage("scoreUpdated", scoreUpdatePayload); err == nil {
+			log.Printf("Broadcasting score update for %s: %d points", g.Players[playerID].Username, g.Players[playerID].Score)
+			g.Messenger.BroadcastMessage(b)
+		} else {
+			log.Printf("Error creating scoreUpdated message: %v", err)
+		}
+
+		// Check if all players guessed correctly
 		if g.CurrentTurn.allGuessedCorrectly() {
 			log.Println("All players have guessed correctly!")
 			g.FlowSignal <- TurnEnded
 		}
+
+		// Broadcast updated game state
 		g.BroadcastGameState()
 		return
 	}
+
 	distance := levenshteinDistance(guess, g.CurrentTurn.WordToGuess.Word)
 	if distance <= 2 {
 		log.Printf("Player %s guessed close! (distance: %d)", playerID, distance)
@@ -103,7 +128,7 @@ func SendGuessMessage(g *Game, playerID, result string) {
 
 	playerColor := g.getPlayerColor(playerID)
 	log.Printf("Sending guess message for player %s with color %s", playerID, playerColor)
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"guess":    result,
 		"username": g.Players[playerID].Username,
 		"color":    playerColor,

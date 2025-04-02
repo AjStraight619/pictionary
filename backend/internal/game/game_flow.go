@@ -1,6 +1,8 @@
 package game
 
-import "log"
+import (
+	"log"
+)
 
 type FlowEvent int
 
@@ -22,6 +24,9 @@ func NewFlowManager(game *Game) *FlowManager {
 }
 
 func (fm *FlowManager) HandleFlow(flow FlowEvent) {
+	// Update last activity timestamp on any flow event
+	fm.game.UpdateLastActivity()
+
 	switch flow {
 	case GameStarted:
 		fm.handleGameStarted()
@@ -48,7 +53,7 @@ func (fm *FlowManager) handleGameEnded() {
 	fm.game.Status = Finished
 	fm.game.Mu.Unlock()
 	fm.game.BroadcastGameState()
-	fm.game.cleanup()
+
 }
 
 func (fm *FlowManager) handleRoundStarted() {
@@ -58,6 +63,10 @@ func (fm *FlowManager) handleRoundStarted() {
 
 func (fm *FlowManager) handleRoundEnded() {
 	log.Printf("Round %d ended", fm.game.Round.Count)
+
+	// Broadcast updated game state with new scores
+	fm.game.BroadcastGameState()
+
 	if fm.game.Round.Count == fm.game.Options.RoundLimit {
 		log.Println("Game over!")
 		fm.game.FlowSignal <- GameEnded

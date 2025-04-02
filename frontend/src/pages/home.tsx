@@ -16,7 +16,9 @@ import { useNavigate } from "react-router-dom";
 import { useLocalStorage } from "usehooks-ts";
 import type { PlayerInfo } from "@/types/lobby";
 import { DoodleElements } from "@/components/home/doodle-elements";
+import { AnimatedSvgElements } from "@/components/home/animated-svg-elements";
 import { API_URL } from "@/utils/config";
+import { cn } from "@/lib/utils";
 
 type GameOptions = {
   roundLimit: number;
@@ -48,59 +50,59 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"create" | "join">("create");
 
   // Handle quick play button
-  const handleQuickPlay = async () => {
-    if (username.length < 3 || username.length > 12) {
-      setError("Player name must be between 3 and 12 characters.");
-      return;
-    }
+  // const handleQuickPlay = async () => {
+  //   if (username.length < 3 || username.length > 12) {
+  //     setError("Player name must be between 3 and 12 characters.");
+  //     return;
+  //   }
 
-    setIsLoading(true);
+  //   setIsLoading(true);
 
-    try {
-      // Use the create game API with default options
-      const payload = {
-        username,
-        options: {
-          roundLimit: 6,
-          turnTimeLimit: 60,
-          selectWordTimeLimit: 20,
-          maxPlayers: 6,
-        },
-      };
+  //   try {
+  //     // Use the create game API with default options
+  //     const payload = {
+  //       username,
+  //       options: {
+  //         roundLimit: 6,
+  //         turnTimeLimit: 60,
+  //         selectWordTimeLimit: 20,
+  //         maxPlayers: 6,
+  //       },
+  //     };
 
-      const res = await fetch(`${API_URL}/game/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+  //     const res = await fetch(`${API_URL}/game/create`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(payload),
+  //     });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        setError(errorData.error || "Failed to create the game.");
-        return;
-      }
+  //     if (!res.ok) {
+  //       const errorData = await res.json();
+  //       setError(errorData.error || "Failed to create the game.");
+  //       return;
+  //     }
 
-      const data = await res.json();
-      const gameID = data.gameID;
-      const playerID = data.playerID;
+  //     const data = await res.json();
+  //     const gameID = data.gameID;
+  //     const playerID = data.playerID;
 
-      // Store player info locally
-      setPlayerInfo({
-        playerID,
-        username,
-      });
+  //     // Store player info locally
+  //     setPlayerInfo({
+  //       playerID,
+  //       username,
+  //     });
 
-      // Navigate to the game
-      navigate(`/game/${gameID}`);
-    } catch (error) {
-      console.error("Error creating the game:", error);
-      setError("Something went wrong. Please try again later.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     // Navigate to the game
+  //     navigate(`/game/${gameID}`);
+  //   } catch (error) {
+  //     console.error("Error creating the game:", error);
+  //     setError("Something went wrong. Please try again later.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   // Handle create game form submission
   const handleCreateGame = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -249,9 +251,10 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen dark bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-indigo-900 to-blue-950 relative overflow-hidden">
-      {/* Cartoon Clouds Background */}
+    <div className="min-h-screen dark bg-background  relative overflow-hidden">
+      {/* Background Elements */}
       <DoodleElements />
+      <AnimatedSvgElements />
 
       <div className="container px-4 py-8 mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center py-12">
@@ -261,7 +264,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="space-y-6"
           >
-            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">
+            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-gradient-pictionary drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]">
               Draw, Guess, Laugh!
             </h2>
             <p className="text-xl text-yellow-100">
@@ -269,7 +272,7 @@ export default function Home() {
               your friends, and let the drawing battles begin!
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button
+              {/* <Button
                 size="lg"
                 className="gap-2 bg-gradient-to-r from-yellow-400 to-pink-500 hover:from-yellow-500 hover:to-pink-600 text-black font-bold shadow-[0_0_15px_rgba(255,214,0,0.5)] hover:shadow-[0_0_20px_rgba(255,214,0,0.7)] transition-all duration-300"
                 onClick={handleQuickPlay}
@@ -283,14 +286,14 @@ export default function Home() {
                     Play Now
                   </>
                 )}
-              </Button>
-              <Button
+              </Button> */}
+              {/* <Button
                 variant="outline"
                 size="lg"
                 className="border-yellow-400 text-yellow-400 hover:text-yellow-300 hover:border-yellow-300 hover:bg-purple-900/30"
               >
                 Learn More
-              </Button>
+              </Button> */}
             </div>
             <div className="flex items-center gap-2 text-yellow-300">
               {/* <Users className="h-4 w-4" />
@@ -369,17 +372,16 @@ export default function Home() {
                       >
                         Rounds
                       </label>
-                      <select
+                      <SelectableOptions
                         id="roundLimit"
                         name="roundLimit"
-                        className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                        value={gameOptions.roundLimit}
+                        options={{
+                          "3": "3 Rounds",
+                          "6": "6 Rounds",
+                          "10": "10 Rounds",
+                        }}
                         onChange={handleOptionChange}
-                      >
-                        <option value="3">3 Rounds</option>
-                        <option value="6">6 Rounds</option>
-                        <option value="10">10 Rounds</option>
-                      </select>
+                      />
                     </div>
                     <div>
                       <label
@@ -388,17 +390,15 @@ export default function Home() {
                       >
                         Max Players
                       </label>
-                      <select
+                      <SelectableOptions
                         id="maxPlayers"
                         name="maxPlayers"
-                        className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                        value={gameOptions.maxPlayers}
+                        options={{
+                          "4": "4 Players",
+                          "6": "6 Players",
+                        }}
                         onChange={handleOptionChange}
-                      >
-                        <option value="4">4 Players</option>
-                        <option value="6">6 Players</option>
-                        <option value="8">8 Players</option>
-                      </select>
+                      />
                     </div>
                   </div>
 
@@ -410,17 +410,16 @@ export default function Home() {
                       >
                         Turn Timer (sec)
                       </label>
-                      <select
+                      <SelectableOptions
                         id="turnTimeLimit"
                         name="turnTimeLimit"
-                        className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                        value={gameOptions.turnTimeLimit}
+                        options={{
+                          "40": "40 Seconds",
+                          "60": "60 Seconds",
+                          "80": "80 Seconds",
+                        }}
                         onChange={handleOptionChange}
-                      >
-                        <option value="40">40 Seconds</option>
-                        <option value="60">60 Seconds</option>
-                        <option value="80">80 Seconds</option>
-                      </select>
+                      />
                     </div>
                     <div>
                       <label
@@ -429,17 +428,15 @@ export default function Home() {
                       >
                         Word Select (sec)
                       </label>
-                      <select
+                      <SelectableOptions
                         id="selectWordTimeLimit"
                         name="selectWordTimeLimit"
-                        className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                        value={gameOptions.selectWordTimeLimit}
+                        options={{
+                          "10": "10 Seconds",
+                          "20": "20 Seconds",
+                        }}
                         onChange={handleOptionChange}
-                      >
-                        <option value="10">10 Seconds</option>
-                        <option value="20">20 Seconds</option>
-                        <option value="30">30 Seconds</option>
-                      </select>
+                      />
                     </div>
                   </div>
 
@@ -540,7 +537,7 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="py-16"
         >
-          <h3 className="text-3xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500">
+          <h3 className="text-3xl font-bold text-center mb-8 text-gradient-pictionary">
             How It Works
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -589,6 +586,38 @@ export default function Home() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+function SelectableOptions({
+  id,
+  name,
+  options,
+  onChange,
+  className,
+}: {
+  id: string;
+  name: string;
+  options: Record<string, string>; // key is the value, value is the label <option value="10">10 Seconds</option>
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  className?: string;
+}) {
+  return (
+    <select
+      id={id}
+      name={name}
+      className={cn(
+        "w-full h-10 px-3 rounded-md border border-input bg-transparent",
+        className
+      )}
+      onChange={onChange}
+    >
+      {Object.entries(options).map(([key, value]) => (
+        <option key={key} value={key}>
+          {value}
+        </option>
+      ))}
+    </select>
   );
 }
 

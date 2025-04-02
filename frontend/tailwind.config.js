@@ -53,6 +53,15 @@ export default {
           4: "hsl(var(--chart-4))",
           5: "hsl(var(--chart-5))",
         },
+        pictionary: {
+          yellow: "#FACC15", // yellow-400
+          pink: "#EC4899",   // pink-500
+          purple: "#A855F7", // purple-500
+        },
+      },
+      backgroundImage: {
+        'gradient-pictionary': 'linear-gradient(to right, #FACC15, #EC4899, #A855F7)',
+        'gradient-pictionary-btn': 'linear-gradient(to right, #FACC15, #EC4899)',
       },
     },
   },

@@ -1,5 +1,8 @@
 import { Check, Crown, Pencil, X } from "lucide-react";
 import { motion } from "framer-motion";
+import { useGameStatus } from "@/hooks/useGameSelector";
+import { GameStatus } from "@/types/game";
+import Score from "../player/score";
 
 type PlayerCardProps = {
   name: string;
@@ -21,6 +24,7 @@ const PlayerCard = ({
   // Convert color string to a usable background color with low opacity
   const bgColor = color ? `${color}20` : "bg-muted"; // 20 is hex for ~12% opacity
   const textColor = color || "text-foreground";
+  const gameStatus = useGameStatus();
 
   return (
     <motion.div
@@ -53,14 +57,18 @@ const PlayerCard = ({
             <Pencil className="h-3.5 w-3.5 text-primary flex-shrink-0" />
           )}
         </div>
-        <p className="text-xs text-muted-foreground truncate">Score: {score}</p>
+        <Score score={score} />
       </div>
 
       {/* Ready indicator moved to end of card */}
-      {isReady ? (
-        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-      ) : (
-        <X className="h-4 w-4 text-red-500 flex-shrink-0" />
+      {gameStatus === GameStatus.NotStarted && (
+        <>
+          {isReady ? (
+            <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+          ) : (
+            <X className="h-4 w-4 text-red-500 flex-shrink-0" />
+          )}
+        </>
       )}
     </motion.div>
   );

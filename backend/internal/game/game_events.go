@@ -185,6 +185,9 @@ func (g *Game) InitGameEvents() {
 }
 
 func (g *Game) handleExternalEvent(event e.GameEvent) {
+	// Update the last activity timestamp for the game
+	g.UpdateLastActivity()
+
 	g.Mu.RLock()
 	handler, exists := g.GameEvents[event.Type]
 	g.Mu.RUnlock()
@@ -193,5 +196,7 @@ func (g *Game) handleExternalEvent(event e.GameEvent) {
 		log.Printf("Dispatching custom handler for event type: %s", event.Type)
 		go handler(event.Payload)
 		return
+	} else {
+		log.Printf("No handler registered for game event: %s", event.Type)
 	}
 }

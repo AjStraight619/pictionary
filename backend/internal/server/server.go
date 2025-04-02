@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -14,23 +15,27 @@ import (
 type GameInstance struct {
 	Game       *game.Game
 	Hub        *ws.Hub
-	CancelFunc context.CancelFunc // Game-specific cancel function
+	CancelFunc context.CancelFunc
 }
 
 type GameServer struct {
 	ctx        context.Context
 	cancelFunc context.CancelFunc
-	games      map[string]*GameInstance // Change from *game.Games to map of GameInstance
-	mu         sync.RWMutex             // Add mutex for thread safety
+	games      map[string]*GameInstance
+	mu         sync.RWMutex
 }
 
 func NewGameServer() *GameServer {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &GameServer{
+	server := &GameServer{
 		ctx:        ctx,
 		cancelFunc: cancel,
 		games:      make(map[string]*GameInstance),
 	}
+
+	server.StartInactiveGamesCleaner()
+
+	return server
 }
 
 // CreateGame now creates a game-specific context
@@ -119,4 +124,63 @@ func (s *GameServer) GetHub(id string) (*ws.Hub, bool) {
 
 func (s *GameServer) OnGameEnded(gameID string) {
 	s.StopGame(gameID)
+}
+
+// Add this new method to GameServer
+func (s *GameServer) StartInactiveGamesCleaner() {
+	log.Println("Starting inactive games cleaner...")
+
+	go func() {
+		cleanupTicker := time.NewTicker(10 * time.Minute)
+		defer cleanupTicker.Stop()
+
+		for {
+			select {
+			case <-cleanupTicker.C:
+				s.cleanupInactiveGames()
+			case <-s.ctx.Done():
+				log.Println("Stopping inactive games cleaner...")
+				return
+			}
+		}
+	}()
+}
+
+// cleanupInactiveGames cleans up games that are inactive or have no players
+func (s *GameServer) cleanupInactiveGames() {
+	log.Println("Running inactive games cleanup check...")
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	now := time.Now()
+	gameIDsToRemove := []string{}
+
+	// Find games to clean up
+	for id, instance := range s.games {
+		game := instance.Game
+
+		// Get game stats using the proper API
+		lastActivity, playerCount, status := game.GetLastActivityInfo()
+		inactiveTime := now.Sub(lastActivity)
+
+		if (playerCount == 0 && inactiveTime > 30*time.Minute) ||
+			(inactiveTime > 2*time.Hour) ||
+			(status == 2 /* Finished */ && inactiveTime > 15*time.Minute) {
+			log.Printf("Marking game %s for cleanup (players: %d, inactive: %v, status: %v)",
+				id, playerCount, inactiveTime, status)
+			gameIDsToRemove = append(gameIDsToRemove, id)
+		}
+	}
+
+	// Clean up the marked games
+	for _, id := range gameIDsToRemove {
+		log.Printf("Cleaning up inactive game: %s", id)
+		instance := s.games[id]
+		instance.CancelFunc() // Cancel the game context
+		delete(s.games, id)   // Remove from games map
+	}
+
+	log.Printf("Inactive games cleanup complete. Removed %d games. Current games: %d",
+		len(gameIDsToRemove), len(s.games))
 }

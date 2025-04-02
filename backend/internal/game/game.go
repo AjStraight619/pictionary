@@ -60,3 +60,17 @@ func NewGame(ctx context.Context, id string, options shared.GameOptions, messeng
 	game.CurrentTurn = InitTurn()
 	return game
 }
+
+// UpdateLastActivity updates the game's last activity timestamp
+func (g *Game) UpdateLastActivity() {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+	g.lastActivity = time.Now()
+}
+
+// GetLastActivityInfo returns information about the game's activity and status
+func (g *Game) GetLastActivityInfo() (time.Time, int, Status) {
+	g.Mu.RLock()
+	defer g.Mu.RUnlock()
+	return g.lastActivity, len(g.Players), g.Status
+}
