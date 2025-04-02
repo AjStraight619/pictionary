@@ -37,6 +37,10 @@ const GameStateUpdater = () => {
         dispatch({ type: "DRAWING_PLAYER_CHANGED", payload });
       },
 
+      cursorUpdate: (payload) => {
+        dispatch({ type: "CURSOR_UPDATE", payload });
+      },
+
       selectedWord: (payload) => {
         dispatch({ type: "SELECTED_WORD", payload });
       },
@@ -67,6 +71,7 @@ const GameStateUpdater = () => {
       "openSelectWordModal",
       "scoreUpdated",
       "playerReady",
+      "cursorUpdate",
     ],
     messageHandlers,
   });

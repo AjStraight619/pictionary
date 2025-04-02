@@ -1,6 +1,7 @@
 import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 import { useCallback, useEffect, useRef } from "react";
 import pako from "pako";
+import ActiveCursor from "./active-cursor";
 
 export type PencilDraft = {
   path: string;
@@ -155,7 +156,8 @@ const ViewerCanvas = () => {
 
   // Maintain aspect ratio but fill available space
   return (
-    <div className="w-full h-full flex items-center justify-center bg-white">
+    <div className="w-full h-full flex items-center justify-center bg-white relative">
+      <ActiveCursor />
       <svg
         id="viewer-canvas"
         className="w-full h-full max-w-full max-h-full object-contain"

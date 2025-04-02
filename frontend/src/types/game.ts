@@ -1,5 +1,3 @@
-import { Player } from "./lobby";
-
 export enum GameStatus {
   NotStarted = 0,
   InProgress = 1,
@@ -23,11 +21,29 @@ export type GameState = {
   playerOrder: string[];
   options: GameOptions;
   status: GameStatus;
+  activeCursor: Cursor | null;
   round: Round | null;
   turn: Turn | null;
   revealedLetters: string[];
   selectableWords: Word[];
   isSelectingWord: boolean;
+};
+
+export type Player = {
+  ID: string;
+  username: string;
+  isDrawing: boolean;
+  isGuessCorrect: boolean;
+  isHost: boolean;
+  score: number;
+  color: string;
+  ready: boolean;
+};
+
+export type Cursor = {
+  x: number;
+  y: number;
+  color: string;
 };
 
 export type Word = {

@@ -1,5 +1,4 @@
-import { GameState, Word } from "./game";
-import { Player } from "./lobby";
+import { Cursor, GameState, Player, Word } from "./game";
 import { ShapeData } from "./canvas";
 
 /**
@@ -50,6 +49,7 @@ export type MessagePayloadMap = {
   startTimer: { timerType: string; duration: number };
   stopTimer: { timerType: string };
   startGameCountdown: { duration: number };
+  cursorUpdate: { playerID: string; cursor: Cursor | null };
 
   // Game control messages
   startGame: { force?: boolean };

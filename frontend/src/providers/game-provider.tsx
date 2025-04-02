@@ -1,5 +1,12 @@
-import { GameState, GameStatus, Turn, TurnPhase, Word } from "@/types/game";
-import { Player } from "@/types/lobby";
+import {
+  Cursor,
+  GameState,
+  GameStatus,
+  Player,
+  Turn,
+  TurnPhase,
+  Word,
+} from "@/types/game";
 import React, { createContext, useContext, useReducer } from "react";
 
 type Action =
@@ -14,7 +21,11 @@ type Action =
       payload: { isSelectingWord: boolean; selectableWords: Word[] };
     }
   | { type: "SCORE_UPDATED"; payload: { playerID: string; score: number } }
-  | { type: "PLAYER_READY"; payload: { playerID: string } };
+  | { type: "PLAYER_READY"; payload: { playerID: string } }
+  | {
+      type: "CURSOR_UPDATE";
+      payload: { playerID: string; cursor: Cursor | null };
+    };
 
 function setSelectedWord(turn: Turn, word: Word): Turn {
   return {
@@ -88,6 +99,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           p.ID === action.payload.playerID ? { ...p, isReady: true } : p
         ),
       };
+
+    case "CURSOR_UPDATE":
+      return { ...state, activeCursor: action.payload.cursor };
     default:
       return state;
   }
@@ -103,6 +117,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     id: "",
     players: [],
     status: GameStatus.InProgress,
+    activeCursor: null,
     playerOrder: [],
     options: { roundLimit: 8, turnTimeLimit: 60, selectWordTimeLimit: 30 },
     round: null,

@@ -53,6 +53,10 @@ export function useCurrentDrawerFromPlayers(): string | null {
   });
 }
 
+export function useActiveCursor(): GameState["activeCursor"] {
+  return useGameSelector((state) => state.activeCursor);
+}
+
 export function useSelectableWords(): GameState["selectableWords"] {
   return useGameSelector((state) => state.selectableWords);
 }
