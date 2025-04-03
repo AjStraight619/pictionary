@@ -54,7 +54,7 @@ func (tm *TimerManager) StartGameCountdown(timerType string, duration int) {
 }
 
 func (tm *TimerManager) StartTurnTimer(playerID string) {
-	timer := NewTimer(tm.game.ctx, "turnTimer", 10)
+	timer := NewTimer(tm.game.ctx, "turnTimer", tm.game.Options.TurnTimeLimit)
 	tm.game.timers["turnTimer"] = timer
 
 	onCancel := func() {
@@ -79,7 +79,7 @@ func (tm *TimerManager) StartTurnTimer(playerID string) {
 }
 
 func (tm *TimerManager) StartWordSelectionTimer(playerID string) {
-	timer := NewTimer(tm.game.ctx, "selectWordTimer", 8)
+	timer := NewTimer(tm.game.ctx, "selectWordTimer", tm.game.Options.WordSelectTimeLimit)
 	tm.game.timers["selectWordTimer"] = timer
 	log.Println("Word selection timer started.")
 

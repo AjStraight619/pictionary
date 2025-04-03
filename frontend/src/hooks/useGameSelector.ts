@@ -20,6 +20,10 @@ export function useCurrentRound(): GameState["round"] {
   return useGameSelector((state) => state.round);
 }
 
+export function useTurn(): GameState["turn"] {
+  return useGameSelector((state) => state.turn);
+}
+
 export function useWordToGuess():
   | NonNullable<GameState["turn"]>["wordToGuess"]
   | null {

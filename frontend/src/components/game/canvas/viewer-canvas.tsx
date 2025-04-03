@@ -1,5 +1,5 @@
 import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import pako from "pako";
 import ActiveCursor from "./active-cursor";
 
@@ -10,13 +10,43 @@ export type PencilDraft = {
 };
 
 const ViewerCanvas = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const svgContainerRef = useRef<SVGSVGElement>(null);
   const svgElementsMap = useRef<Map<string, SVGElement>>(new Map());
   const drawingQueue = useRef<string[]>([]);
+  const [debugMode, setDebugMode] = useState(false);
 
   const { lastMessage } = useCustomWebsocket({
     messageTypes: ["drawing", "shape", "remove-all", "remove-element"],
   });
+
+  // Function to resize container and maintain 4:3 aspect ratio
+  const resizeContainer = useCallback(() => {
+    if (!containerRef.current || !svgContainerRef.current) return;
+
+    const parentElement = containerRef.current.parentElement;
+    if (!parentElement) return;
+
+    const parentWidth = parentElement.clientWidth;
+    const parentHeight = parentElement.clientHeight;
+
+    // Determine the maximum size the container can be while maintaining 4:3
+    let containerWidth, containerHeight;
+
+    if (parentWidth / parentHeight > 4 / 3) {
+      // Parent is wider than 4:3, so height is the limiting factor
+      containerHeight = parentHeight;
+      containerWidth = containerHeight * (4 / 3);
+    } else {
+      // Parent is taller than 4:3, so width is the limiting factor
+      containerWidth = parentWidth;
+      containerHeight = containerWidth * (3 / 4);
+    }
+
+    // Set container size explicitly to maintain 4:3 aspect ratio
+    containerRef.current.style.width = `${containerWidth}px`;
+    containerRef.current.style.height = `${containerHeight}px`;
+  }, []);
 
   // Debounced function to process the drawing queue
   const processDrawingQueue = useCallback(
@@ -147,24 +177,62 @@ const ViewerCanvas = () => {
     }
   }, [lastMessage, processDrawingQueue, clearSvgContainer]);
 
+  // Add resize listener
   useEffect(() => {
+    // Initial resize
+    resizeContainer();
+
+    // Add resize event listener
+    const handleResize = () => {
+      resizeContainer();
+    };
+
+    window.addEventListener("resize", handleResize);
     return () => {
+      window.removeEventListener("resize", handleResize);
       svgElementsMap.current.clear();
       drawingQueue.current = [];
     };
+  }, [resizeContainer]);
+
+  // Add keypress handler for debug mode toggle
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Toggle debug mode with Ctrl+D
+      if (e.ctrlKey && e.key === "d") {
+        e.preventDefault();
+        setDebugMode((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Maintain aspect ratio but fill available space
   return (
-    <div className="w-full h-full flex items-center justify-center bg-white relative">
+    <div
+      ref={containerRef}
+      className="bg-white rounded-lg relative flex items-center justify-center"
+      id="viewer-canvas-container"
+    >
       <ActiveCursor />
       <svg
         id="viewer-canvas"
-        className="w-full h-full max-w-full max-h-full object-contain"
+        className="w-full h-full"
         viewBox="0 0 800 600"
         preserveAspectRatio="xMidYMid meet"
         ref={svgContainerRef}
       />
+
+      {debugMode && (
+        <div className="absolute top-0 left-0 bg-black bg-opacity-70 text-white p-2 z-50 text-xs">
+          <div>
+            Container: {containerRef.current?.clientWidth}x
+            {containerRef.current?.clientHeight}
+          </div>
+          <div>Press Ctrl+D to hide debug</div>
+        </div>
+      )}
     </div>
   );
 };

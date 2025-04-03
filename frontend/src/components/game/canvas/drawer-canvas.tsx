@@ -1,14 +1,6 @@
 import type * as fabric from "fabric";
-import { useEffect, useRef, useState } from "react";
-import {
-  handleCanvasMouseDown,
-  handleCanvasMouseMove,
-  handleKeyDownEvents,
-  handleMouseUp,
-  handleObjectModified,
-  handlePathCreated,
-  initializeCanvas,
-} from "@/utils/canvas";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { handleObjectDeletion } from "@/utils/canvas";
 import { SelectedTool, type ShapeData } from "@/types/canvas";
 
 import type { FreeHandData } from "@/types/game";
@@ -18,6 +10,8 @@ import Toolbar from "@/components/game/canvas/tools/toolbar";
 import { useReadLocalStorage } from "usehooks-ts";
 import { PlayerInfo } from "@/types/lobby";
 import ActiveCursor from "./active-cursor";
+import { useCanvasHistory } from "@/hooks/useCanvasHistory";
+import { useCanvas } from "@/hooks/useCanvas";
 
 const DrawerCanvas = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,12 +26,66 @@ const DrawerCanvas = () => {
   const lastUsedColorRef = useRef<string>("#000000");
   const lastUsedBrushSizeRef = useRef<number>(5);
   const playerInfo = useReadLocalStorage<PlayerInfo>("playerInfo");
-  const [debugMode, setDebugMode] = useState(false);
-  const [debugInfo, setDebugInfo] = useState({ x: 0, y: 0, pctX: 0, pctY: 0 });
+
+  // Initialize canvas history
+  const { saveState, undo, redo } = useCanvasHistory(fabricRef);
+
+  // Add logging wrappers for history operations
+  const loggedSaveState = useCallback(() => {
+    console.log("📝 Saving canvas state");
+    saveState();
+  }, [saveState]);
+
+  const loggedUndo = useCallback(() => {
+    console.log("⏪ Undoing last action");
+    undo();
+  }, [undo]);
+
+  const loggedRedo = useCallback(() => {
+    console.log("⏩ Redoing action");
+    redo();
+  }, [redo]);
 
   const { sendJsonMessage } = useCustomWebsocket({
     messageTypes: ["canvas"],
   });
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!fabricRef.current) return;
+
+      // Handle backspace/delete for object removal
+      if (e.key === "Backspace" || e.key === "Delete") {
+        const canvas = fabricRef.current;
+        const activeObjects = canvas.getActiveObjects();
+
+        if (activeObjects.length === 0) return;
+
+        console.log("🗑️ Deleting objects, saving state first");
+        // Save state before deletion
+        loggedSaveState();
+
+        // Handle the deletion logic
+        handleObjectDeletion(canvas, activeObjects, sendJsonMessage);
+      }
+
+      // Undo on Ctrl+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        loggedUndo();
+      }
+
+      // Redo on Ctrl+Shift+Z or Ctrl+Y
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        ((e.key === "z" && e.shiftKey) || e.key === "y")
+      ) {
+        e.preventDefault();
+        loggedRedo();
+      }
+    },
+    [loggedSaveState, loggedUndo, loggedRedo, sendJsonMessage]
+  );
 
   const sendCursorPosition = useThrottledCallback((e: React.MouseEvent) => {
     if (!containerRef.current || !canvasRef.current) return;
@@ -52,16 +100,6 @@ const DrawerCanvas = () => {
     // Convert to percentage of canvas dimensions
     const percentX = relativeX / canvasRect.width;
     const percentY = relativeY / canvasRect.height;
-
-    // Update debug info if debug mode is enabled
-    if (debugMode) {
-      setDebugInfo({
-        x: relativeX,
-        y: relativeY,
-        pctX: percentX,
-        pctY: percentY,
-      });
-    }
 
     sendJsonMessage({
       type: "cursorUpdate",
@@ -88,127 +126,79 @@ const DrawerCanvas = () => {
       type: "shape",
       payload: shapeData,
     });
+
+    // Save state after adding a shape
+    console.log("🔷 Adding shape, saving state");
+    loggedSaveState();
   }, 16);
 
   // Function to resize canvas when container size changes
-  const resizeCanvas = () => {
+  const resizeCanvas = useCallback(() => {
     if (!fabricRef.current || !containerRef.current) return;
 
-    const container = containerRef.current;
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
+    const parentElement = containerRef.current.parentElement;
+    if (!parentElement) return;
 
-    // Maintain 4:3 aspect ratio while maximizing canvas size
-    let canvasWidth, canvasHeight;
+    const parentWidth = parentElement.clientWidth;
+    const parentHeight = parentElement.clientHeight;
 
-    if (containerWidth / containerHeight > 4 / 3) {
-      // Container is wider than 4:3, height is limiting factor
-      canvasHeight = containerHeight;
-      canvasWidth = containerHeight * (4 / 3);
+    // Determine the maximum size the container can be while maintaining 4:3
+    let containerWidth, containerHeight;
+
+    if (parentWidth / parentHeight > 4 / 3) {
+      // Parent is wider than 4:3, so height is the limiting factor
+      containerHeight = parentHeight;
+      containerWidth = containerHeight * (4 / 3);
     } else {
-      // Container is taller than 4:3, width is limiting factor
-      canvasWidth = containerWidth;
-      canvasHeight = containerWidth * (3 / 4);
+      // Parent is taller than 4:3, so width is the limiting factor
+      containerWidth = parentWidth;
+      containerHeight = containerWidth * (3 / 4);
     }
 
-    // Set canvas dimensions to match the calculated size
-    fabricRef.current.setWidth(canvasWidth);
-    fabricRef.current.setHeight(canvasHeight);
-    fabricRef.current.setZoom(canvasWidth / 800); // Scale objects based on original 800px width
+    // Set container size explicitly to maintain 4:3 aspect ratio
+    containerRef.current.style.width = `${containerWidth}px`;
+    containerRef.current.style.height = `${containerHeight}px`;
+
+    // Update canvas size using non-deprecated methods
+    fabricRef.current.setDimensions({
+      width: containerWidth,
+      height: containerHeight,
+    });
+
+    // Update zoom level based on the original 800px design width
+    fabricRef.current.setZoom(containerWidth / 800);
     fabricRef.current.renderAll();
-  };
-
-  useEffect(() => {
-    const canvas = initializeCanvas({ fabricRef, canvasRef, id: "canvas" });
-    if (!canvas) return;
-
-    canvas.on("mouse:down", (options) => {
-      handleCanvasMouseDown({
-        options,
-        selectedToolRef,
-        canvas,
-        sendDrawingData,
-        sendSvgShape,
-        isMouseDownRef,
-        pathDataRef,
-        lastUsedColorRef,
-      });
-    });
-
-    canvas.on("mouse:move", (options) => {
-      handleCanvasMouseMove({
-        options,
-        selectedToolRef,
-        canvas,
-        sendDrawingData,
-        isMouseDownRef,
-        pathDataRef,
-        lastUsedColorRef,
-      });
-    });
-
-    canvas.on("path:created", (options) => {
-      const path = options.path;
-      handlePathCreated({ path, sendSvgShape });
-    });
-
-    canvas.on("mouse:up", () => {
-      handleMouseUp({
-        canvas,
-        selectedToolRef,
-        setSelectedTool,
-        isMouseDownRef,
-        pathDataRef,
-      });
-    });
-
-    canvas.on("object:modified", () => {
-      handleObjectModified({ canvas, sendSvgShape });
-    });
-
-    window.addEventListener("keydown", (e) => {
-      handleKeyDownEvents({
-        e,
-        canvas,
-        sendJsonMessage,
-      });
-    });
-
-    // Add resize listener
-    const handleResize = () => {
-      resizeCanvas();
-    };
-
-    window.addEventListener("resize", handleResize);
-    // Initial resize
-    handleResize();
-
-    return () => {
-      canvas.dispose();
-      window.removeEventListener("keydown", (e) => {
-        handleKeyDownEvents({
-          e,
-          canvas,
-          sendJsonMessage,
-        });
-      });
-      window.removeEventListener("resize", handleResize);
-    };
   }, []);
 
-  // Add keypress handler for debug mode toggle
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Toggle debug mode with Ctrl+D
-      if (e.ctrlKey && e.key === "d") {
-        e.preventDefault();
-        setDebugMode((prev) => !prev);
-      }
-    };
+  // Initialize canvas once
+  useCanvas(
+    canvasRef,
+    fabricRef,
+    selectedToolRef,
+    isMouseDownRef,
+    pathDataRef,
+    lastUsedColorRef,
+    setSelectedTool,
+    sendDrawingData,
+    sendSvgShape,
+    loggedSaveState
+  );
 
+  // Combined event listeners in a single useEffect
+  useEffect(() => {
+    // Set up keyboard and resize event listeners
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+    window.addEventListener("resize", resizeCanvas);
+
+    // Initial resize
+    resizeCanvas();
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", resizeCanvas);
+    };
+  }, [handleKeyDown, resizeCanvas]);
 
   return (
     <div
@@ -220,28 +210,10 @@ const DrawerCanvas = () => {
       <ActiveCursor />
       <canvas
         ref={canvasRef}
-        className="max-w-full max-h-full object-contain"
+        className="border border-gray-200 shadow-inner"
+        width="800"
+        height="600"
       />
-
-      {debugMode && (
-        <div className="absolute top-0 left-0 bg-black bg-opacity-70 text-white p-2 z-50 text-xs">
-          <div>
-            Container: {containerRef.current?.clientWidth}x
-            {containerRef.current?.clientHeight}
-          </div>
-          <div>
-            Canvas: {canvasRef.current?.width}x{canvasRef.current?.height}
-          </div>
-          <div>
-            Mouse Pos: {debugInfo.x.toFixed(1)}x{debugInfo.y.toFixed(1)}
-          </div>
-          <div>
-            Percent: {(debugInfo.pctX * 100).toFixed(1)}%x
-            {(debugInfo.pctY * 100).toFixed(1)}%
-          </div>
-          <div>Press Ctrl+D to hide debug</div>
-        </div>
-      )}
 
       <Toolbar
         selectedToolRef={selectedToolRef}

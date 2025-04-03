@@ -98,6 +98,7 @@ func (c *Client) Read() {
 			}
 		}
 
+		// ! Broadcast messages to all clients that do not change the internal game state.
 		c.Hub.Broadcast <- message
 	}
 

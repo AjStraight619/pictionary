@@ -1,9 +1,11 @@
-import { useActiveCursor } from "@/hooks/useGameSelector";
+import { useActiveCursor, useTurn } from "@/hooks/useGameSelector";
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
+import { TurnPhase } from "@/types/game";
 
 const ActiveCursor = () => {
   const cursor = useActiveCursor();
+  const turn = useTurn();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -11,10 +13,15 @@ const ActiveCursor = () => {
     return () => setMounted(false);
   }, []);
 
-  if (!mounted || !cursor) return null;
+  if (!mounted || !cursor || turn?.phase !== TurnPhase.PhaseDrawing)
+    return null;
 
-  // Get canvas element directly - must use the actual canvas, not the container
-  const canvasElement = document.querySelector("#canvas-container canvas");
+  // Get either canvas container we're in - drawer or viewer
+  const drawerCanvas = document.querySelector("#canvas-container canvas");
+  const viewerSvg = document.querySelector("#viewer-canvas");
+
+  // Use whichever element is available
+  const canvasElement = drawerCanvas || viewerSvg;
   if (!canvasElement) return null;
 
   const canvasRect = canvasElement.getBoundingClientRect();
@@ -37,6 +44,7 @@ const ActiveCursor = () => {
         border: "1px solid white",
         outline: "1px solid black",
         transform: "translate(-50%, -50%)",
+        opacity: 0.8,
       }}
     />,
     document.body

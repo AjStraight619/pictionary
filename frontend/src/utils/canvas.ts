@@ -22,10 +22,16 @@ export const initializeCanvas = ({
   if (!canvasRef.current) return;
   const canvasElement = document.getElementById(id);
 
-  const canvas = new fabric.Canvas(canvasRef.current, {
-    width: canvasElement?.clientWidth,
-    height: canvasElement?.clientHeight,
-  });
+  // Create canvas with initial dimensions
+  const canvas = new fabric.Canvas(canvasRef.current);
+
+  if (canvasElement) {
+    // Set dimensions using the non-deprecated method
+    canvas.setDimensions({
+      width: canvasElement.clientWidth,
+      height: canvasElement.clientHeight,
+    });
+  }
 
   fabricRef.current = canvas;
 
@@ -76,7 +82,7 @@ const onShapeDown = (
   sendSvgShape: (shapeData: ShapeData) => void,
   lastUsedColorRef: React.MutableRefObject<string>
 ) => {
-  const pointer = canvas.getViewportPoint(options.e);
+  const pointer = canvas.getPointer(options.e);
   const shapeId = crypto.randomUUID();
   let shape: fabric.FabricObject | null = null;
 
@@ -88,6 +94,8 @@ const onShapeDown = (
         width: 100,
         height: 100,
         fill: lastUsedColorRef.current,
+        originX: "center",
+        originY: "center",
       });
 
       shape.set({
@@ -103,6 +111,8 @@ const onShapeDown = (
         height: 100,
         width: 100,
         fill: lastUsedColorRef.current,
+        originX: "center",
+        originY: "center",
       });
 
       shape.set({
@@ -116,6 +126,8 @@ const onShapeDown = (
         top: pointer.y,
         radius: 50,
         fill: lastUsedColorRef.current,
+        originX: "center",
+        originY: "center",
       });
 
       shape.set({
@@ -325,124 +337,36 @@ export const handlePathCreated = ({
   sendSvgShape(svgData);
 };
 
-export const handleKeyDownEvents = ({
-  e,
-  canvas,
-  sendJsonMessage,
-}: {
-  e: KeyboardEvent;
-  canvas: fabric.Canvas | null;
-  sendJsonMessage: SendJsonMessage;
-}) => {
-  // Validate the canvas instance and its `contextTop`
-  if (!canvas) {
-    console.warn("Canvas is not ready");
+// In canvas.ts
+export const handleObjectDeletion = (
+  canvas: fabric.Canvas,
+  activeObjects: fabric.Object[],
+  sendJsonMessage: SendJsonMessage
+) => {
+  // Handle all objects deletion
+  if (activeObjects.length === canvas.getObjects().length) {
+    canvas.clear();
+    canvas.renderAll();
+    sendJsonMessage({
+      type: "remove-all",
+    });
     return;
   }
 
-  if (canvas.targets.length === 0) return; // No target elements return early
+  // Handle individual object deletion
+  activeObjects.forEach((object) => {
+    const id = (object as fabric.Object & { id?: string }).id;
+    canvas.remove(object);
 
-  // Handle delete and backspace keys for object removal
-  if (e.key === "Delete" || e.key === "Backspace") {
-    const activeObjects = canvas.getActiveObjects();
-    const allObjects = canvas.getObjects();
-
-    if (activeObjects.length === allObjects.length) {
-      // Clear entire canvas
-      canvas.clear();
-      canvas.renderAll(); // Ensure immediate re-render
+    // Send removal event to WebSocket
+    if (id) {
       sendJsonMessage({
-        type: "remove-all",
-      });
-    } else {
-      activeObjects.forEach((object) => {
-        // Ensure object has an ID before removing
-        const id = (object as fabric.Object & { id?: string }).id;
-        console.log("Object id to be deleted: ", id);
-        canvas.remove(object);
-        canvas.discardActiveObject(); // Clear selection
-        canvas.renderAll(); // Ensure canvas updates immediately
-
-        // Send removal event to WebSocket
-        sendJsonMessage({
-          type: "remove-element",
-          payload: { id },
-        });
+        type: "remove-element",
+        payload: { id },
       });
     }
-  }
+  });
+
+  canvas.discardActiveObject();
+  canvas.renderAll();
 };
-
-//const saveHistory = (
-//  canvas: fabric.Canvas,
-//  canvasHistoryRef: React.MutableRefObject<fabric.FabricObject[][]>,
-//  historyIndexRef: React.MutableRefObject<number>,
-//) => {
-//  const serializedObjects = canvas
-//    .getObjects()
-//    .map((obj) => obj.toObject(["id", "customProperty"]));
-//
-//  // Trim future history if we overwrite it
-//  if (historyIndexRef.current < canvasHistoryRef.current.length - 1) {
-//    canvasHistoryRef.current = canvasHistoryRef.current.slice(
-//      0,
-//      historyIndexRef.current + 1,
-//    );
-//  }
-//
-//  canvasHistoryRef.current.push(serializedObjects);
-//  historyIndexRef.current++;
-//  console.log("History saved:", canvasHistoryRef.current);
-//};
-
-//export const undo = (
-//  canvas: fabric.Canvas,
-//  canvasHistoryRef: React.MutableRefObject<fabric.FabricObject[][]>,
-//  historyIndexRef: React.MutableRefObject<number>,
-//) => {
-//  if (historyIndexRef.current > 0) {
-//    historyIndexRef.current--;
-//    const previousState = canvasHistoryRef.current[historyIndexRef.current];
-//    restoreCanvasState(canvas, previousState);
-//  } else {
-//    console.log("No more undo steps.");
-//  }
-//};
-//
-//export const redo = (
-//  canvas: fabric.Canvas,
-//  canvasHistoryRef: React.MutableRefObject<fabric.FabricObject[][]>,
-//  historyIndexRef: React.MutableRefObject<number>,
-//) => {
-//  if (historyIndexRef.current < canvasHistoryRef.current.length - 1) {
-//    historyIndexRef.current++;
-//    const nextState = canvasHistoryRef.current[historyIndexRef.current];
-//    restoreCanvasState(canvas, nextState);
-//  } else {
-//    console.log("No more redo steps.");
-//  }
-//};
-//
-//const restoreCanvasState = (
-//  canvas: fabric.Canvas,
-//  state: fabric.FabricObject[],
-//) => {
-//  console.log("Restoring canvas state:", state);
-//
-//  // Clear the canvas
-//  canvas.clear();
-//
-//  // Enliven objects and add them to the canvas
-//  fabric.util.enlivenObjects(state, (objects) => {
-//    if (objects.length === 0) {
-//      console.error("No objects to restore");
-//    }
-//    objects.forEach((obj) => {
-//      console.log("Adding object to canvas:", obj);
-//      canvas.add(obj);
-//    });
-//
-//    // Render the canvas after adding objects
-//    canvas.renderAll();
-//  });
-//};
