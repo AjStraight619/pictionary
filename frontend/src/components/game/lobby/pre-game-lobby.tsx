@@ -30,29 +30,27 @@ const PreGameLobby = () => {
     messageTypes: ["startGameCountdown"],
   });
 
+  const gameStarting = timeRemaining !== null;
+
   const open = gameStatus === GameStatus.NotStarted;
 
   const { sendTypedMessage } = useCustomWebsocket({
     messageTypes: ["playerReady", "playerToggleReady"],
   });
 
-  function copyToClipboard(text: string) {
+  const copyToClipboard = (text: string) => {
     setCopied(true);
     navigator.clipboard.writeText(text);
     setTimeout(() => setCopied(false), 2000);
-  }
-
-  const [gameStarting, setGameStarting] = useState(false);
+  };
 
   const handleStartGame = () => {
     startTimer();
-    setGameStarting(true);
   };
 
   const handleCancelGame = () => {
     setTimeRemaining(null);
     stopTimer();
-    setGameStarting(false);
   };
 
   const toggleReady = () => {
@@ -63,7 +61,6 @@ const PreGameLobby = () => {
     }
   };
 
-  // Instead of manually searching, use our host hook:
   const isHost = host && host.ID === playerInfo?.playerID;
 
   return (
