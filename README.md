@@ -2,6 +2,17 @@
 
 A real-time multiplayer drawing and guessing game inspired by the classic Pictionary. Players take turns drawing a randomly selected word while others try to guess it before time runs out.
 
+## Screenshots
+
+### Landing Page
+![Landing Page](screenshots/landing-page.png)
+
+### Word Selection
+![Word Selection](screenshots/word-selection.png)
+
+### Active Drawing Turn
+![Active Turn](screenshots/active-turn.png)
+
 ## Tech Stack
 
 ### Frontend
@@ -41,7 +52,7 @@ pictionary/
 │   │   ├── pages/      # Main page components
 │   │   ├── types/      # TypeScript type definitions
 │   │   └── utils/      # Utility functions
-├── mobile/             # Mobile application
+├── mobile/             # Mobile application (early development)
 │   ├── components/     # Mobile UI components
 │   ├── hooks/          # Mobile-specific hooks
 │   ├── screens/        # Mobile screens
@@ -86,10 +97,12 @@ go run cmd/server/main.go
 - Responsive UI design
 
 ### In Progress
+- Letter reveal logic
 - Authentication system
 - Improved word selection and categories
 - Spectator mode
 - Game statistics and leaderboards
+- Mobile version (early development stage)
 
 ### Future Plans
 - Custom word lists and room settings
@@ -97,6 +110,9 @@ go run cmd/server/main.go
 - Mobile-optimized interface
 - Better diffing for game state updates
 
+## Mobile Version
+
+The mobile version of the game is currently in the early stages of development. It aims to provide a native-like experience for iOS and Android users while sharing core logic with the web version. Currently, basic functionality is being implemented with a focus on responsive design and touch interactions.
 
 ## Architecture Highlights
 
