@@ -52,9 +52,22 @@ func ServeWs(c echo.Context, server *server.GameServer) error {
 
 	// Update the player's connection status in the game state.
 	player := game.GetPlayerByID(playerID)
+
+	// Check if this is a reconnection of a previously disconnected player
+	var isReconnection bool
+	if player == nil {
+		isReconnection = game.HandleReconnect(playerID)
+		if isReconnection {
+			// Get the restored player
+			player = game.GetPlayerByID(playerID)
+			log.Printf("Player %s successfully reconnected", playerID)
+		}
+	}
+
 	if player == nil {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Player not found"})
 	}
+
 	player.Pending = false
 	player.Connected = true
 	player.Client = ws.NewClient(hub, conn, playerID)

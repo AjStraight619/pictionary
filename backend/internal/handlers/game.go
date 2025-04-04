@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/Ajstraight619/pictionary-server/internal/game"
+	g "github.com/Ajstraight619/pictionary-server/internal/game"
 	"github.com/Ajstraight619/pictionary-server/internal/server"
 	"github.com/Ajstraight619/pictionary-server/internal/shared"
 	"github.com/google/uuid"
@@ -83,13 +85,41 @@ func JoinGameHandler(c echo.Context, server *server.GameServer) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Game not found"})
 	}
 
-	playerID := uuid.New().String()
-	player := game.NewPlayer(playerID, req.Username, false)
+	// Check for existing playerID - they might be reconnecting
+	playerID := c.QueryParam("playerID")
+	isReconnecting := false
+
+	// If playerID is provided, check if they're in temporary disconnected players
+	if playerID != "" {
+		isReconnecting = game.CheckTempDisconnectedPlayer(playerID)
+
+		// If reconnecting, allow them to join regardless of game state
+		if isReconnecting {
+			log.Printf("Player %s attempting to rejoin game %s via join endpoint", playerID, req.GameID)
+			return c.JSON(http.StatusOK, map[string]string{
+				"gameID":   req.GameID,
+				"playerID": playerID,
+			})
+		}
+	}
+
+	// If game is in progress and not reconnecting, reject
+	if game.Status == g.InProgress && !isReconnecting {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Game is already in progress"})
+	}
+
+	if req.Username == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Username is required"})
+	}
+
+	// For new players, create a new ID and player
+	newPlayerID := uuid.New().String()
+	player := game.NewPlayer(newPlayerID, req.Username, false)
 	player.Pending = true
 	game.AddPlayer(player)
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"gameID":   req.GameID,
-		"playerID": playerID,
+		"playerID": newPlayerID,
 	})
 }

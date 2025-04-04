@@ -50,6 +50,9 @@ func (s *GameServer) CreateGame(id string, options shared.GameOptions) error {
 	game := game.NewGame(gameCtx, id, options, hub, s)
 	game.InitGameEvents()
 
+	// Set up the disconnect handler
+	hub.OnDisconnect = game.HandleDisconnect
+
 	s.games[id] = &GameInstance{
 		Game:       game,
 		Hub:        hub,

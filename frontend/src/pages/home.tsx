@@ -38,71 +38,16 @@ export default function Home() {
   const [username, setUsername] = useState(playerInfo?.username || "");
   const [gameCode, setGameCode] = useState("");
   const [gameOptions, setGameOptions] = useState<GameOptions>({
-    roundLimit: 6,
-    turnTimeLimit: 60,
-    selectWordTimeLimit: 20,
-    maxPlayers: 6,
+    roundLimit: 3,
+    turnTimeLimit: 40,
+    selectWordTimeLimit: 10,
+    maxPlayers: 4,
   });
 
   // UI states
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"create" | "join">("create");
-
-  // Handle quick play button
-  // const handleQuickPlay = async () => {
-  //   if (username.length < 3 || username.length > 12) {
-  //     setError("Player name must be between 3 and 12 characters.");
-  //     return;
-  //   }
-
-  //   setIsLoading(true);
-
-  //   try {
-  //     // Use the create game API with default options
-  //     const payload = {
-  //       username,
-  //       options: {
-  //         roundLimit: 6,
-  //         turnTimeLimit: 60,
-  //         selectWordTimeLimit: 20,
-  //         maxPlayers: 6,
-  //       },
-  //     };
-
-  //     const res = await fetch(`${API_URL}/game/create`, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify(payload),
-  //     });
-
-  //     if (!res.ok) {
-  //       const errorData = await res.json();
-  //       setError(errorData.error || "Failed to create the game.");
-  //       return;
-  //     }
-
-  //     const data = await res.json();
-  //     const gameID = data.gameID;
-  //     const playerID = data.playerID;
-
-  //     // Store player info locally
-  //     setPlayerInfo({
-  //       playerID,
-  //       username,
-  //     });
-
-  //     // Navigate to the game
-  //     navigate(`/game/${gameID}`);
-  //   } catch (error) {
-  //     console.error("Error creating the game:", error);
-  //     setError("Something went wrong. Please try again later.");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   // Handle create game form submission
   const handleCreateGame = async (e: React.FormEvent<HTMLFormElement>) => {

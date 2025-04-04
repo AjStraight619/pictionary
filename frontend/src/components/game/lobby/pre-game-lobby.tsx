@@ -77,8 +77,8 @@ const PreGameLobby = () => {
         <DialogDescription>Waiting for players to join...</DialogDescription>
         <div
           className={`grid gap-2 ${
-            players.length > 4 ? "grid-cols-2 grid-flow-col" : "grid-cols-1"
-          }`}
+            players.length > 4 ? "grid-cols-2" : "grid-cols-1"
+          } auto-rows-auto w-full`}
         >
           {players.map((player) => (
             <PlayerCard

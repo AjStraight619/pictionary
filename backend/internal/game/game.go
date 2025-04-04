@@ -25,8 +25,9 @@ type Game struct {
 	Messenger   m.Messenger               `json:"-"`
 	GameEvents  map[string]EventHandler   `json:"-"`
 	// SelectableWords []shared.Word             `json:"selectableWords"`
-	UsedWords       []shared.Word `json:"-"`
-	AvailableColors []string      `json:"-"`
+	UsedWords               []shared.Word             `json:"-"`
+	AvailableColors         []string                  `json:"-"`
+	TempDisconnectedPlayers map[string]*shared.Player `json:"-"`
 	// isSelectingWord bool
 	TimerManager *TimerManager
 	WordSelector *WordSelector

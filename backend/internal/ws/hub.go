@@ -70,9 +70,9 @@ func (h *Hub) Run() {
 			if _, ok := h.Clients[client]; ok {
 				delete(h.Clients, client)
 				close(client.Send)
-				// if h.OnDisconnect != nil {
-				// 	go h.OnDisconnect(client.PlayerID)
-				// }
+				if h.OnDisconnect != nil {
+					go h.OnDisconnect(client.PlayerID)
+				}
 			}
 		case message := <-h.Broadcast:
 			for client := range h.Clients {

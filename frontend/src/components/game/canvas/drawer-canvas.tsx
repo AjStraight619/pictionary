@@ -28,64 +28,12 @@ const DrawerCanvas = () => {
   const playerInfo = useReadLocalStorage<PlayerInfo>("playerInfo");
 
   // Initialize canvas history
-  const { saveState, undo, redo } = useCanvasHistory(fabricRef);
 
   // Add logging wrappers for history operations
-  const loggedSaveState = useCallback(() => {
-    console.log("📝 Saving canvas state");
-    saveState();
-  }, [saveState]);
-
-  const loggedUndo = useCallback(() => {
-    console.log("⏪ Undoing last action");
-    undo();
-  }, [undo]);
-
-  const loggedRedo = useCallback(() => {
-    console.log("⏩ Redoing action");
-    redo();
-  }, [redo]);
 
   const { sendJsonMessage } = useCustomWebsocket({
     messageTypes: ["canvas"],
   });
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (!fabricRef.current) return;
-
-      // Handle backspace/delete for object removal
-      if (e.key === "Backspace" || e.key === "Delete") {
-        const canvas = fabricRef.current;
-        const activeObjects = canvas.getActiveObjects();
-
-        if (activeObjects.length === 0) return;
-
-        console.log("🗑️ Deleting objects, saving state first");
-        // Save state before deletion
-        loggedSaveState();
-
-        // Handle the deletion logic
-        handleObjectDeletion(canvas, activeObjects, sendJsonMessage);
-      }
-
-      // Undo on Ctrl+Z
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        loggedUndo();
-      }
-
-      // Redo on Ctrl+Shift+Z or Ctrl+Y
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        ((e.key === "z" && e.shiftKey) || e.key === "y")
-      ) {
-        e.preventDefault();
-        loggedRedo();
-      }
-    },
-    [loggedSaveState, loggedUndo, loggedRedo, sendJsonMessage]
-  );
 
   const sendCursorPosition = useThrottledCallback((e: React.MouseEvent) => {
     if (!containerRef.current || !canvasRef.current) return;
@@ -170,6 +118,69 @@ const DrawerCanvas = () => {
     fabricRef.current.renderAll();
   }, []);
 
+  const { saveState, undo, redo } = useCanvasHistory(
+    fabricRef,
+    sendJsonMessage
+  );
+
+  const loggedSaveState = useCallback(() => {
+    console.log("📝 Saving canvas state");
+    saveState();
+  }, [saveState]);
+
+  const loggedUndo = useCallback(() => {
+    console.log("⏪ Undoing last action");
+    undo();
+  }, [undo]);
+
+  const loggedRedo = useCallback(() => {
+    console.log("⏩ Redoing action");
+    redo();
+  }, [redo]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!fabricRef.current) return;
+
+      // Handle backspace/delete for object removal
+      if (e.key === "Backspace" || e.key === "Delete") {
+        const canvas = fabricRef.current;
+        const activeObjects = canvas.getActiveObjects();
+
+        if (activeObjects.length === 0) return;
+
+        console.log("🗑️ Deleting objects, saving state first");
+        // Save state before deletion
+        loggedSaveState();
+
+        // Handle the deletion logic
+        handleObjectDeletion(canvas, activeObjects, sendJsonMessage);
+      }
+
+      // Undo on Ctrl+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        loggedUndo();
+      }
+
+      // Redo on Ctrl+Shift+Z or Ctrl+Y
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        ((e.key === "z" && e.shiftKey) || e.key === "y")
+      ) {
+        e.preventDefault();
+        loggedRedo();
+      }
+    },
+    [loggedSaveState, loggedUndo, loggedRedo, sendJsonMessage]
+  );
+
+  const handleBeforeUnload = useCallback(() => {
+    sendJsonMessage({
+      type: "remove-all",
+    });
+  }, [sendJsonMessage]);
+
   // Initialize canvas once
   useCanvas(
     canvasRef,
@@ -186,19 +197,21 @@ const DrawerCanvas = () => {
 
   // Combined event listeners in a single useEffect
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
     // Set up keyboard and resize event listeners
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("keydown", handleKeyDown, { signal });
+    window.addEventListener("resize", resizeCanvas, { signal });
+    window.addEventListener("beforeunload", handleBeforeUnload, { signal });
 
     // Initial resize
     resizeCanvas();
 
     // Cleanup function
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("resize", resizeCanvas);
+      controller.abort();
     };
-  }, [handleKeyDown, resizeCanvas]);
+  }, [handleKeyDown, resizeCanvas, handleBeforeUnload]);
 
   return (
     <div

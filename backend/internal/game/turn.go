@@ -150,6 +150,7 @@ func (t *Turn) End(g *Game) {
 	log.Println("Turn ended")
 	g.ClearDrawingPlayers()
 	g.Round.MarkPlayerAsDrawn(t.CurrentDrawerID)
+	t.Phase = PhaseWordSelection
 	g.Mu.Lock()
 	roundComplete := len(g.Round.PlayersDrawn) == len(g.PlayerOrder)
 	g.Mu.Unlock()
