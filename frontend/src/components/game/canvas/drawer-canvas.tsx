@@ -9,7 +9,6 @@ import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 import Toolbar from "@/components/game/canvas/tools/toolbar";
 import { useReadLocalStorage } from "usehooks-ts";
 import { PlayerInfo } from "@/types/lobby";
-import ActiveCursor from "./active-cursor";
 import { useCanvasHistory } from "@/hooks/useCanvasHistory";
 import { useCanvas } from "@/hooks/useCanvas";
 
@@ -220,7 +219,6 @@ const DrawerCanvas = () => {
       id="canvas-container"
       onMouseMove={sendCursorPosition}
     >
-      <ActiveCursor />
       <canvas
         ref={canvasRef}
         className="border border-gray-200 shadow-inner"
