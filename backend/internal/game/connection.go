@@ -119,17 +119,3 @@ func (g *Game) HandleReconnect(playerID string) bool {
 
 	return true
 }
-
-// CheckTempDisconnectedPlayer checks if a player is in the temporary disconnected players map
-func (g *Game) CheckTempDisconnectedPlayer(playerID string) bool {
-	g.Mu.Lock()
-	defer g.Mu.Unlock()
-
-	// Initialize map if it doesn't exist
-	if g.TempDisconnectedPlayers == nil {
-		return false
-	}
-
-	_, exists := g.TempDisconnectedPlayers[playerID]
-	return exists
-}

@@ -94,7 +94,7 @@ const PreGameLobby = () => {
         </div>
         <DialogFooter>
           <div className="flex justify-between w-full">
-            <Button onClick={toggleReady}>
+            <Button disabled={players.length < 2} onClick={toggleReady}>
               {players.find((p) => p.ID === playerInfo?.playerID)?.ready
                 ? "Cancel Ready"
                 : "Ready"}
@@ -102,6 +102,7 @@ const PreGameLobby = () => {
             <div className="space-x-2">
               {isHost && (
                 <Button
+                  disabled={gameStarting}
                   onClick={() =>
                     copyToClipboard(location.pathname.split("/").pop()!)
                   }

@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Ajstraight619/pictionary-server/internal/game"
 	g "github.com/Ajstraight619/pictionary-server/internal/game"
 	"github.com/Ajstraight619/pictionary-server/internal/server"
 	"github.com/Ajstraight619/pictionary-server/internal/shared"
@@ -25,7 +24,7 @@ type JoinGameRequest struct {
 
 var numPlayers = 2
 
-func CreateTestPlayers(numPlayers int, game *game.Game) []*shared.Player {
+func CreateTestPlayers(numPlayers int, game *g.Game) []*shared.Player {
 	players := make([]*shared.Player, numPlayers)
 
 	for i := range numPlayers {
@@ -61,12 +60,12 @@ func CreateGameHandler(c echo.Context, server *server.GameServer) error {
 	player.Pending = true
 
 	// Only add test players in development mode
-	// env := c.Get("environment")
-	// if env == "development" || env == "" { // Default to adding test players if env is not set
-	for _, p := range CreateTestPlayers(numPlayers, game) {
-		game.AddPlayer(p)
+	env := c.Get("environment")
+	if env == "development" || env == "" { // Default to adding test players if env is not set
+		for _, p := range CreateTestPlayers(numPlayers, game) {
+			game.AddPlayer(p)
+		}
 	}
-	// }
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"gameID":   gameID,
@@ -91,7 +90,7 @@ func JoinGameHandler(c echo.Context, server *server.GameServer) error {
 
 	// If playerID is provided, check if they're in temporary disconnected players
 	if playerID != "" {
-		isReconnecting = game.CheckTempDisconnectedPlayer(playerID)
+		isReconnecting = game.HandleReconnect(playerID)
 
 		// If reconnecting, allow them to join regardless of game state
 		if isReconnecting {
