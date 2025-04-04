@@ -92,44 +92,107 @@ const PreGameLobby = () => {
             />
           ))}
         </div>
-        <DialogFooter>
-          <div className="flex justify-between w-full">
-            <Button disabled={players.length < 2} onClick={toggleReady}>
-              {players.find((p) => p.ID === playerInfo?.playerID)?.ready
-                ? "Cancel Ready"
-                : "Ready"}
-            </Button>
-            <div className="space-x-2">
-              {isHost && (
-                <Button
-                  disabled={gameStarting}
-                  onClick={() =>
-                    copyToClipboard(location.pathname.split("/").pop()!)
-                  }
-                >
-                  {copied ? "Copied!" : "Copy Game Link"}
-                </Button>
-              )}
+        <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <ReadyButton
+            isReady={players.find((p) => p.ID === playerInfo?.playerID)?.ready}
+            onToggle={toggleReady}
+          />
 
-              {isHost ? (
-                gameStarting ? (
-                  <Button onClick={handleCancelGame}>
-                    Cancel {timeRemaining}
-                  </Button>
-                ) : (
-                  <Button onClick={handleStartGame}>Start Game</Button>
-                )
-              ) : gameStarting ? (
-                <p>Game starting {timeRemaining}</p>
-              ) : (
-                <p>Waiting for leader to start the game...</p>
-              )}
-            </div>
+          <div className="flex ml-auto gap-2 items-center">
+            {isHost && (
+              <CopyLinkButton
+                gameId={location.pathname.split("/").pop() || ""}
+                disabled={gameStarting}
+                copied={copied}
+                onCopy={copyToClipboard}
+              />
+            )}
+
+            <GameControlButton
+              isHost={!!isHost}
+              gameStarting={gameStarting}
+              timeRemaining={timeRemaining}
+              playersCount={players.length}
+              onStart={handleStartGame}
+              onCancel={handleCancelGame}
+            />
           </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
+};
+
+// Component type definitions
+type ReadyButtonProps = {
+  isReady?: boolean;
+  onToggle: () => void;
+};
+
+type CopyLinkButtonProps = {
+  gameId: string;
+  disabled: boolean;
+  copied: boolean;
+  onCopy: (text: string) => void;
+};
+
+type GameControlButtonProps = {
+  isHost: boolean;
+  gameStarting: boolean;
+  timeRemaining: number | null;
+  playersCount: number;
+  onStart: () => void;
+  onCancel: () => void;
+};
+
+const ReadyButton = ({ isReady, onToggle }: ReadyButtonProps) => (
+  <Button onClick={onToggle} variant={isReady ? "outline" : "default"}>
+    {isReady ? "Cancel Ready" : "Ready"}
+  </Button>
+);
+
+const CopyLinkButton = ({
+  gameId,
+  disabled,
+  copied,
+  onCopy,
+}: CopyLinkButtonProps) => (
+  <Button disabled={disabled} onClick={() => onCopy(gameId)} variant="outline">
+    {copied ? "Copied!" : "Copy Game Link"}
+  </Button>
+);
+
+const GameControlButton = ({
+  isHost,
+  gameStarting,
+  timeRemaining,
+  playersCount,
+  onStart,
+  onCancel,
+}: GameControlButtonProps) => {
+  const notEnoughPlayers = playersCount < 2;
+
+  if (isHost) {
+    if (gameStarting) {
+      return (
+        <Button onClick={onCancel} variant="destructive">
+          Cancel {timeRemaining || ""}
+        </Button>
+      );
+    }
+
+    return (
+      <Button onClick={onStart} disabled={notEnoughPlayers}>
+        Start Game
+      </Button>
+    );
+  }
+
+  if (gameStarting) {
+    return <p className="text-sm">Game starting {timeRemaining || ""}</p>;
+  }
+
+  return <p className="text-sm">Waiting for leader to start...</p>;
 };
 
 export default PreGameLobby;
