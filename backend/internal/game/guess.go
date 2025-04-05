@@ -34,6 +34,7 @@ func (g *Game) handlePlayerGuess(playerID string, guess string) {
 		// Calculate score to add
 		// scoreToAdd := CalculateScore(g)
 
+		// TODO: Remove this (currently just for testing)
 		scoreToAdd := 100
 
 		// Update player's score
@@ -55,13 +56,11 @@ func (g *Game) handlePlayerGuess(playerID string, guess string) {
 			log.Printf("Error creating scoreUpdated message: %v", err)
 		}
 
-		// Check if all players guessed correctly
 		if g.CurrentTurn.allGuessedCorrectly() {
 			log.Println("All players have guessed correctly!")
 			g.FlowSignal <- TurnEnded
 		}
 
-		// Broadcast updated game state
 		g.BroadcastGameState()
 		return
 	}
@@ -73,7 +72,7 @@ func (g *Game) handlePlayerGuess(playerID string, guess string) {
 
 	} else {
 		log.Printf("Player %s guessed: %s (distance: %d)", playerID, guess, distance)
-		SendGuessMessage(g, playerID, guess) // Simply return the guess
+		SendGuessMessage(g, playerID, guess)
 	}
 }
 

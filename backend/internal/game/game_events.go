@@ -53,14 +53,11 @@ func (g *Game) InitGameEvents() {
 			return
 		}
 
-		log.Printf("Word selected manually: %s", pt.Word.Word)
-
 		g.CancelTimer("selectWordTimer")
 		g.setIsSelectingWord(false)
 		g.setWord(&pt.Word)
-		log.Printf("Word selected manually: %s", pt.Word.Word)
 
-		selectWordPayload := map[string]interface{}{
+		selectWordPayload := map[string]any{
 			"word":            g.CurrentTurn.WordToGuess,
 			"isSelectingWord": false,
 		}
@@ -114,7 +111,6 @@ func (g *Game) InitGameEvents() {
 			return
 		}
 
-		// Mark the player as ready
 		player := g.GetPlayerByID(pt.PlayerID)
 		if player == nil {
 			log.Printf("Player with ID %s not found", pt.PlayerID)
@@ -126,21 +122,6 @@ func (g *Game) InitGameEvents() {
 
 		g.BroadcastGameState()
 
-		// Check if all players are ready
-		allReady := true
-		g.Mu.RLock()
-		for _, p := range g.Players {
-			if !p.Ready {
-				allReady = false
-				break
-			}
-		}
-		g.Mu.RUnlock()
-
-		// If all players are ready and there's at least 2 players, host can start the game
-		if allReady && len(g.Players) >= 2 {
-			log.Println("All players are ready, host can start the game")
-		}
 	})
 
 	g.RegisterGameEvent(e.PlayerToggleReady, func(payload json.RawMessage) {
@@ -151,35 +132,17 @@ func (g *Game) InitGameEvents() {
 			return
 		}
 
-		// Get the player
 		player := g.GetPlayerByID(pt.PlayerID)
 		if player == nil {
 			log.Printf("Player with ID %s not found", pt.PlayerID)
 			return
 		}
 
-		// Toggle the ready state
 		player.Ready = !player.Ready
 		log.Printf("Player %s (%s) ready state toggled to: %v", player.Username, player.ID, player.Ready)
 
-		// Broadcast the updated game state
 		g.BroadcastGameState()
 
-		// Check if all players are ready
-		allReady := true
-		g.Mu.RLock()
-		for _, p := range g.Players {
-			if !p.Ready {
-				allReady = false
-				break
-			}
-		}
-		g.Mu.RUnlock()
-
-		// If all players are ready and there's at least 2 players, host can start the game
-		if allReady && len(g.Players) >= 2 {
-			log.Println("All players are ready, host can start the game")
-		}
 	})
 
 	g.RegisterGameEvent(e.CursorUpdate, func(payload json.RawMessage) {
@@ -194,6 +157,18 @@ func (g *Game) InitGameEvents() {
 
 		// For testing with myself..
 		g.Messenger.SendToPlayer(pt.PlayerID, payload)
+	})
+
+	g.RegisterGameEvent(e.RemovePlayer, func(payload json.RawMessage) {
+		var pt e.RemovePlayerPayload
+		if err := json.Unmarshal(payload, &pt); err != nil {
+			log.Println("Error unmarshalling RemovePlayer payload:", err)
+			return
+		}
+
+		log.Printf("Payload: %+v", pt)
+
+		g.RemovePlayerByHost(pt.PlayerID, pt.HostID)
 	})
 
 }

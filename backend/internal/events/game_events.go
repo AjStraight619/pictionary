@@ -6,8 +6,6 @@ import (
 	"github.com/Ajstraight619/pictionary-server/internal/shared"
 )
 
-// External incoming events coming from the client.
-
 type GameEvent struct {
 	Type    string          `json:"type"`
 	Payload json.RawMessage `json:"payload"`
@@ -48,6 +46,11 @@ type CursorUpdatePayload struct {
 	Cursor   Cursor `json:"cursor"`
 }
 
+type RemovePlayerPayload struct {
+	PlayerID string `json:"playerID"`
+	HostID   string `json:"hostID"`
+}
+
 type Cursor struct {
 	X int `json:"x"`
 	Y int `json:"y"`
@@ -62,4 +65,5 @@ const (
 	PlayerReady       = "playerReady"
 	PlayerToggleReady = "playerToggleReady"
 	CursorUpdate      = "cursorUpdate"
+	RemovePlayer      = "removePlayer"
 )

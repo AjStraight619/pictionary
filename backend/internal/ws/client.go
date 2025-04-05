@@ -71,6 +71,7 @@ func (c *Client) Read() {
 		e.SelectWord:        true,
 		e.PlayerReady:       true,
 		e.PlayerToggleReady: true,
+		e.RemovePlayer:      true,
 	}
 
 	for {

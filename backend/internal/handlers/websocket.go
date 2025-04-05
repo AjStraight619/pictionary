@@ -53,6 +53,19 @@ func ServeWs(c echo.Context, server *server.GameServer) error {
 	// Update the player's connection status in the game state.
 	player := game.GetPlayerByID(playerID)
 
+	// First check if this player was removed
+	game.Mu.RLock()
+	_, isRemoved := game.RemovedPlayers[playerID]
+	game.Mu.RUnlock()
+
+	if isRemoved {
+		log.Printf("ServeWs: Rejecting connection from removed player ID %s", playerID)
+		return c.JSON(http.StatusForbidden, map[string]string{
+			"error": "You were removed from this game",
+			"code":  "PLAYER_REMOVED",
+		})
+	}
+
 	// Check if this is a reconnection of a previously disconnected player
 	var isReconnection bool
 	if player == nil {
@@ -94,7 +107,6 @@ func ServeWs(c echo.Context, server *server.GameServer) error {
 
 	hub.Broadcast <- b
 
-	// Temporary fix to make sure the game state the ws connection is
 	time.AfterFunc(200*time.Millisecond, func() {
 		log.Println("game state:", game)
 		game.BroadcastGameState()

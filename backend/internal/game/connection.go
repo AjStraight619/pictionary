@@ -14,8 +14,6 @@ const (
 
 func (g *Game) HandleDisconnect(playerID string) {
 	g.Mu.Lock()
-
-	// Check if player exists
 	player, exists := g.Players[playerID]
 	if !exists {
 		g.Mu.Unlock()
@@ -23,7 +21,17 @@ func (g *Game) HandleDisconnect(playerID string) {
 	}
 
 	player.Connected = false
-	log.Printf("Player %s (%s) disconnected", player.Username, playerID)
+	log.Printf("HandleDisconnect: Player %s (%s) disconnected", player.Username, playerID)
+
+	// Check if player was removed by host - don't store in temp disconnected
+	if _, isRemoved := g.RemovedPlayers[playerID]; isRemoved {
+		log.Printf("HandleDisconnect: Player %s was previously removed by host, not storing for reconnection", playerID)
+		delete(g.Players, playerID)
+		g.Mu.Unlock()
+
+		// Game state update is handled by RemovePlayer, which is called separately
+		return
+	}
 
 	// Initialize the temp disconnected players map if it doesn't exist
 	if g.TempDisconnectedPlayers == nil {
@@ -68,7 +76,7 @@ func (g *Game) HandleDisconnect(playerID string) {
 			return
 		}
 
-		log.Printf("Grace period expired for player %s, removing permanently", playerID)
+		log.Printf("HandleDisconnect: Grace period expired for player %s, removing permanently", playerID)
 		delete(g.TempDisconnectedPlayers, playerID)
 
 		// Release lock before broadcasting
@@ -81,27 +89,36 @@ func (g *Game) HandleDisconnect(playerID string) {
 
 	// If we need to clean up the game (no players left)
 	if needsCleanup && g.lifecycle != nil {
-		log.Println("All players have left the game, initiating cleanup")
+		log.Printf("HandleDisconnect: All players have left the game, initiating cleanup")
 		g.lifecycle.OnGameEnded(g.ID)
 	}
 
 	if allDisconnected {
-		log.Println("All players have disconnected from game:", g.ID)
+		log.Printf("HandleDisconnect: All players have disconnected from game: %s", g.ID)
 	}
 }
 
-// HandleReconnect checks if a player was temporarily disconnected and restores them
 func (g *Game) HandleReconnect(playerID string) bool {
 	g.Mu.Lock()
 
-	// Check if player exists in temp disconnected players
+	// First check if player was removed by host
+	if _, isRemoved := g.RemovedPlayers[playerID]; isRemoved {
+		log.Printf("HandleReconnect: Rejecting reconnection attempt from removed player %s", playerID)
+		g.Mu.Unlock()
+
+		// Notify that this player was removed and cannot rejoin
+		g.Messenger.BroadcastMessage([]byte("Removed player attempted to reconnect: " + playerID))
+		return false
+	}
+
 	player, exists := g.TempDisconnectedPlayers[playerID]
 	if !exists {
+		log.Printf("HandleReconnect: Player %s not found in temporary disconnected players", playerID)
 		g.Mu.Unlock()
 		return false
 	}
 
-	log.Printf("Player %s (%s) is reconnecting within grace period", player.Username, playerID)
+	log.Printf("HandleReconnect: Player %s (%s) is reconnecting within grace period", player.Username, playerID)
 
 	// Restore player to active players
 	player.Connected = true
