@@ -27,6 +27,29 @@ type GameOptions = {
   maxPlayers: number;
 };
 
+// type FormError = {
+//   error: string | null;
+// };
+
+// function validateForm(
+//   type: "create" | "join",
+//   username: string,
+//   gameCode: string,
+//   gameOptions: GameOptions
+// ): FormError {
+//   if (type === "create") {
+//     if (username.length < 3 || username.length > 12) {
+//       return { error: "Player name must be between 3 and 12 characters." };
+//     }
+//   }
+//   if (type === "join") {
+//     if (gameCode.length !== 6) {
+//       return { error: "Game code must be 6 characters long." };
+//     }
+//   }
+//   return { error: null };
+// }
+
 export default function Home() {
   const navigate = useNavigate();
   const [playerInfo, setPlayerInfo] = useLocalStorage<PlayerInfo | null>(
@@ -86,7 +109,6 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      // Prepare the payload
       const payload = {
         username,
         options: gameOptions,
@@ -111,13 +133,11 @@ export default function Home() {
       const gameID = data.gameID;
       const playerID = data.playerID;
 
-      // Store player info locally
       setPlayerInfo({
         playerID,
         username,
       });
 
-      // Navigate to the game
       navigate(`/game/${gameID}`);
     } catch (error) {
       console.error("Error creating the game:", error);
@@ -127,7 +147,6 @@ export default function Home() {
     }
   };
 
-  // Handle join game form submission
   const handleJoinGame = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -146,13 +165,11 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      // Prepare the payload (without playerID)
       const payload = {
-        gameId: gameCode,
-        playerName: username,
+        gameID: gameCode,
+        username,
       };
 
-      // Send the join game request to the server
       const res = await fetch(`${API_URL}/game/join`, {
         method: "POST",
         headers: {
@@ -168,7 +185,7 @@ export default function Home() {
       }
 
       const data = await res.json();
-      const playerID = data.playerID; // Get playerID from server response
+      const playerID = data.playerID;
 
       // Store player info locally
       setPlayerInfo({
@@ -176,7 +193,6 @@ export default function Home() {
         username,
       });
 
-      // Navigate to the game
       navigate(`/game/${gameCode}`);
     } catch (error) {
       console.error("Error joining the game:", error);
@@ -483,8 +499,9 @@ export default function Home() {
           className="py-16"
         >
           <h3 className="text-3xl font-bold text-center mb-8 text-gradient-pictionary">
-            How It Works
+            How to Play
           </h3>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
