@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -13,8 +14,17 @@ import (
 )
 
 func main() {
+	// Debug startup issues
+	fmt.Println("==== SERVER STARTING ====")
+	fmt.Println("Environment:", os.Getenv("RAILWAY_ENVIRONMENT_NAME"))
+	fmt.Println("Port:", os.Getenv("PORT"))
+
+	// Regular startup
+	cfg := config.GetConfig()
+	gameServer := server.NewGameServer()
 	log.Printf("Starting server with environment: %s", os.Getenv("RAILWAY_ENVIRONMENT_NAME"))
 	log.Printf("Port: %s", os.Getenv("PORT"))
+	log.Printf("Sureeeee")
 
 	// Set the port explicitly if not set
 	if os.Getenv("PORT") == "" {
@@ -22,11 +32,9 @@ func main() {
 		log.Printf("PORT not set, defaulting to 8080")
 	}
 
-	cfg := config.GetConfig()
 	log.Printf("Config: Environment=%s, Port=%s", cfg.Environment, cfg.Port)
 
 	// Basic server setup
-	gameServer := server.NewGameServer()
 	log.Printf("Game server initialized")
 
 	e := app.InitEcho(cfg)
