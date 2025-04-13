@@ -34,7 +34,7 @@ const PreGameLobby = () => {
 
   const open = gameStatus === GameStatus.NotStarted;
 
-  const { sendTypedMessage } = useCustomWebsocket({
+  const { sendWSMessage } = useCustomWebsocket({
     messageTypes: ["playerReady", "playerToggleReady"],
   });
 
@@ -55,7 +55,7 @@ const PreGameLobby = () => {
 
   const toggleReady = () => {
     if (playerInfo?.playerID) {
-      sendTypedMessage("playerToggleReady", {
+      sendWSMessage("playerToggleReady", {
         playerID: playerInfo.playerID,
       });
     }
@@ -80,12 +80,14 @@ const PreGameLobby = () => {
           {players.map((player) => (
             <PlayerCard
               key={player.ID}
+              playerID={player.ID}
               isHost={player.isHost}
               isDrawing={player.isDrawing}
               name={player.username}
               score={player.score}
               color={player.color}
               isReady={player.ready}
+              isPreGame={true}
             />
           ))}
         </div>
@@ -155,7 +157,7 @@ const CopyLinkButton = ({
   onCopy,
 }: CopyLinkButtonProps) => (
   <Button disabled={disabled} onClick={() => onCopy(gameId)} variant="outline">
-    {copied ? "Copied!" : "Copy Game Link"}
+    {copied ? "Copied!" : "Copy Game ID"}
   </Button>
 );
 

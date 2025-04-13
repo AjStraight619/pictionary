@@ -7,13 +7,14 @@ import {
   TurnPhase,
   Word,
 } from "@/types/game";
+import { ToastEvent } from "@/types/messages";
 import React, { createContext, useContext, useReducer } from "react";
 
 type Action =
   | { type: "GAME_STATE_UPDATE"; payload: GameState }
   | { type: "PLAYER_JOINED"; payload: Player }
   | { type: "PLAYER_LEFT"; payload: string }
-  | { type: "ADD_REVEALED_LETTER"; payload: string }
+  | { type: "ADD_REVEALED_LETTER"; payload: Array<string | number> }
   | { type: "DRAWING_PLAYER_CHANGED"; payload: Player }
   | { type: "SELECTED_WORD"; payload: { word: Word; isSelectingWord: boolean } }
   | {
@@ -25,7 +26,9 @@ type Action =
   | {
       type: "CURSOR_UPDATE";
       payload: { playerID: string; cursor: Cursor | null };
-    };
+    }
+  | { type: "TOAST"; payload: ToastEvent }
+  | { type: "LETTER_REVEALED"; payload: { position: number; letter: string } };
 
 function setSelectedWord(turn: Turn, word: Word): Turn {
   return {
@@ -50,7 +53,13 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case "ADD_REVEALED_LETTER":
       return {
         ...state,
-        revealedLetters: [...state.revealedLetters, action.payload],
+        revealedLetters: action.payload,
+      };
+
+    case "LETTER_REVEALED":
+      return {
+        ...state,
+        revealedLetters: [...state.revealedLetters, action.payload.letter],
       };
 
     case "DRAWING_PLAYER_CHANGED":

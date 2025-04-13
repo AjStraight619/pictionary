@@ -34,7 +34,6 @@ func (g *Game) NewPlayer(id, username string, isHost bool) *shared.Player {
 		Pending:   false,
 		Connected: false,
 		IsDrawing: false,
-		Removed:   false,
 	}
 }
 
@@ -60,16 +59,21 @@ func (g *Game) RemovePlayer(playerID string) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
 	if player, ok := g.Players[playerID]; ok {
+		// Set the leftAt time
+		player.LeftAt = time.Now()
+
 		g.AvailableColors = append(g.AvailableColors, player.Color)
 		delete(g.Players, playerID)
 
+		// Check if this is a player that was removed by host
 		var msgType string
-		if player.Removed {
+		if _, wasRemoved := g.RemovedPlayers[playerID]; wasRemoved {
 			msgType = "playerRemoved"
 		} else {
 			msgType = "playerLeft"
 		}
 
+		log.Printf("RemovePlayer: removing player %s with msgType %s", playerID, msgType)
 		msg, err := utils.CreateMessage(msgType, map[string]interface{}{
 			"player": player,
 		})
@@ -99,52 +103,35 @@ func (g *Game) RemovePlayerByHost(playerID string, hostID string) error {
 	}
 	g.Mu.RUnlock()
 
-	// Get player and add to removed players set
+	// Mark player as removed in the central set
 	g.Mu.Lock()
-	player, exists := g.Players[playerID]
-
-	// Mark player as removed in central set
 	g.RemovedPlayers[playerID] = true
 
-	if exists {
+	// Also handle the case if player is in temporary storage
+	var clientToClose shared.ClientInterface
+	if player, exists := g.Players[playerID]; exists {
 		log.Printf("RemovePlayerByHost: Marking player %s (%s) as removed by host %s", player.Username, playerID, hostID)
+		clientToClose = player.Client
+		player.Client = nil // Prevent RemovePlayer from trying to close it again
+	} else if tempPlayer, inTempStorage := g.TempDisconnectedPlayers[playerID]; inTempStorage {
+		log.Printf("RemovePlayerByHost: Found player %s in temporary storage, marking for removal", playerID)
+		// Move player from temp storage to active players so RemovePlayer can handle it
+		tempPlayer.LeftAt = time.Now()
+		g.Players[playerID] = tempPlayer
+		delete(g.TempDisconnectedPlayers, playerID)
+	}
+	g.Mu.Unlock()
 
-		// Get player info for notification before possibly removing
-		playerInfo := *player
+	// Use the existing RemovePlayer function for the actual removal
+	g.RemovePlayer(playerID)
 
-		// Broadcast player removed notification before we close the connection
-		removedMsg, _ := utils.CreateMessage("playerRemoved", map[string]interface{}{
-			"player": playerInfo,
-		})
-		g.Mu.Unlock()
-		g.Messenger.BroadcastMessage(removedMsg)
-
-		// Reacquire lock for further operations
-		g.Mu.Lock()
-
-		// Close their connection if active
-		if player.Client != nil {
-			log.Printf("RemovePlayerByHost: Closing connection for removed player %s", playerID)
-			player.Client.Close() // This will trigger HandleDisconnect
-		} else {
-			// If not connected, just remove from game directly
-			log.Printf("RemovePlayerByHost: Player %s not active, removing directly", playerID)
-			g.RemovePlayer(playerID)
-		}
-	} else {
-		log.Printf("RemovePlayerByHost: Player %s not found in active players", playerID)
-
-		// Check if in temporary storage and remove them
-		if _, inTempStorage := g.TempDisconnectedPlayers[playerID]; inTempStorage {
-			log.Printf("RemovePlayerByHost: Found player %s in temporary storage, removing", playerID)
-			delete(g.TempDisconnectedPlayers, playerID)
-		} else {
-			log.Printf("RemovePlayerByHost: Player %s not found in game at all", playerID)
-		}
-		g.Mu.Unlock()
+	// Close the client connection after removal is complete
+	if clientToClose != nil {
+		log.Printf("RemovePlayerByHost: Closing connection for removed player %s", playerID)
+		clientToClose.Close()
 	}
 
-	// Make sure game state is updated
+	// Broadcast updated game state
 	g.BroadcastGameState()
 
 	return nil

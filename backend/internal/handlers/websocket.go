@@ -38,49 +38,44 @@ func ServeWs(c echo.Context, server *server.GameServer) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Hub not found"})
 	}
 
-	playerID := c.QueryParam("playerID")
-	username := c.QueryParam("username")
+	// Get player info from session or query params
+	playerID, username, _ := GetPlayerIDFromSession(c, gameID)
 
 	if playerID == "" || username == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "PlayerID and Username are required"})
 	}
 
+	// Upgrade connection to WebSocket
 	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Unable to upgrade connection"})
 	}
 
-	// Update the player's connection status in the game state.
-	player := game.GetPlayerByID(playerID)
-
-	// First check if this player was removed
-	game.Mu.RLock()
-	_, isRemoved := game.RemovedPlayers[playerID]
-	game.Mu.RUnlock()
-
+	// Check if player was removed from this game
+	isRemoved, err := HandleRemovedPlayer(c, game, playerID, gameID)
 	if isRemoved {
-		log.Printf("ServeWs: Rejecting connection from removed player ID %s", playerID)
-		return c.JSON(http.StatusForbidden, map[string]string{
-			"error": "You were removed from this game",
-			"code":  "PLAYER_REMOVED",
-		})
+		conn.Close()
+		return err
 	}
 
-	// Check if this is a reconnection of a previously disconnected player
-	var isReconnection bool
+	// Update the player's connection status
+	player := game.GetPlayerByID(playerID)
+
+	// Handle reconnection if needed
 	if player == nil {
-		isReconnection = game.HandleReconnect(playerID)
-		if isReconnection {
-			// Get the restored player
+		_, isReconnecting := HandleReconnection(c, game, playerID, username, gameID)
+		if isReconnecting {
 			player = game.GetPlayerByID(playerID)
-			log.Printf("Player %s successfully reconnected", playerID)
 		}
 	}
 
+	// Ensure player exists
 	if player == nil {
+		conn.Close()
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Player not found"})
 	}
 
+	// Setup WebSocket client
 	player.Pending = false
 	player.Connected = true
 	player.Client = ws.NewClient(hub, conn, playerID)
@@ -91,24 +86,25 @@ func ServeWs(c echo.Context, server *server.GameServer) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Internal server error"})
 	}
 
+	// Start listening for messages
 	go player.Client.Write()
 	go player.Client.Read()
 
+	// Notify others that a player has joined
 	msgType := "playerJoined"
 	payload := map[string]interface{}{
 		"player": player,
 	}
 
 	b, err := utils.CreateMessage(msgType, payload)
-
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Internal server error"})
 	}
 
 	hub.Broadcast <- b
 
+	// Broadcast game state after a short delay
 	time.AfterFunc(200*time.Millisecond, func() {
-		log.Println("game state:", game)
 		game.BroadcastGameState()
 	})
 

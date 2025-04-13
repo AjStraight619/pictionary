@@ -2,7 +2,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRevealedLetters } from "@/hooks/useGameSelector";
 import { Word as TWord } from "@/types/game";
 import { useIsCurrentDrawer } from "@/hooks/useIsCurrentDrawer";
-import { useEffect, useState } from "react";
 
 // Animation variants
 const letterVariants = {
@@ -10,6 +9,7 @@ const letterVariants = {
   animate: { opacity: 1, y: 0 },
 };
 
+// Letter reveal animation
 const revealVariants = {
   initial: { scale: 1.5, opacity: 0 },
   animate: { scale: 1, opacity: 1 },
@@ -20,47 +20,22 @@ type WordProps = {
   word: TWord;
 };
 
+// Helper function to convert character code to string
+const charFromCode = (code: number | string): string => {
+  if (typeof code === "number") {
+    // Convert number to character
+    return String.fromCharCode(code);
+  }
+  return code;
+};
+
+const isHidden = (letter: string | number): boolean => {
+  return letter === "_" || letter === 95;
+};
+
 const Word = ({ word }: WordProps) => {
   const revealedLetters = useRevealedLetters();
   const isCurrentDrawer = useIsCurrentDrawer();
-  const [prevRevealedCount, setPrevRevealedCount] = useState(0);
-  const [recentlyRevealed, setRecentlyRevealed] = useState<number[]>([]);
-
-  useEffect(() => {
-    if (!isCurrentDrawer) {
-      // Count non-underscore characters
-      const currentRevealedCount = revealedLetters.filter(
-        (l) => l !== "_"
-      ).length;
-
-      // If we have more revealed letters than before
-      if (currentRevealedCount > prevRevealedCount) {
-        // Find which indices were newly revealed
-        const newIndices: number[] = [];
-        revealedLetters.forEach((letter, idx) => {
-          // If this letter is revealed and wasn't before
-          if (
-            letter !== "_" &&
-            (idx >= revealedLetters.length ||
-              recentlyRevealed.indexOf(idx) === -1)
-          ) {
-            newIndices.push(idx);
-          }
-        });
-
-        // Set the newly revealed indices
-        setRecentlyRevealed(newIndices);
-
-        // Clear the highlighting after a delay
-        const timer = setTimeout(() => {
-          setRecentlyRevealed([]);
-        }, 2000);
-
-        setPrevRevealedCount(currentRevealedCount);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [revealedLetters, isCurrentDrawer, prevRevealedCount, recentlyRevealed]);
 
   return (
     <div className="flex space-x-1">
@@ -81,7 +56,7 @@ const Word = ({ word }: WordProps) => {
               <motion.span
                 key={isCurrentDrawer ? letter : revealedLetters[index]}
                 variants={
-                  recentlyRevealed.includes(index)
+                  !isHidden(revealedLetters[index]) && !isCurrentDrawer
                     ? revealVariants
                     : letterVariants
                 }
@@ -89,7 +64,7 @@ const Word = ({ word }: WordProps) => {
                 animate="animate"
                 exit="exit"
                 className={`leading-none m-0 p-0 ${
-                  recentlyRevealed.includes(index)
+                  !isHidden(revealedLetters[index]) && !isCurrentDrawer
                     ? "text-yellow-300 font-bold"
                     : ""
                 }`}
@@ -98,7 +73,10 @@ const Word = ({ word }: WordProps) => {
                 {isCurrentDrawer ? (
                   <>{letter.toLowerCase()}</>
                 ) : (
-                  <>{revealedLetters[index]?.toLowerCase() || "\u00A0"}</>
+                  <>
+                    {charFromCode(revealedLetters[index])?.toLowerCase() ||
+                      "\u00A0"}
+                  </>
                 )}
               </motion.span>
             </AnimatePresence>

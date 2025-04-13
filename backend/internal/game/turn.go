@@ -66,7 +66,7 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 	totalLetters := len(letters)
 	turnTimeLimit := g.Options.TurnTimeLimit
 
-	// Don't proceed if word is only 1-2 letters
+	// Dont reveal letters if the word is 1-3 letters
 	if totalLetters <= 3 {
 		return
 	}
@@ -108,7 +108,6 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 	// Collect unrevealed indices
 	for i, r := range t.RevealedLetters {
 		if r == '_' {
-			// Prioritize spaces
 			if letters[i] == ' ' {
 				priorityIndices = append(priorityIndices, i)
 			} else {
@@ -139,7 +138,7 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 	}
 
 	// Broadcast the updated revealed letters to all players.
-	if b, err := utils.CreateMessage("revealedLetter", t.RevealedLetters); err == nil {
+	if b, err := utils.CreateMessage("revealedLetters", t.RevealedLetters); err == nil {
 		g.Messenger.BroadcastMessage(b)
 	} else {
 		log.Println("error marshalling revealedLetter message:", err)

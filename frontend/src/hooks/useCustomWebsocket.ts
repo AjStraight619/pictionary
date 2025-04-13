@@ -105,7 +105,7 @@ export const useCustomWebsocket = ({
   }[readyState];
 
   // Type-safe function to send messages
-  const sendTypedMessage = <K extends keyof MessagePayloadMap>(
+  const sendWSMessage = <K extends keyof MessagePayloadMap>(
     type: K,
     payload: MessagePayloadMap[K]
   ) => {
@@ -114,7 +114,7 @@ export const useCustomWebsocket = ({
 
   return {
     sendJsonMessage,
-    sendTypedMessage,
+    sendWSMessage,
     lastMessage,
     readyState,
     connectionStatus,

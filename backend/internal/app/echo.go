@@ -1,18 +1,48 @@
 package app
 
 import (
+	"context"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/Ajstraight619/pictionary-server/config"
+	"github.com/Ajstraight619/pictionary-server/internal/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
+
+// Global session manager
+var SessionManager *session.Manager
 
 // InitEcho initializes and configures the Echo web framework
 func InitEcho(cfg *config.Config) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	// Initialize session manager - Redis is required
+	var err error
+	SessionManager, err = session.NewManager(context.Background(), cfg.Redis.URL)
+	if err != nil {
+		log.Printf("ERROR: Failed to connect to Redis at %s: %v", cfg.Redis.URL, err)
+		log.Printf("Redis is required for the application to function correctly.")
+
+		if cfg.Environment == "production" {
+			log.Fatal("Exiting because Redis connection failed in production environment")
+		} else {
+			log.Printf("In development mode - please install Redis and restart the server")
+			log.Printf("brew install redis && brew services start redis   (macOS)")
+			log.Printf("sudo apt-get install redis-server              (Ubuntu/Debian)")
+			log.Printf("docker run --name redis -p 6379:6379 -d redis  (Docker)")
+			os.Exit(1)
+		}
+	}
+
+	log.Printf("Successfully connected to Redis at %s", cfg.Redis.URL)
+
+	// Add session middleware
+	e.Use(session.Middleware(SessionManager))
 
 	// Add environment to context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	g "github.com/Ajstraight619/pictionary-server/internal/game"
@@ -59,13 +58,15 @@ func CreateGameHandler(c echo.Context, server *server.GameServer) error {
 	game.AddPlayer(player)
 	player.Pending = true
 
-	// Only add test players in development mode
 	env := c.Get("environment")
-	if env == "development" || env == "" { // Default to adding test players if env is not set
+	if env == "development" || env == "" {
 		for _, p := range CreateTestPlayers(numPlayers, game) {
 			game.AddPlayer(p)
 		}
 	}
+
+	// Create session for the player
+	UpdateSessionWithNewPlayer(c, playerID, req.Username, gameID)
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"gameID":   gameID,
@@ -84,17 +85,21 @@ func JoinGameHandler(c echo.Context, server *server.GameServer) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Game not found"})
 	}
 
-	// Check for existing playerID - they might be reconnecting
-	playerID := c.QueryParam("playerID")
-	isReconnecting := false
+	// Get player info from session or query params
+	playerID, _, _ := GetPlayerIDFromSession(c, req.GameID)
 
-	// If playerID is provided, check if they're in temporary disconnected players
+	// Check if player was removed from this game
 	if playerID != "" {
-		isReconnecting = game.HandleReconnect(playerID)
+		isRemoved, err := HandleRemovedPlayer(c, game, playerID, req.GameID)
+		if isRemoved {
+			return err
+		}
+
+		// Try to reconnect the player
+		playerID, isReconnecting := HandleReconnection(c, game, playerID, req.Username, req.GameID)
 
 		// If reconnecting, allow them to join regardless of game state
 		if isReconnecting {
-			log.Printf("Player %s attempting to rejoin game %s via join endpoint", playerID, req.GameID)
 			return c.JSON(http.StatusOK, map[string]string{
 				"gameID":   req.GameID,
 				"playerID": playerID,
@@ -103,7 +108,7 @@ func JoinGameHandler(c echo.Context, server *server.GameServer) error {
 	}
 
 	// If game is in progress and not reconnecting, reject
-	if game.Status == g.InProgress && !isReconnecting {
+	if game.Status == g.InProgress {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Game is already in progress"})
 	}
 
@@ -111,11 +116,14 @@ func JoinGameHandler(c echo.Context, server *server.GameServer) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Username is required"})
 	}
 
-	// For new players, create a new ID and player
+	// Generate a fresh player ID to avoid collision with removed players
 	newPlayerID := uuid.New().String()
 	player := game.NewPlayer(newPlayerID, req.Username, false)
 	player.Pending = true
 	game.AddPlayer(player)
+
+	// Update or create session
+	UpdateSessionWithNewPlayer(c, newPlayerID, req.Username, req.GameID)
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"gameID":   req.GameID,

@@ -54,16 +54,19 @@ func (r *Round) setInitialDrawer(g *Game) {
 		return
 	}
 	firstID := g.PlayerOrder[0]
-	g.Players[firstID].IsDrawing = true
-	r.CurrentDrawerID = firstID
-	r.CurrentDrawerIdx = 0
-	g.CurrentTurn = NewTurn(firstID)
-	msgType := "drawingPlayerChanged"
-	payload := g.Players[firstID]
-	if b, err := utils.CreateMessage(msgType, payload); err == nil {
-		g.Messenger.BroadcastMessage(b)
+	if player, exists := g.Players[firstID]; exists {
+		player.IsDrawing = true
+		r.CurrentDrawerID = firstID
+		r.CurrentDrawerIdx = 0
+		g.CurrentTurn = NewTurn(firstID)
+		msgType := "drawingPlayerChanged"
+		if b, err := utils.CreateMessage(msgType, player); err == nil {
+			g.Messenger.BroadcastMessage(b)
+		} else {
+			log.Println("error marshalling message:", err)
+		}
 	} else {
-		log.Println("error marshalling message:", err)
+		log.Printf("setInitialDrawer: Player %s not found in players map", firstID)
 	}
 }
 
@@ -78,21 +81,27 @@ func (r *Round) NextDrawer(g *Game) *shared.Player {
 	r.CurrentDrawerIdx = (r.CurrentDrawerIdx + 1) % len(g.PlayerOrder)
 	newID := g.PlayerOrder[r.CurrentDrawerIdx]
 
+	// Check if the player exists
+	nextPlayer, exists := g.Players[newID]
+	if !exists {
+		log.Printf("NextDrawer: Player %s not found in players map", newID)
+		return nil
+	}
+
 	// Create a new turn for the new drawer.
 	g.CurrentTurn = NewTurn(newID)
 
 	// Set the new drawer as active.
-	g.Players[newID].IsDrawing = true
+	nextPlayer.IsDrawing = true
 	r.CurrentDrawerID = newID
 
 	// Broadcast the change.
-	payload := g.Players[newID]
-	if b, err := utils.CreateMessage("drawingPlayerChanged", payload); err == nil {
+	if b, err := utils.CreateMessage("drawingPlayerChanged", nextPlayer); err == nil {
 		g.Messenger.BroadcastMessage(b)
 	} else {
 		log.Println("error marshalling message:", err)
 	}
-	return g.Players[newID]
+	return nextPlayer
 }
 
 func (r *Round) GetCurrentDrawer(players map[string]*shared.Player, playerOrder []string) *shared.Player {
@@ -116,4 +125,4 @@ func (r *Round) IsOver(g *Game) bool {
 
 func (r *Round) UnmarkAllPlayersAsDrawn() {
 	r.PlayersDrawn = []string{}
-}
+} // Default to adding test players if env is not set

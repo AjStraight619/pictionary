@@ -1,30 +1,42 @@
 import { Check, Crown, Pencil, X } from "lucide-react";
 import { motion } from "framer-motion";
-import { useGameStatus } from "@/hooks/useGameSelector";
-import { GameStatus } from "@/types/game";
 import Score from "../player/score";
+// import { useReadLocalStorage } from "usehooks-ts";
+// import { PlayerInfo } from "@/types/lobby";
+// import { useHost } from "@/hooks/useGameSelector";
 
 type PlayerCardProps = {
+  playerID: string;
   name: string;
   score: number;
   isHost: boolean;
   isDrawing: boolean;
   color: string;
   isReady?: boolean;
+  isPreGame: boolean;
 };
 
 const PlayerCard = ({
+  playerID,
   name,
   score,
   isHost,
   isDrawing,
   color,
   isReady,
+  isPreGame,
 }: PlayerCardProps) => {
+  // Get current user info
+  // const playerInfo = useReadLocalStorage<PlayerInfo>("playerInfo");
+  // const host = useHost();
+
+  // Check if current user is the host and this is not their card
+  // const canRemovePlayer =
+  //   host?.ID === playerInfo?.playerID && playerID !== host?.ID;
+
   // Convert color string to a usable background color with low opacity
   const bgColor = color ? `${color}20` : "bg-muted"; // 20 is hex for ~12% opacity
   const textColor = color || "text-foreground";
-  const gameStatus = useGameStatus();
 
   return (
     <motion.div
@@ -60,15 +72,15 @@ const PlayerCard = ({
         <Score score={score} />
       </div>
 
-      {/* Ready indicator moved to end of card */}
-      {gameStatus === GameStatus.NotStarted && (
-        <>
+      {isPreGame && (
+        <div className="inline-flex items-center gap-2">
+          {/* {canRemovePlayer && <RemovePlayer playerID={playerID} name={name} />} */}
           {isReady ? (
             <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
           ) : (
             <X className="h-4 w-4 text-red-500 flex-shrink-0" />
           )}
-        </>
+        </div>
       )}
     </motion.div>
   );

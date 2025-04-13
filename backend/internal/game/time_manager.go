@@ -74,12 +74,14 @@ func (tm *TimerManager) StartTurnTimer(playerID string) {
 			} else {
 				log.Println("error marshalling turnTimer message:", err)
 			}
+
+			tm.game.CurrentTurn.BroadcastRevealedLetter(tm.game, remaining)
 		}
 	}()
 }
 
 func (tm *TimerManager) StartWordSelectionTimer(playerID string) {
-	timer := NewTimer(tm.game.ctx, "selectWordTimer", tm.game.Options.WordSelectTimeLimit)
+	timer := NewTimer(tm.game.ctx, "selectWordTimer", 10)
 	tm.game.timers["selectWordTimer"] = timer
 	log.Println("Word selection timer started.")
 

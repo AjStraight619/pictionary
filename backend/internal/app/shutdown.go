@@ -11,8 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// SetupGracefulShutdown configures graceful shutdown on system signals
-func SetupGracefulShutdown(e *echo.Echo, gameServer *server.GameServer) {
+func SetupShutdown(e *echo.Echo, gameServer *server.GameServer) {
 	go func() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

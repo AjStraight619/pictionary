@@ -37,9 +37,12 @@ export type MessagePayloadMap = {
   playerReady: { playerID: string };
   playerToggleReady: { playerID: string };
   playerJoined: { player: Player };
-
+  playerLeft: { player: Player };
+  playerRemoved: { player: Player };
+  removePlayer: { playerID: string; hostID: string };
+  letterRevealed: LetterRevealPayload;
   // Game flow messages
-  revealedLetter: string;
+  revealedLetters: string[];
   drawingPlayerChanged: Player;
   selectedWord: { word: Word; isSelectingWord: boolean };
   scoreUpdated: { playerID: string; score: number };
@@ -57,18 +60,29 @@ export type MessagePayloadMap = {
   // Add these timer-related message types
   selectWordTimer: { timeRemaining?: number };
   turnTimer: { timeRemaining?: number };
+
+  toast: ToastEvent;
 };
 
-/**
- * Type for message handlers that process payloads with proper typing
- */
+export enum ToastEventTypes {
+  PlayerJoined = "player-joined",
+  PlayerLeft = "player-left",
+  PlayerRemoved = "player-removed",
+}
+export type ToastEvent = {
+  type: ToastEventTypes;
+  message: string;
+};
+
+export type LetterRevealPayload = {
+  position: number;
+  letter: string;
+};
+
 export type MessageHandler<K extends keyof MessagePayloadMap> = (
   payload: MessagePayloadMap[K]
 ) => void;
 
-/**
- * Type for a map of message handlers with proper typing
- */
 export type MessageHandlers = {
   [K in keyof MessagePayloadMap]?: MessageHandler<K>;
 };

@@ -17,7 +17,7 @@ func main() {
 
 	handlers.RegisterRoutes(e, gameServer)
 
-	app.SetupGracefulShutdown(e, gameServer)
+	app.SetupShutdown(e, gameServer)
 
 	// Start the server
 	e.Logger.Fatal(e.Start(":" + cfg.Port))

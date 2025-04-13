@@ -1,5 +1,5 @@
 import { GameState, Word } from "./game";
-import { Player } from "./lobby";
+import { Player } from "./player";
 import { DrawingDataType } from "./canvas";
 
 export type MessagePayloadMap = {

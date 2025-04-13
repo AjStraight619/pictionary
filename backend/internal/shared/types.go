@@ -40,7 +40,6 @@ type Player struct {
 	Connected      bool            `json:"connected"`
 	Avatar         string          `json:"avatar"`
 	Client         ClientInterface `json:"-"`
-	Removed        bool            `json:"removed"`
 }
 
 func (p *Player) String() string {

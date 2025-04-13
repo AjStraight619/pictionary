@@ -1,14 +1,23 @@
 [build]
 builder = "nixpacks"
-buildCommand = "./railway-build.sh"
+buildCommand = "cd backend && go build -o ../server ./cmd/server/main.go"
+watchPatterns = ["backend/**"]
 
 [deploy]
-startCommand = "./main"
-healthcheckPath = "/"
-healthcheckTimeout = 100
+startCommand = "./server"
+healthcheckPath = "/health"
+healthcheckTimeout = 10
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
 
 [env]
 PORT = "8080"
 RAILWAY_ENVIRONMENT_NAME = "production"
 CGO_ENABLED = "1"
-DATABASE_PATH = "/data/game.db" 
+DATABASE_PATH = "/data/game.db"
+
+[services.redis]
+image = "redis:alpine"
+port = 6379
+volumes = ["/data:/data"]
+envs = { REDIS_MAXMEMORY_POLICY = "allkeys-lru" } 

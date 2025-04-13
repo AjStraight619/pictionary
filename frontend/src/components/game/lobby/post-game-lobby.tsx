@@ -28,11 +28,13 @@ export default function PostGameLobby() {
               <div>{idx + 1}</div>
               <PlayerCard
                 key={player.ID}
+                playerID={player.ID}
                 isHost={player.isHost}
                 isDrawing={player.isDrawing}
                 name={player.username}
                 score={player.score}
                 color={player.color}
+                isPreGame={false}
               />
             </div>
           ))}

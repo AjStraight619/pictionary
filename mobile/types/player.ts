@@ -3,9 +3,13 @@ export type PlayerInfo = {
   username: string;
 };
 
-export type GameOptions = {
-  roundLimit: number;
-  turnTimeLimit: number;
-  selectWordTimeLimit: number;
-  maxPlayers?: number;
+export type Player = {
+  ID: string;
+  username: string;
+  isDrawing: boolean;
+  isGuessCorrect: boolean;
+  isHost: boolean;
+  score: number;
+  color: string;
+  ready: boolean;
 };

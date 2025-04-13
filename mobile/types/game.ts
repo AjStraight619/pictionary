@@ -1,4 +1,4 @@
-import { Player } from "./lobby";
+import { Player } from "./player";
 
 export enum GameStatus {
   NotStarted = 0,

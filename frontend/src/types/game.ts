@@ -24,13 +24,15 @@ export type GameState = {
   activeCursor: Cursor | null;
   round: Round | null;
   turn: Turn | null;
-  revealedLetters: string[];
+  revealedLetters: Array<string | number>;
   selectableWords: Word[];
   isSelectingWord: boolean;
 };
 
 export type Player = {
   ID: string;
+  joinedAt: string;
+  leftAt: string;
   username: string;
   isDrawing: boolean;
   isGuessCorrect: boolean;

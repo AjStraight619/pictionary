@@ -6,7 +6,7 @@ import { SelectedTool, type ShapeData } from "@/types/canvas";
 import type { FreeHandData } from "@/types/game";
 import { useDebouncedCallback, useThrottledCallback } from "use-debounce";
 import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
-import Toolbar from "@/components/game/canvas/tools/toolbar";
+import Toolbar from "@/components/game/canvas/toolbar";
 import { useReadLocalStorage } from "usehooks-ts";
 import { PlayerInfo } from "@/types/lobby";
 import { useCanvasHistory } from "@/hooks/useCanvasHistory";
