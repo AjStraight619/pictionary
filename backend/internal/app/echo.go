@@ -19,11 +19,13 @@ var SessionManager *session.Manager
 func InitEcho(cfg *config.Config) *echo.Echo {
 	e := echo.New()
 
-	// Basic health check should be first
+	// Basic health check should be first and not depend on any initialization
+	// This is critical for Railway deployment
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
 	})
 
+	// Register all other middleware and routes after health check
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
