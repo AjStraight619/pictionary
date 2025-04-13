@@ -17,11 +17,10 @@ type RedisConfig struct {
 
 func GetConfig() *Config {
 	if os.Getenv("RAILWAY_ENVIRONMENT_NAME") != "" {
-		// Production settings
-		// Use Railway Redis service if provided
+
 		redisURL := os.Getenv("REDIS_URL")
 		if redisURL == "" {
-			redisURL = "redis://localhost:6379" // Fallback
+			redisURL = "redis://localhost:6379"
 		}
 
 		return &Config{

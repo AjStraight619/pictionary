@@ -29,6 +29,7 @@ func RegisterRoutes(e *echo.Echo, server *server.GameServer) {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 
+	// Health check endpoint
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
 	})
