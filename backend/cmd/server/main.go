@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"github.com/Ajstraight619/pictionary-server/config"
+	"github.com/Ajstraight619/pictionary-server/internal/app"
+	"github.com/Ajstraight619/pictionary-server/internal/handlers"
+	"github.com/Ajstraight619/pictionary-server/internal/server"
 )
 
 // Simple health check handler that doesn't depend on any initialization
@@ -31,17 +34,18 @@ func main() {
 
 	// Start a minimal health check server immediately on a different port
 	// Railway requires the health check to respond on the main port
-	go func() {
-		port := os.Getenv("PORT")
-		mux := http.NewServeMux()
-		mux.HandleFunc("/health", healthCheckHandler)
+	healthPort := os.Getenv("PORT")
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", healthCheckHandler)
 
+	// Start health check server in a goroutine
+	go func() {
 		server := &http.Server{
-			Addr:    ":" + port,
+			Addr:    ":" + healthPort,
 			Handler: mux,
 		}
 
-		log.Printf("Starting minimal health check server on port %s", port)
+		log.Printf("Starting health check server on port %s", healthPort)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Printf("Health check server error: %v", err)
 		}
@@ -50,21 +54,32 @@ func main() {
 	// Give health check server time to start
 	time.Sleep(1 * time.Second)
 
-	// Continue with normal initialization - if this fails, the health check will still work
+	// Continue with normal initialization
 	log.Printf("Beginning main server initialization")
 
 	cfg := config.GetConfig()
-
 	log.Printf("Config: Environment=%s, Port=%s", cfg.Environment, cfg.Port)
 
-	// Skipping the rest of initialization for now until health check passes
-	// app.InitDB()
-	// e := app.InitEcho(cfg)
-	// gameServer := server.NewGameServer()
-	// handlers.RegisterRoutes(e, gameServer)
-	// app.SetupShutdown(e, gameServer)
+	// Initialize the database
+	app.InitDB()
 
-	// Just keep the app running so health check continues to respond
-	log.Printf("Initialization complete, health check active")
-	select {} // Block forever
+	// Initialize Echo server
+	e := app.InitEcho(cfg)
+
+	// Create game server
+	gameServer := server.NewGameServer()
+
+	// Register all routes
+	handlers.RegisterRoutes(e, gameServer)
+
+	// Setup shutdown handlers
+	app.SetupShutdown(e, gameServer)
+
+	// Log that initialization is complete
+	log.Printf("Initialization complete, game server active")
+
+	// Let the Echo server run (this will block)
+	if err := e.Start(":" + cfg.Port); err != nil {
+		log.Printf("Echo server error: %v", err)
+	}
 }
