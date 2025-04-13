@@ -34,6 +34,7 @@ const PlayerCard = ({
   // const canRemovePlayer =
   //   host?.ID === playerInfo?.playerID && playerID !== host?.ID;
 
+  console.log("playerID", playerID);
   // Convert color string to a usable background color with low opacity
   const bgColor = color ? `${color}20` : "bg-muted"; // 20 is hex for ~12% opacity
   const textColor = color || "text-foreground";

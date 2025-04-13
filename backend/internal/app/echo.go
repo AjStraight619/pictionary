@@ -21,6 +21,11 @@ func InitEcho(cfg *config.Config) *echo.Echo {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// Add health check endpoint directly in Echo init
+	e.GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
+	})
+
 	// Initialize session manager - Redis is required
 	var err error
 	SessionManager, err = session.NewManager(context.Background(), cfg.Redis.URL)
@@ -29,7 +34,9 @@ func InitEcho(cfg *config.Config) *echo.Echo {
 		log.Printf("Redis is required for the application to function correctly.")
 
 		if cfg.Environment == "production" {
-			log.Fatal("Exiting because Redis connection failed in production environment")
+			log.Printf("CRITICAL ERROR: Redis connection failed in production environment")
+			log.Printf("The application will continue to run WITHOUT Redis for debugging purposes")
+			// Don't exit, let it continue to debug the issue
 		} else {
 			log.Printf("In development mode - please install Redis and restart the server")
 			log.Printf("brew install redis && brew services start redis   (macOS)")
@@ -37,12 +44,11 @@ func InitEcho(cfg *config.Config) *echo.Echo {
 			log.Printf("docker run --name redis -p 6379:6379 -d redis  (Docker)")
 			os.Exit(1)
 		}
+	} else {
+		log.Printf("Successfully connected to Redis at %s", cfg.Redis.URL)
+		// Add session middleware
+		e.Use(session.Middleware(SessionManager))
 	}
-
-	log.Printf("Successfully connected to Redis at %s", cfg.Redis.URL)
-
-	// Add session middleware
-	e.Use(session.Middleware(SessionManager))
 
 	// Add environment to context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
