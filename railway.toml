@@ -15,6 +15,7 @@ PORT = "8080"
 RAILWAY_ENVIRONMENT_NAME = "production"
 CGO_ENABLED = "1"
 DATABASE_PATH = "/data/game.db"
+SKIP_REDIS = "true"
 
 [services.redis]
 image = "redis:alpine"
