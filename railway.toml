@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cd backend && CGO_ENABLED=1 go build -o ../server ./cmd/server/main.go"
+buildCommand = "cd backend && go build -o ../server ./cmd/server/main.go"
 watchPatterns = ["backend/**"]
 
 [deploy]
@@ -13,8 +13,8 @@ restartPolicyMaxRetries = 5
 [env]
 PORT = "8080"
 RAILWAY_ENVIRONMENT_NAME = "production"
-CGO_ENABLED = "1"
-DATABASE_PATH = "/data/game.db"
+CGO_ENABLED = "0"
+DATABASE_URL = "${{Postgres.DATABASE_URL}}"
 SKIP_REDIS = "true"
 
 

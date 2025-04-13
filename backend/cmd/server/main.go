@@ -25,7 +25,7 @@ func main() {
 	fmt.Println("==== SERVER STARTING ====")
 	fmt.Println("Environment:", os.Getenv("RAILWAY_ENVIRONMENT_NAME"))
 	fmt.Println("Port:", os.Getenv("PORT"))
-	fmt.Println("CGO_ENABLED:", os.Getenv("CGO_ENABLED"))
+	fmt.Println("Database URL:", os.Getenv("DATABASE_URL") != "")
 
 	// Set the port explicitly if not set
 	if os.Getenv("PORT") == "" {
@@ -61,7 +61,7 @@ func main() {
 	cfg := config.GetConfig()
 	log.Printf("Config: Environment=%s, Port=%s", cfg.Environment, cfg.Port)
 
-	// Initialize the database, but continue even if it fails
+	// Initialize database with PostgreSQL support
 	err := app.InitDB()
 	if err != nil {
 		log.Printf("WARNING: Database initialization failed: %v", err)
