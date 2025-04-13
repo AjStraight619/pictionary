@@ -3,26 +3,32 @@ package app
 import (
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/Ajstraight619/pictionary-server/internal/db"
 )
 
 // InitDB ensures the data directory exists and initializes the database connection
 func InitDB() error {
-	// Ensure data directory exists
-	dataDir := "data"
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		log.Printf("Warning: Could not create data directory: %v", err)
+	// Check for DATABASE_URL first (PostgreSQL)
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL != "" {
+		log.Printf("Using PostgreSQL database from DATABASE_URL")
+		// Pass empty string to InitDB since it reads DATABASE_URL internally
+		if err := db.InitDB(""); err != nil {
+			log.Printf("Failed to initialize PostgreSQL: %v", err)
+			return err
+		}
+	} else {
+		// SQLite fallback (not used in production)
+		log.Printf("No DATABASE_URL found, this will cause errors in production")
+		return db.InitDB("")
 	}
 
-	// Use environment variable for database path if provided
-	dbPath := os.Getenv("DATABASE_PATH")
-	if dbPath == "" {
-		dbPath = filepath.Join(dataDir, "game.db")
+	// Migrate all models
+	if err := db.MigrateAllModels(); err != nil {
+		log.Printf("Failed to migrate models: %v", err)
+		return err
 	}
-	log.Printf("Using database path: %s", dbPath)
 
-	// Initialize database connection
-	return db.InitDB(dbPath)
+	return nil
 }

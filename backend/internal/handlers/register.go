@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Ajstraight619/pictionary-server/internal/server"
+	"github.com/Ajstraight619/pictionary-server/internal/user"
 	"github.com/labstack/echo/v4"
 )
 
@@ -20,9 +21,8 @@ func RegisterRoutes(e *echo.Echo, server *server.GameServer) {
 		return ServeWs(c, server)
 	})
 
-	// e.GET("/game/state/:id", func(c echo.Context) error {
-	// 	return CreateGameStateHandler(c, server)
-	// })
+	userService := user.NewService()
+	RegisterAuthRoutes(e, userService)
 
 	// Root path for Railway health check
 	e.GET("/", func(c echo.Context) error {

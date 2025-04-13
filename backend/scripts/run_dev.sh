@@ -16,6 +16,5 @@ if [ "$1" = "seed" ]; then
   exit 0
 fi
 
-# Run the server
 cd backend/cmd/server
 go run main.go 

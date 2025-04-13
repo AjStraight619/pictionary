@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"log"
 	"os"
 
@@ -19,8 +20,8 @@ func InitDB(dsn string) error {
 		log.Printf("Using PostgreSQL database URL from environment")
 		DB, err = gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	} else {
-		log.Printf("No DATABASE_URL found, trying to use SQLite (not recommended)")
-		return nil // Skip SQLite initialization
+		log.Printf("No DATABASE_URL found in environment variables")
+		return errors.New("DATABASE_URL environment variable not set")
 	}
 
 	if err != nil {
@@ -32,10 +33,16 @@ func InitDB(dsn string) error {
 	return nil
 }
 
-func MigrateModels(models ...interface{}) {
+func MigrateModels(models ...interface{}) error {
+	if DB == nil {
+		return errors.New("database connection not initialized")
+	}
+
 	if err := DB.AutoMigrate(models...); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
+		log.Printf("Failed to run migrations: %v", err)
+		return err
 	}
 
 	log.Println("Database migrations completed")
+	return nil
 }

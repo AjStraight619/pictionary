@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"slices"
+
 	"github.com/Ajstraight619/pictionary-server/internal/game"
 	"github.com/Ajstraight619/pictionary-server/internal/session"
 	"github.com/labstack/echo/v4"
@@ -17,24 +19,26 @@ func GetPlayerIDFromSession(c echo.Context, gameID string) (playerID, username s
 		// Session exists, get player info from it
 		playerID = sessionData.PlayerID
 		username = sessionData.Username
+		log.Printf("[AUTH] Retrieved player %s (username: %s) from Redis session", playerID, username)
 
 		// Check if player has access to this game
-		for _, id := range sessionData.GameIDs {
-			if id == gameID {
-				hasAccess = true
-				break
-			}
+		if slices.Contains(sessionData.GameIDs, gameID) {
+			hasAccess = true
+			log.Printf("[AUTH] Player %s has access to game %s via Redis session", playerID, gameID)
 		}
 
 		if !hasAccess {
-			log.Printf("Player %s tried to access game %s without permission", playerID, gameID)
+			log.Printf("[AUTH] Player %s tried to access game %s without permission", playerID, gameID)
 		}
+	} else {
+		log.Printf("[AUTH] No session found, falling back to query params for authentication")
 	}
 
 	// Fallback to query params if session not found
 	if playerID == "" {
 		playerID = c.QueryParam("playerID")
 		username = c.QueryParam("username")
+		log.Printf("[AUTH] Using query params for auth: playerID=%s, username=%s", playerID, username)
 	}
 
 	return playerID, username, hasAccess
@@ -51,6 +55,8 @@ func HandleRemovedPlayer(c echo.Context, g *game.Game, playerID, gameID string) 
 	if !isRemoved {
 		return false, nil
 	}
+
+	log.Printf("[AUTH] Player %s was previously removed from game %s", playerID, gameID)
 
 	// Player was removed - invalidate their session for this game
 	sessionData := session.GetSessionData(c)
@@ -69,7 +75,7 @@ func HandleRemovedPlayer(c echo.Context, g *game.Game, playerID, gameID string) 
 			sessionData.GameIDs = newGameIDs
 			sessionMgr.Update(sessionID, *sessionData)
 
-			log.Printf("Removed game %s from session for player %s", gameID, playerID)
+			log.Printf("[AUTH] Removed game %s from Redis session for player %s", gameID, playerID)
 		}
 	}
 
@@ -82,6 +88,7 @@ func HandleRemovedPlayer(c echo.Context, g *game.Game, playerID, gameID string) 
 func UpdateSessionWithNewPlayer(c echo.Context, playerID, username, gameID string) {
 	sessionMgr := session.GetSessionManager(c)
 	if sessionMgr == nil {
+		log.Printf("[AUTH] No session manager available, skipping session creation")
 		return
 	}
 
@@ -91,33 +98,31 @@ func UpdateSessionWithNewPlayer(c echo.Context, playerID, username, gameID strin
 	// If we have an existing session, update it
 	if sessionData != nil {
 		sessionID = session.GetSessionID(c)
+		log.Printf("[AUTH] Updating existing Redis session %s for player %s", sessionID, playerID)
+
 		sessionData.PlayerID = playerID
 		sessionData.Username = username
 
 		// Add this game to the existing games if not already present
-		gameExists := false
-		for _, id := range sessionData.GameIDs {
-			if id == gameID {
-				gameExists = true
-				break
-			}
-		}
+		gameExists := slices.Contains(sessionData.GameIDs, gameID)
 
 		if !gameExists {
 			sessionData.GameIDs = append(sessionData.GameIDs, gameID)
+			log.Printf("[AUTH] Added game %s to existing Redis session", gameID)
 		}
 
 		sessionMgr.Update(sessionID, *sessionData)
 	} else {
 		// Create a new session
+		log.Printf("[AUTH] Creating new Redis session for player %s (username: %s)", playerID, username)
 		var err error
 		sessionID, err = sessionMgr.Create(playerID, username)
 		if err != nil {
-			log.Printf("Failed to create session: %v", err)
+			log.Printf("[AUTH] Failed to create Redis session: %v", err)
 		} else {
 			// Add game to session
 			if err := sessionMgr.AddGameToSession(sessionID, gameID); err != nil {
-				log.Printf("Failed to add game to session: %v", err)
+				log.Printf("[AUTH] Failed to add game to Redis session: %v", err)
 			}
 		}
 	}
@@ -125,6 +130,7 @@ func UpdateSessionWithNewPlayer(c echo.Context, playerID, username, gameID strin
 	// Set session cookie
 	if sessionID != "" {
 		session.SetSessionCookie(c, sessionID)
+		log.Printf("[AUTH] Set session cookie for player %s with Redis session ID: %s", playerID, sessionID)
 	}
 }
 
@@ -140,11 +146,14 @@ func HandleReconnection(c echo.Context, g *game.Game, playerID, username, gameID
 
 	// If reconnecting, update username if needed
 	if isReconnecting {
-		log.Printf("Player %s reconnecting to game %s", playerID, gameID)
+		log.Printf("[AUTH] Player %s reconnecting to game %s using Redis session", playerID, gameID)
 
 		sessionData := session.GetSessionData(c)
 		if sessionData != nil && sessionData.Username != username {
 			// Update session data with new username
+			log.Printf("[AUTH] Updating username in Redis session from %s to %s",
+				sessionData.Username, username)
+
 			sessionData.Username = username
 			sessionID := session.GetSessionID(c)
 			if sessionMgr := session.GetSessionManager(c); sessionMgr != nil {

@@ -1,6 +1,11 @@
 package config
 
-import "os"
+import (
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+)
 
 type Config struct {
 	Port           string
@@ -15,7 +20,57 @@ type RedisConfig struct {
 	DB       int
 }
 
+// LoadEnvFile attempts to load environment variables from a .env file
+func LoadEnvFile() {
+	// Check for .env file in current directory and parent directories
+	paths := []string{".env", "../.env", "../../.env"}
+
+	for _, path := range paths {
+		absPath, _ := filepath.Abs(path)
+		if _, err := os.Stat(path); err == nil {
+			log.Printf("Found .env file at %s", absPath)
+			content, err := os.ReadFile(path)
+			if err != nil {
+				log.Printf("Error reading .env file: %v", err)
+				continue
+			}
+
+			// Parse each line
+			lines := strings.Split(string(content), "\n")
+			for _, line := range lines {
+				line = strings.TrimSpace(line)
+				if line == "" || strings.HasPrefix(line, "#") {
+					continue // Skip empty lines and comments
+				}
+
+				// Split by first equals sign
+				parts := strings.SplitN(line, "=", 2)
+				if len(parts) == 2 {
+					key := strings.TrimSpace(parts[0])
+					value := strings.TrimSpace(parts[1])
+					os.Setenv(key, value)
+					log.Printf("Loaded env var: %s", key)
+				}
+			}
+			return // Stop after finding and loading the first .env file
+		}
+	}
+
+	log.Printf("No .env file found in searched paths")
+}
+
 func GetConfig() *Config {
+	// Load environment variables from .env file
+	LoadEnvFile()
+
+	// Check DATABASE_URL and print it
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL != "" {
+		log.Printf("DATABASE_URL is set: %s (length: %d)", dbURL[:10]+"...", len(dbURL))
+	} else {
+		log.Printf("WARNING: DATABASE_URL is not set")
+	}
+
 	if os.Getenv("RAILWAY_ENVIRONMENT_NAME") != "" {
 
 		redisURL := os.Getenv("REDIS_URL")
