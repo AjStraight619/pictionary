@@ -33,22 +33,10 @@ func InitEcho(cfg *config.Config) *echo.Echo {
 		var err error
 		SessionManager, err = session.NewManager(context.Background(), cfg.Redis.URL)
 		if err != nil {
-			log.Printf("ERROR: Failed to connect to Redis at %s: %v", cfg.Redis.URL, err)
-
-			if cfg.Environment == "production" {
-				log.Printf("Redis connection failed in production - sessions will be disabled")
-			} else {
-				log.Printf("Redis connection failed in development, install with:")
-				log.Printf("brew install redis && brew services start redis   (macOS)")
-				log.Printf("sudo apt-get install redis-server              (Ubuntu/Debian)")
-				log.Printf("docker run --name redis -p 6379:6379 -d redis  (Docker)")
-			}
+			log.Printf("Redis connection failed - sessions will be disabled")
 		} else {
-			log.Printf("Successfully connected to Redis at %s", cfg.Redis.URL)
 			e.Use(session.Middleware(SessionManager))
 		}
-	} else {
-		log.Printf("Skipping Redis connection as requested")
 	}
 
 	// Add environment to context
