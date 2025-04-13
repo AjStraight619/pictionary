@@ -18,36 +18,37 @@ var SessionManager *session.Manager
 // InitEcho initializes and configures the Echo web framework
 func InitEcho(cfg *config.Config) *echo.Echo {
 	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
 
-	// Add health check endpoint directly in Echo init
+	// Basic health check should be first
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
 	})
 
-	// Initialize session manager - Redis is required
-	var err error
-	SessionManager, err = session.NewManager(context.Background(), cfg.Redis.URL)
-	if err != nil {
-		log.Printf("ERROR: Failed to connect to Redis at %s: %v", cfg.Redis.URL, err)
-		log.Printf("Redis is required for the application to function correctly.")
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-		if cfg.Environment == "production" {
-			log.Printf("CRITICAL ERROR: Redis connection failed in production environment")
-			log.Printf("The application will continue to run WITHOUT Redis for debugging purposes")
-			// Don't exit, let it continue to debug the issue
+	// Only try to connect to Redis if not already in a failing state
+	if os.Getenv("SKIP_REDIS") != "true" {
+		// Initialize session manager
+		var err error
+		SessionManager, err = session.NewManager(context.Background(), cfg.Redis.URL)
+		if err != nil {
+			log.Printf("ERROR: Failed to connect to Redis at %s: %v", cfg.Redis.URL, err)
+
+			if cfg.Environment == "production" {
+				log.Printf("Redis connection failed in production - sessions will be disabled")
+			} else {
+				log.Printf("Redis connection failed in development, install with:")
+				log.Printf("brew install redis && brew services start redis   (macOS)")
+				log.Printf("sudo apt-get install redis-server              (Ubuntu/Debian)")
+				log.Printf("docker run --name redis -p 6379:6379 -d redis  (Docker)")
+			}
 		} else {
-			log.Printf("In development mode - please install Redis and restart the server")
-			log.Printf("brew install redis && brew services start redis   (macOS)")
-			log.Printf("sudo apt-get install redis-server              (Ubuntu/Debian)")
-			log.Printf("docker run --name redis -p 6379:6379 -d redis  (Docker)")
-			os.Exit(1)
+			log.Printf("Successfully connected to Redis at %s", cfg.Redis.URL)
+			e.Use(session.Middleware(SessionManager))
 		}
 	} else {
-		log.Printf("Successfully connected to Redis at %s", cfg.Redis.URL)
-		// Add session middleware
-		e.Use(session.Middleware(SessionManager))
+		log.Printf("Skipping Redis connection as requested")
 	}
 
 	// Add environment to context
