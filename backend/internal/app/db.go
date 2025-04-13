@@ -9,7 +9,7 @@ import (
 )
 
 // InitDB ensures the data directory exists and initializes the database connection
-func InitDB() {
+func InitDB() error {
 	// Ensure data directory exists
 	dataDir := "data"
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
@@ -24,5 +24,5 @@ func InitDB() {
 	log.Printf("Using database path: %s", dbPath)
 
 	// Initialize database connection
-	db.InitDB(dbPath)
+	return db.InitDB(dbPath)
 }

@@ -2,22 +2,24 @@ package db
 
 import (
 	"log"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
-func InitDB(dsn string) {
+func InitDB(dsn string) error {
 	var err error
 
 	DB, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Printf("failed to initialize database, got error %v", err)
+		return err
 	}
 
 	log.Println("Database connection initialized")
-
+	return nil
 }
 
 func MigrateModels(models ...interface{}) {
