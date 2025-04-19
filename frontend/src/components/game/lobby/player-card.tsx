@@ -1,9 +1,6 @@
 import { Check, Crown, Pencil, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Score from "../player/score";
-// import { useReadLocalStorage } from "usehooks-ts";
-// import { PlayerInfo } from "@/types/lobby";
-// import { useHost } from "@/hooks/useGameSelector";
 
 type PlayerCardProps = {
   playerID: string;
@@ -26,19 +23,10 @@ const PlayerCard = ({
   isReady,
   isPreGame,
 }: PlayerCardProps) => {
-  // Get current user info
-  // const playerInfo = useReadLocalStorage<PlayerInfo>("playerInfo");
-  // const host = useHost();
-
-  // Check if current user is the host and this is not their card
-  // const canRemovePlayer =
-  //   host?.ID === playerInfo?.playerID && playerID !== host?.ID;
-
-  console.log("playerID", playerID);
-  // Convert color string to a usable background color with low opacity
   const bgColor = color ? `${color}20` : "bg-muted"; // 20 is hex for ~12% opacity
   const textColor = color || "text-foreground";
 
+  console.log("playerID: ", playerID);
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}

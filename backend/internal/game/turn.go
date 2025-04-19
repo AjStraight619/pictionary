@@ -2,10 +2,7 @@ package game
 
 import (
 	"log"
-	"math"
 	"math/rand"
-	"slices"
-	"time"
 
 	"github.com/Ajstraight619/pictionary-server/internal/shared"
 	"github.com/Ajstraight619/pictionary-server/internal/utils"
@@ -26,6 +23,8 @@ type Turn struct {
 	Phase                   TurnPhase       `json:"phase"`
 	IsSelectingWord         bool            `json:"isSelectingWord"`
 	SelectableWords         []shared.Word   `json:"selectableWords,omitempty"`
+	revealedCount           int             `json:"-"`
+	unrevealedIndices       []int           `json:"-"`
 }
 
 func InitTurn() *Turn {
@@ -51,12 +50,24 @@ func NewTurn(playerID string) *Turn {
 }
 
 func (t *Turn) Start(g *Game, playerID string) {
-	log.Println("Turn started")
-	revealedLetters := make([]rune, len(g.CurrentTurn.WordToGuess.Word))
-	for i := range revealedLetters {
-		revealedLetters[i] = '_'
+	letters := []rune(g.CurrentTurn.WordToGuess.Word)
+	t.RevealedLetters = make([]rune, len(letters))
+	for i := range t.RevealedLetters {
+		t.RevealedLetters[i] = '_'
 	}
-	t.RevealedLetters = revealedLetters
+	// prepare indices for reveal (skip spaces)
+	t.unrevealedIndices = make([]int, 0, len(letters))
+	for i, r := range letters {
+		if r != ' ' {
+			t.unrevealedIndices = append(t.unrevealedIndices, i)
+		}
+	}
+	// shuffle reveal order
+	rand.Shuffle(len(t.unrevealedIndices), func(i, j int) {
+		t.unrevealedIndices[i], t.unrevealedIndices[j] = t.unrevealedIndices[j], t.unrevealedIndices[i]
+	})
+	// reset counter
+	// set drawer and start timer
 	t.CurrentDrawerID = playerID
 	g.TimerManager.StartTurnTimer(playerID)
 }
@@ -64,84 +75,39 @@ func (t *Turn) Start(g *Game, playerID string) {
 func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 	letters := []rune(t.WordToGuess.Word)
 	totalLetters := len(letters)
-	turnTimeLimit := g.Options.TurnTimeLimit
+	turnLimit := g.Options.TurnTimeLimit
 
-	// Dont reveal letters if the word is 1-3 letters
+	// don't reveal short words
 	if totalLetters <= 3 {
 		return
 	}
 
-	elapsedTime := turnTimeLimit - timeRemaining
-
-	// Cap the maximum percentage of letters to reveal (70%)
-	maxLettersToReveal := int(float64(totalLetters) * 0.7)
-
-	// Non-linear reveal progression - slower at start, faster toward end
-	// Using square root function to create a curve that reveals fewer letters early
-	progressPercentage := math.Sqrt(float64(elapsedTime) / float64(turnTimeLimit))
-	targetCount := min(int(math.Ceil(progressPercentage*float64(totalLetters))), maxLettersToReveal)
-
-	// Ensure at least one letter is revealed after 25% of the time
-	if elapsedTime > turnTimeLimit/4 && targetCount == 0 {
-		targetCount = 1
-	}
-
-	// Count currently revealed letters
-	currentRevealed := 0
-	for _, r := range t.RevealedLetters {
-		if r != '_' {
-			currentRevealed++
-		}
-	}
-
-	// If we've already revealed enough letters, exit
-	if currentRevealed >= targetCount {
+	elapsed := turnLimit - timeRemaining
+	maxReveal := int(float64(totalLetters) * 0.7)
+	if maxReveal <= 0 {
 		return
 	}
 
-	lettersToReveal := targetCount - currentRevealed
+	// determine how many letters should be revealed by now (linear)
+	allowed := elapsed * maxReveal / turnLimit
+	if allowed > maxReveal {
+		allowed = maxReveal
+	}
 
-	// Prioritize revealing spaces and common letters first
-	unrevealedIndices := make([]int, 0, totalLetters)
-	priorityIndices := make([]int, 0)
+	// reveal any new letters up to allowed
+	for t.revealedCount < allowed && t.revealedCount < len(t.unrevealedIndices) {
+		idx := t.unrevealedIndices[t.revealedCount]
+		t.RevealedLetters[idx] = letters[idx]
+		t.revealedCount++
+	}
 
-	// Collect unrevealed indices
-	for i, r := range t.RevealedLetters {
-		if r == '_' {
-			if letters[i] == ' ' {
-				priorityIndices = append(priorityIndices, i)
-			} else {
-				unrevealedIndices = append(unrevealedIndices, i)
-			}
+	// only broadcast when new letters were revealed
+	if t.revealedCount > 0 {
+		if msg, err := utils.CreateMessage("revealedLetters", t.RevealedLetters); err == nil {
+			g.Messenger.SendToOthers(t.CurrentDrawerID, msg)
+		} else {
+			log.Println("error marshalling revealedLetters message:", err)
 		}
-	}
-
-	randSource := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	// Reveal priority indices first (spaces)
-	for i := 0; i < lettersToReveal && len(priorityIndices) > 0; i++ {
-		randIdx := randSource.Intn(len(priorityIndices))
-		indexToReveal := priorityIndices[randIdx]
-		t.RevealedLetters[indexToReveal] = letters[indexToReveal]
-		// Remove the index from the slice
-		priorityIndices = slices.Delete(priorityIndices, randIdx, randIdx+1)
-		lettersToReveal--
-	}
-
-	// Reveal remaining letters from normal indices
-	for i := 0; i < lettersToReveal && len(unrevealedIndices) > 0; i++ {
-		randIdx := randSource.Intn(len(unrevealedIndices))
-		indexToReveal := unrevealedIndices[randIdx]
-		t.RevealedLetters[indexToReveal] = letters[indexToReveal]
-		// Remove the index from the slice
-		unrevealedIndices = slices.Delete(unrevealedIndices, randIdx, randIdx+1)
-	}
-
-	// Broadcast the updated revealed letters to all players.
-	if b, err := utils.CreateMessage("revealedLetters", t.RevealedLetters); err == nil {
-		g.Messenger.BroadcastMessage(b)
-	} else {
-		log.Println("error marshalling revealedLetter message:", err)
 	}
 }
 
@@ -150,6 +116,8 @@ func (t *Turn) End(g *Game) {
 	g.ClearDrawingPlayers()
 	g.Round.MarkPlayerAsDrawn(t.CurrentDrawerID)
 	t.Phase = PhaseWordSelection
+	t.RevealedLetters = nil
+	t.revealedCount = 0
 	g.Mu.Lock()
 	roundComplete := len(g.Round.PlayersDrawn) == len(g.PlayerOrder)
 	g.Mu.Unlock()

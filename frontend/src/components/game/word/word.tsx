@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { useRevealedLetters } from "@/hooks/useGameSelector";
 import { Word as TWord } from "@/types/game";
 import { useIsCurrentDrawer } from "@/hooks/useIsCurrentDrawer";

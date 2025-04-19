@@ -19,21 +19,18 @@ const GameStateUpdater = () => {
         console.log("gameState update: ", payload);
         dispatch({ type: "GAME_STATE_UPDATE", payload });
       },
-      revealedLetters: (payload) => {
-        // Count revealed letters (non-underscore characters)
-        const revealedCount = Array.isArray(payload)
-          ? payload.filter((char: string) => char !== "_").length
-          : 0;
-
-        console.log(
-          "✨ Letter reveal update:",
-          revealedCount,
-          "letters revealed so far"
-        );
+      revealedLetters: (payload: (number | string)[]) => {
+        // Turn [95, 95, 109, 95, 114] → ["", "", "m", "", "r"]
+        const letters = payload.map((code) => {
+          // normalize to a number
+          const n = typeof code === "string" ? +code : code;
+          // if it’s the underscore code, return empty—otherwise char
+          return n === 95 ? "" : String.fromCharCode(n);
+        });
 
         dispatch({
           type: "ADD_REVEALED_LETTER",
-          payload,
+          payload: letters,
         });
       },
       drawingPlayerChanged: (payload) => {
@@ -62,6 +59,7 @@ const GameStateUpdater = () => {
       },
 
       letterRevealed: (payload) => {
+        console.log("Letter revealed");
         dispatch({ type: "LETTER_REVEALED", payload });
       },
 

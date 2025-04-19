@@ -21,7 +21,7 @@ type UseCustomWebsocketOptions = {
 
 const useCustomWebsocket = ({
   messageTypes = [],
-  url = "ws://localhost:8080/ws", // Default WebSocket server URL
+  url = "ws://localhost:8080/ws",
 }: UseCustomWebsocketOptions = {}) => {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<ReceivedMessage | null>(null);
