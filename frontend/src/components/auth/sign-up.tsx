@@ -13,6 +13,7 @@ import { useState } from "react";
 export default function SignUp() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  console.log("Error: ", error, "isLoading: ", isLoading);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

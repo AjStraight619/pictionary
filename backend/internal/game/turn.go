@@ -70,6 +70,7 @@ func (t *Turn) Start(g *Game, playerID string) {
 	// set drawer and start timer
 	t.CurrentDrawerID = playerID
 	g.TimerManager.StartTurnTimer(playerID)
+	log.Printf("Current revealed letters on turn start: %s", string(t.RevealedLetters))
 }
 
 func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
