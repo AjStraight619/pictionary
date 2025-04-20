@@ -55,6 +55,11 @@ func (s *Service) Authenticate(email, password string) (*db.User, error) {
 
 // GetByID retrieves a user by ID
 func (s *Service) GetByID(id string) (*db.User, error) {
+	if s.db == nil {
+		log.Println("ERROR: Cannot get user - database connection is nil")
+		return nil, errors.New("database connection error")
+	}
+
 	var user db.User
 	if err := s.db.Where("id = ?", id).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

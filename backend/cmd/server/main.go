@@ -2,7 +2,8 @@ package main
 
 import (
 	"log"
-	"os"
+	"net/http"
+	"time"
 
 	"github.com/Ajstraight619/pictionary-server/config"
 	"github.com/Ajstraight619/pictionary-server/internal/app"
@@ -10,43 +11,62 @@ import (
 	"github.com/Ajstraight619/pictionary-server/internal/handlers"
 	"github.com/Ajstraight619/pictionary-server/internal/server"
 	"github.com/Ajstraight619/pictionary-server/internal/user"
+	"github.com/labstack/echo/v4"
 )
+
+// Health check handler that doesn't depend on any initialization
+func healthCheckHandler(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{
+		"status": "healthy",
+	})
+}
 
 func main() {
 	// Get config first to ensure environment variables are loaded
 	cfg := config.GetConfig()
 
-	// Start initializing Echo FIRST to handle health checks immediately
 	e := app.InitEcho(cfg)
 
-	// Initialize database directly
-	if err := db.InitDB(); err != nil {
-		log.Printf("Database initialization failed: %v", err)
-		os.Exit(1) // Exit the application if DB initialization fails
-	}
+	e.GET("/health", healthCheckHandler)
+	e.GET("/", healthCheckHandler)
 
-	// Verify that DB is not nil
-	if db.DB == nil {
-		log.Printf("Database is nil after successful initialization - this should never happen")
-		os.Exit(1)
-	}
+	go func() {
+		time.Sleep(500 * time.Millisecond)
 
-	log.Println("Database initialization complete")
+		// Initialize database
+		log.Println("Initializing database...")
+		if err := db.InitDB(); err != nil {
+			log.Printf("Database initialization failed: %v", err)
+			// Don't exit - just log and continue with limited functionality
+			return
+		}
 
-	// Create all required services first (after DB is initialized)
-	userService := user.NewService()
+		// Verify that DB is not nil
+		if db.DB == nil {
+			log.Printf("Database is nil after initialization - functionality will be limited")
+			return
+		}
 
-	// Set up game server
-	gameServer := server.NewGameServer()
+		log.Println("Database initialization complete")
 
-	// Register all routes after services are created
-	handlers.RegisterRoutes(e, gameServer)
-	handlers.RegisterUserRoutes(e, userService)
+		// Create all required services
+		userService := user.NewService()
 
-	// Setup shutdown handlers
-	app.SetupShutdown(e, gameServer)
+		// Set up game server
+		gameServer := server.NewGameServer()
 
-	// Start the server
+		// Register all routes after services are created
+		handlers.RegisterRoutes(e, gameServer)
+		handlers.RegisterUserRoutes(e, userService)
+
+		// Setup shutdown handlers
+		app.SetupShutdown(e, gameServer)
+
+		log.Println("All services and routes initialized successfully")
+	}()
+
+	// Start the server - this must be outside the goroutine
+	log.Printf("Starting server on port %s", cfg.Port)
 	if err := e.Start(":" + cfg.Port); err != nil {
 		log.Printf("Server error: %v", err)
 	}
