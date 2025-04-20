@@ -11,6 +11,12 @@ import (
 func Middleware(manager *Manager) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			// Log request info for debugging
+			log.Printf("[DEBUG] Request from Origin: %s, Referer: %s, URL: %s",
+				c.Request().Header.Get("Origin"),
+				c.Request().Header.Get("Referer"),
+				c.Request().URL.Path)
+
 			// Get session ID from cookie
 			cookie, err := c.Cookie(CookieName)
 
@@ -87,7 +93,11 @@ func SetSessionCookie(c echo.Context, sessionID string) {
 	}
 
 	c.SetCookie(cookie)
-	log.Printf("[SESSION] Set session cookie with ID: %s", sessionID)
+	log.Printf("[SESSION] Set session cookie with ID: %s, Environment: %s, SameSite: %v, Secure: %v",
+		sessionID,
+		environment,
+		cookie.SameSite,
+		cookie.Secure)
 }
 
 func ClearSessionCookie(c echo.Context) {
@@ -97,16 +107,21 @@ func ClearSessionCookie(c echo.Context) {
 	cookie.Path = "/"
 	cookie.Expires = time.Unix(0, 0)
 	cookie.HttpOnly = true
-	cookie.SameSite = http.SameSiteStrictMode
 
-	// Set Secure flag in production environment
+	// Use same SameSite policy as SetSessionCookie
 	environment, ok := c.Get("environment").(string)
 	if ok && environment == "production" {
 		cookie.Secure = true
+		cookie.SameSite = http.SameSiteNoneMode
+	} else {
+		cookie.SameSite = http.SameSiteLaxMode
 	}
 
 	c.SetCookie(cookie)
-	log.Printf("[SESSION] Cleared session cookie")
+	log.Printf("[SESSION] Cleared session cookie. Environment: %s, SameSite: %v, Secure: %v",
+		environment,
+		cookie.SameSite,
+		cookie.Secure)
 }
 
 func GetSessionManager(c echo.Context) *Manager {

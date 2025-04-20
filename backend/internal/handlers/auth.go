@@ -4,6 +4,8 @@ package handlers
 import (
 	"net/http"
 
+	"log"
+
 	"github.com/Ajstraight619/pictionary-server/internal/db"
 	"github.com/Ajstraight619/pictionary-server/internal/session"
 	"github.com/labstack/echo/v4"
@@ -81,25 +83,46 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	}
 
 	if err := c.Bind(&req); err != nil {
+		log.Printf("[AUTH] Login failed: Invalid request format: %v", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
 	}
 
 	// Validate inputs
 	if req.Email == "" || req.Password == "" {
+		log.Printf("[AUTH] Login failed: Missing email or password")
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Email and password required"})
 	}
+
+	log.Printf("[AUTH] Login attempt for email: %s", req.Email)
 
 	// Authenticate user
 	user, err := h.userService.Authenticate(req.Email, req.Password)
 	if err != nil {
+		log.Printf("[AUTH] Login failed for %s: %v", req.Email, err)
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid email or password"})
 	}
 
 	// Create session
 	sessionMgr := session.GetSessionManager(c)
 	if sessionMgr != nil {
-		sessionID, _ := sessionMgr.Create(user.ID, user.Username)
+		sessionID, err := sessionMgr.Create(user.ID, user.Username)
+		if err != nil {
+			log.Printf("[AUTH] Failed to create session: %v", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Session creation failed"})
+		}
+
+		log.Printf("[AUTH] Login successful for %s (ID: %s). Setting cookie with session ID: %s",
+			user.Username, user.ID, sessionID)
+
+		// Log request details for debugging
+		log.Printf("[DEBUG] Login request headers - Origin: %s, Host: %s, User-Agent: %s",
+			c.Request().Header.Get("Origin"),
+			c.Request().Header.Get("Host"),
+			c.Request().Header.Get("User-Agent"))
+
 		session.SetSessionCookie(c, sessionID)
+	} else {
+		log.Printf("[AUTH] Warning: Session manager is nil, cannot create session")
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
