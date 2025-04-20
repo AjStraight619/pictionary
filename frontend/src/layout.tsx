@@ -11,7 +11,7 @@ const Layout = () => {
     <main>
       {isAuthenticated && (
         <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-14 items-center justify-between">
+          <div className="container flex h-14 items-center justify-between px-2">
             <div className="flex items-center gap-2">
               <Pencil className="h-5 w-5 text-purple-400" />
               <span className="font-semibold">Pictionary Pals</span>
