@@ -20,6 +20,8 @@ import { AnimatedSvgElements } from "@/components/home/animated-svg-elements";
 import { API_URL } from "@/utils/config";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/providers/session-provider";
+import { LogoutButton } from "@/components/auth/logout-button";
+
 type GameOptions = {
   roundLimit: number;
   turnTimeLimit: number;
@@ -101,6 +103,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // Important: include credentials for auth
         body: JSON.stringify(payload),
       });
 
@@ -193,7 +196,25 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen dark bg-background  relative overflow-hidden">
+    <div className="min-h-screen dark bg-background relative overflow-hidden">
+      {/* Header with logout button */}
+      <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative z-20">
+        <div className="container flex h-14 items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <Pencil className="h-5 w-5 text-purple-400" />
+            <span className="font-semibold">Pictionary Pals</span>
+          </div>
+          <div className="flex items-center gap-4">
+            {user && (
+              <span className="text-sm text-muted-foreground">
+                Hi, {user.username}
+              </span>
+            )}
+            <LogoutButton />
+          </div>
+        </div>
+      </header>
+
       {/* Background Elements */}
       <DoodleElements />
       <AnimatedSvgElements />

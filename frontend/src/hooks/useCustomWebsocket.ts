@@ -38,13 +38,24 @@ export const useCustomWebsocket = ({
       reconnectAttempts: 5,
       reconnectInterval: (attemptNumber) =>
         Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
-      onOpen: () =>
-        console.log("WebSocket opened at", new Date().toLocaleTimeString()),
-      onClose: (event) =>
+      onOpen: () => {
+        console.log("WebSocket opened at", new Date().toLocaleTimeString());
+        console.log(`Connected to WebSocket at ${WS_URL}/${id}`);
+        console.log("Player info used for connection:", { playerID, username });
+      },
+      onClose: (event) => {
         console.log(
-          `WebSocket closed: code ${event.code}, reason: ${event.reason}`
-        ),
-      onError: (error) => console.log("WebSocket error:", error),
+          `WebSocket closed: code ${event.code}, reason: ${
+            event.reason || "none provided"
+          }`
+        );
+        console.log(`Connection was to: ${WS_URL}/${id}`);
+      },
+      onError: (error) => {
+        console.log("WebSocket error:", error);
+        console.log(`Failed connection to: ${WS_URL}/${id}`);
+        console.log("Player info used:", { playerID, username });
+      },
       onReconnectStop: () => {
         console.log("Reconnect stopped at", new Date().toLocaleTimeString());
         //TODO: Trigger a modal here to inform the user that the connection has been lost
