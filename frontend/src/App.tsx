@@ -3,7 +3,7 @@ import Layout from "@/layout";
 import Home from "./pages/home";
 import Game from "./pages/game";
 import SignUp from "./components/auth/sign-up";
-import SignIn from "./components/auth/sign-out";
+import SignIn from "./components/auth/sign-in";
 
 const App = () => {
   return (
