@@ -16,6 +16,14 @@ type Service struct {
 }
 
 func NewService() *Service {
+	if db.DB == nil {
+		log.Println("WARNING: Attempting to create user service with nil database connection")
+		// Return a service that will fail safely when methods are called
+		return &Service{
+			db: nil,
+		}
+	}
+
 	return &Service{
 		db: db.DB,
 	}
@@ -23,6 +31,11 @@ func NewService() *Service {
 
 // Authenticate verifies a user's credentials and returns the user if valid
 func (s *Service) Authenticate(email, password string) (*db.User, error) {
+	if s.db == nil {
+		log.Println("ERROR: Cannot authenticate user - database connection is nil")
+		return nil, errors.New("database connection error")
+	}
+
 	var user db.User
 	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

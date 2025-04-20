@@ -17,11 +17,11 @@ func main() {
 		dbPath := "data/game.db"
 		os.MkdirAll("data", os.ModePerm)
 		log.Println("Using local SQLite database:", dbPath)
-		db.InitDB(dbPath)
+		db.InitDB()
 	} else {
 		// Use PostgreSQL with the provided URL
 		log.Println("Using PostgreSQL database")
-		db.InitDB("")
+		db.InitDB()
 	}
 
 	// Migrate the Word model
