@@ -32,13 +32,24 @@ func InitEcho(cfg *config.Config) *echo.Echo {
 	// Only try to connect to Redis if not already in a failing state
 	if os.Getenv("SKIP_REDIS") != "true" {
 		// Initialize session manager
+		redisURL := cfg.Redis.URL
+		log.Printf("[REDIS] Attempting to connect to Redis with URL: %s", redisURL)
+
+		if redisURL == "" {
+			log.Printf("[REDIS] ERROR: Redis URL is empty! Sessions will be disabled")
+			return e
+		}
+
 		var err error
-		SessionManager, err = session.NewManager(context.Background(), cfg.Redis.URL)
+		SessionManager, err = session.NewManager(context.Background(), redisURL)
 		if err != nil {
-			log.Printf("Redis connection failed - sessions will be disabled")
+			log.Printf("[REDIS] Connection failed: %v - sessions will be disabled", err)
 		} else {
+			log.Printf("[REDIS] Connection successful - sessions enabled")
 			e.Use(session.Middleware(SessionManager))
 		}
+	} else {
+		log.Printf("[REDIS] Skipping Redis connection as SKIP_REDIS=true")
 	}
 
 	// Add environment to context

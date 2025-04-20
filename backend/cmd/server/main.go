@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Ajstraight619/pictionary-server/config"
@@ -25,6 +26,15 @@ func main() {
 	// Get config first to ensure environment variables are loaded
 	cfg := config.GetConfig()
 
+	// Verify Redis URL
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL == "" {
+		log.Printf("WARNING: REDIS_URL environment variable is not set! Sessions will not work!")
+	} else {
+		log.Printf("REDIS_URL is set to: %s", redisURL[:10]+"...")
+	}
+
+	// Start initializing Echo FIRST to handle health checks immediately
 	e := app.InitEcho(cfg)
 
 	e.GET("/health", healthCheckHandler)
