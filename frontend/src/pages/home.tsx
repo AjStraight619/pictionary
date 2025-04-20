@@ -19,36 +19,13 @@ import { DoodleElements } from "@/components/home/doodle-elements";
 import { AnimatedSvgElements } from "@/components/home/animated-svg-elements";
 import { API_URL } from "@/utils/config";
 import { cn } from "@/lib/utils";
-
+import { useSession } from "@/providers/session-provider";
 type GameOptions = {
   roundLimit: number;
   turnTimeLimit: number;
   selectWordTimeLimit: number;
   maxPlayers: number;
 };
-
-// type FormError = {
-//   error: string | null;
-// };
-
-// function validateForm(
-//   type: "create" | "join",
-//   username: string,
-//   gameCode: string,
-//   gameOptions: GameOptions
-// ): FormError {
-//   if (type === "create") {
-//     if (username.length < 3 || username.length > 12) {
-//       return { error: "Player name must be between 3 and 12 characters." };
-//     }
-//   }
-//   if (type === "join") {
-//     if (gameCode.length !== 6) {
-//       return { error: "Game code must be 6 characters long." };
-//     }
-//   }
-//   return { error: null };
-// }
 
 export default function Home() {
   const navigate = useNavigate();
@@ -57,8 +34,12 @@ export default function Home() {
     null
   );
 
+  const { user } = useSession();
+
   // Form states
-  const [username, setUsername] = useState(playerInfo?.username || "");
+  const [username, setUsername] = useState(
+    playerInfo?.username || user?.username || ""
+  );
   const [gameCode, setGameCode] = useState("");
   const [gameOptions, setGameOptions] = useState<GameOptions>({
     roundLimit: 3,

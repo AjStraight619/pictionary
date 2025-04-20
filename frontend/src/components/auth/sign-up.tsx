@@ -1,19 +1,26 @@
-import { API_URL } from "@/lib/constants";
+import type React from "react";
+import { useState } from "react";
+import { API_URL } from "@/utils/config";
+import { useNavigate } from "react-router";
+import { handleError, handleApiError } from "@/utils/error";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../ui/card";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { useState } from "react";
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function SignUp() {
+export default function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  console.log("Error: ", error, "isLoading: ", isLoading);
+  const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,42 +35,99 @@ export default function SignUp() {
     try {
       const res = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Important for session cookie
         body: JSON.stringify({ username, email, password }),
       });
 
       if (!res.ok) {
-        throw new Error("Failed to sign up");
+        throw await handleApiError(res);
       }
 
       const data = await res.json();
       console.log(data);
-    } catch (error) {
-      console.error(error);
-      setError("Failed to sign up");
+
+      // Redirect to sign in page after successful registration
+      navigate("/");
+    } catch (error: unknown) {
+      const { message } = handleError(error, {
+        log: true,
+        prefix: "Registration failed",
+      });
+      setError(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <form onSubmit={handleSignUp}>
-        <Card className="w-full max-w-sm mx-auto">
-          <CardHeader>
-            <CardTitle>Sign Up</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-4">
-              <Input type="text" name="username" placeholder="Username" />
-              <Input type="email" name="email" placeholder="Email" />
-              <Input type="password" name="password" placeholder="Password" />
+    <div className="flex justify-center items-center min-h-screen p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">
+            Create an account
+          </CardTitle>
+          <CardDescription className="text-center">
+            Enter your details below to create your account
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSignUp}>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                name="username"
+                placeholder="johndoe"
+                required
+                autoComplete="username"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="john.doe@example.com"
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                name="password"
+                placeholder="••••••••"
+                required
+                minLength={8}
+                autoComplete="new-password"
+              />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button type="submit">Sign Up</Button>
+          <CardFooter className="flex flex-col space-y-4">
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Creating account..." : "Sign up"}
+            </Button>
+            <div className="text-center text-sm">
+              Already have an account?{" "}
+              <a href="/" className="font-medium text-primary hover:underline">
+                Sign in
+              </a>
+            </div>
           </CardFooter>
-        </Card>
-      </form>
+        </form>
+      </Card>
     </div>
   );
 }

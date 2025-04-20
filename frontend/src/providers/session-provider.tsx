@@ -42,7 +42,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       return response.json() as Promise<User>;
     },
-    staleTime: 5 * 60 * 1000, // cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+    throwOnError: false,
   });
 
   const logoutMutation = useMutation({
