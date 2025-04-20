@@ -77,7 +77,13 @@ func SetSessionCookie(c echo.Context, sessionID string) {
 	cookie.Expires = time.Now().Add(SessionExpiration)
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteStrictMode
-	// In production, set Secure: true
+
+	// Set Secure flag in production environment
+	environment, ok := c.Get("environment").(string)
+	if ok && environment == "production" {
+		cookie.Secure = true
+	}
+
 	c.SetCookie(cookie)
 	log.Printf("[SESSION] Set session cookie with ID: %s", sessionID)
 }
@@ -90,6 +96,13 @@ func ClearSessionCookie(c echo.Context) {
 	cookie.Expires = time.Unix(0, 0)
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteStrictMode
+
+	// Set Secure flag in production environment
+	environment, ok := c.Get("environment").(string)
+	if ok && environment == "production" {
+		cookie.Secure = true
+	}
+
 	c.SetCookie(cookie)
 	log.Printf("[SESSION] Cleared session cookie")
 }
