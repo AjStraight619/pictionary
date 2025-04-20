@@ -76,12 +76,14 @@ func SetSessionCookie(c echo.Context, sessionID string) {
 	cookie.Path = "/"
 	cookie.Expires = time.Now().Add(SessionExpiration)
 	cookie.HttpOnly = true
-	cookie.SameSite = http.SameSiteStrictMode
 
-	// Set Secure flag in production environment
+	// Use SameSite=None for cross-domain requests
 	environment, ok := c.Get("environment").(string)
 	if ok && environment == "production" {
 		cookie.Secure = true
+		cookie.SameSite = http.SameSiteNoneMode
+	} else {
+		cookie.SameSite = http.SameSiteLaxMode
 	}
 
 	c.SetCookie(cookie)
