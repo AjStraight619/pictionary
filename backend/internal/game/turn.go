@@ -50,6 +50,10 @@ func NewTurn(playerID string) *Turn {
 }
 
 func (t *Turn) Start(g *Game, playerID string) {
+	g.Mu.Lock()
+	log.Printf("WORD: At turn start, word is: %v",
+		t.WordToGuess)
+
 	letters := []rune(g.CurrentTurn.WordToGuess.Word)
 	t.RevealedLetters = make([]rune, len(letters))
 	for i := range t.RevealedLetters {
@@ -69,11 +73,19 @@ func (t *Turn) Start(g *Game, playerID string) {
 	// reset counter
 	// set drawer and start timer
 	t.CurrentDrawerID = playerID
+	g.Mu.Unlock()
 	g.TimerManager.StartTurnTimer(playerID)
 	log.Printf("Current revealed letters on turn start: %s", string(t.RevealedLetters))
 }
 
 func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+
+	if t.WordToGuess == nil {
+		return
+	}
+
 	letters := []rune(t.WordToGuess.Word)
 	totalLetters := len(letters)
 	turnLimit := g.Options.TurnTimeLimit
@@ -90,10 +102,7 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 	}
 
 	// determine how many letters should be revealed by now (linear)
-	allowed := elapsed * maxReveal / turnLimit
-	if allowed > maxReveal {
-		allowed = maxReveal
-	}
+	allowed := min(elapsed*maxReveal/turnLimit, maxReveal)
 
 	// reveal any new letters up to allowed
 	for t.revealedCount < allowed && t.revealedCount < len(t.unrevealedIndices) {
@@ -114,6 +123,7 @@ func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 
 func (t *Turn) End(g *Game) {
 	log.Println("Turn ended")
+	g.CancelTimer("turnTimer")
 	g.ClearDrawingPlayers()
 	g.Round.MarkPlayerAsDrawn(t.CurrentDrawerID)
 	t.Phase = PhaseWordSelection
@@ -131,6 +141,10 @@ func (t *Turn) End(g *Game) {
 		g.Round.NextDrawer(g)
 		g.FlowSignal <- TurnStarted
 	}
+}
+
+func getCurrentDrawer(g *Game) *shared.Player {
+	return g.Players[g.PlayerOrder[g.Round.CurrentDrawerIdx]]
 }
 
 func (t *Turn) allGuessedCorrectly() bool {

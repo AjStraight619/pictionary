@@ -67,7 +67,12 @@ func (fm *FlowManager) handleRoundEnded() {
 	// Broadcast updated game state with new scores
 	fm.game.BroadcastGameState()
 
-	if fm.game.Round.Count == fm.game.Options.RoundLimit {
+	fm.game.Mu.Lock()
+	roundCount := fm.game.Round.Count
+	roundLimit := fm.game.Options.RoundLimit
+	fm.game.Mu.Unlock()
+
+	if roundCount == roundLimit {
 		log.Println("Game over!")
 		fm.game.FlowSignal <- GameEnded
 		return
@@ -77,9 +82,9 @@ func (fm *FlowManager) handleRoundEnded() {
 
 func (fm *FlowManager) handleTurnStarted() {
 	fm.game.BroadcastGameState()
+	fm.game.Mu.Lock()
 	turn := fm.game.CurrentTurn
-
-	log.Printf("Turn started: %v", turn)
+	fm.game.Mu.Unlock()
 
 	switch turn.Phase {
 	case PhaseWordSelection:
@@ -89,10 +94,14 @@ func (fm *FlowManager) handleTurnStarted() {
 			return
 		}
 		log.Println("Word selected. Switching to drawing phase.")
+		fm.game.Mu.Lock()
 		turn.Phase = PhaseDrawing
+		fm.game.Mu.Unlock()
 		fm.handleTurnStarted()
 	case PhaseDrawing:
+		fm.game.Mu.Lock()
 		drawer := fm.game.Round.GetCurrentDrawer(fm.game.Players, fm.game.PlayerOrder)
+		fm.game.Mu.Unlock()
 		if drawer == nil {
 			log.Println("No current drawer found; cannot start turn.")
 			return

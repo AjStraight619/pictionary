@@ -17,7 +17,9 @@ func NewTimerManager(game *Game) *TimerManager {
 
 func (tm *TimerManager) StartGameCountdown(timerType string, duration int) {
 	timer := NewTimer(tm.game.ctx, timerType, duration)
+	tm.game.Mu.Lock()
 	tm.game.timers[timerType] = timer
+	tm.game.Mu.Unlock()
 
 	onFinish := func() {
 		log.Println("Game countdown finished")
@@ -54,8 +56,17 @@ func (tm *TimerManager) StartGameCountdown(timerType string, duration int) {
 }
 
 func (tm *TimerManager) StartTurnTimer(playerID string) {
-	timer := NewTimer(tm.game.ctx, "turnTimer", tm.game.Options.TurnTimeLimit)
+	tm.game.CancelTimer("turnTimer")
+
+	tm.game.Mu.RLock()
+	timeLimit := tm.game.Options.TurnTimeLimit
+	tm.game.Mu.RUnlock()
+
+	timer := NewTimer(tm.game.ctx, "turnTimer", timeLimit)
+
+	tm.game.Mu.Lock()
 	tm.game.timers["turnTimer"] = timer
+	tm.game.Mu.Unlock()
 
 	onCancel := func() {
 		tm.game.FlowSignal <- TurnEnded
@@ -81,28 +92,53 @@ func (tm *TimerManager) StartTurnTimer(playerID string) {
 }
 
 func (tm *TimerManager) StartWordSelectionTimer(playerID string) {
-	timer := NewTimer(tm.game.ctx, "selectWordTimer", 10)
-	tm.game.timers["selectWordTimer"] = timer
-	log.Println("Word selection timer started.")
+	tm.game.CancelTimer("selectWordTimer")
 
+	tm.game.Mu.RLock()
+	timeLimit := tm.game.Options.WordSelectTimeLimit
+	tm.game.Mu.RUnlock()
+
+	log.Printf("DEBUG: Creating word selection timer with duration: %d seconds", timeLimit)
+
+	if timeLimit <= 0 {
+		log.Printf("ERROR: Invalid word selection time limit: %d, using default", timeLimit)
+		timeLimit = 10 // Fallback to a default value
+	}
+
+	timer := NewTimer(tm.game.ctx, "selectWordTimer", timeLimit)
+
+	tm.game.Mu.Lock()
+	tm.game.timers["selectWordTimer"] = timer
+	tm.game.Mu.Unlock()
+
+	timerID := timer // Store a reference to this specific timer instance
+
+	// Start countdown with callbacks that verify they're still the active timer
 	go func() {
-		// To control pacing of game. Small delays in between different game actions and state updates.
 		time.Sleep(1 * time.Second)
 		for remaining := range timer.StartCountdown(
 			func() {
-				tm.game.handleTimerExpiration()
+				// Verify this timer is still the active one before running callbacks
+				tm.game.Mu.RLock()
+				currentTimer, exists := tm.game.timers["selectWordTimer"]
+				isStillActive := exists && currentTimer == timerID
+				tm.game.Mu.RUnlock()
+
+				log.Printf("Word selection timer finished (still active: %v)", isStillActive)
+				if isStillActive {
+					tm.game.handleTimerExpiration()
+				}
 			},
 			func() {
 				log.Println("Word selection cancelled. Timer stopped.")
 			},
 		) {
+			// Timer tick code...
 			payload := map[string]interface{}{
 				"timeRemaining": remaining,
 			}
 			if b, err := utils.CreateMessage("selectWordTimer", payload); err == nil {
 				tm.game.Messenger.SendToPlayer(playerID, b)
-			} else {
-				log.Println("error marshalling selectWordTimer message:", err)
 			}
 		}
 		log.Println("Word selection timer ended.")

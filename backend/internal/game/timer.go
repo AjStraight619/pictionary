@@ -109,8 +109,6 @@ func (t *Timer) Cancel() {
 }
 
 func (g *Game) GetRemainingTime(timerType string) int {
-	g.Mu.RLock()
-	defer g.Mu.RUnlock()
 	if timer, exists := g.timers[timerType]; exists {
 		return timer.remaining
 	}
