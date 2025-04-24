@@ -43,7 +43,7 @@ export default function Test() {
       <GameStateUpdater />
       <div className="flex flex-col h-screen bg-gradient-to-b from-background to-background/80 dark overflow-hidden">
         <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
-          <div className="container flex h-14 items-center">
+          <div className="container flex h-14 items-center px-2">
             <div className="flex items-center gap-2 mr-4">
               <Pencil className="h-5 w-5 text-purple-400" />
               <span className="font-semibold hidden md:inline-block">
