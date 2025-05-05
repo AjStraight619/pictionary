@@ -31,6 +31,13 @@ export default function SignUpForm() {
     const username = formData.get("username") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const verifyPassword = formData.get("verify-password") as string;
+
+    if (password !== verifyPassword) {
+      setError("Passwords do not match.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch(`${API_URL}/auth/register`, {
@@ -110,6 +117,18 @@ export default function SignUpForm() {
                 id="password"
                 type="password"
                 name="password"
+                placeholder="••••••••"
+                required
+                minLength={8}
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="verify-password">Verify Password</Label>
+              <Input
+                id="verify-password"
+                type="password"
+                name="verify-password"
                 placeholder="••••••••"
                 required
                 minLength={8}
