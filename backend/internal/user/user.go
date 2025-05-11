@@ -7,25 +7,29 @@ import (
 
 	"github.com/Ajstraight619/pictionary-server/internal/db"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type Service struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger *zap.Logger
 }
 
-func NewService() *Service {
+func NewService(logger *zap.Logger) *Service {
 	if db.DB == nil {
-		log.Println("WARNING: Attempting to create user service with nil database connection")
-		// Return a service that will fail safely when methods are called
+		// use the injected logger instead of log.Println
+		logger.Warn("Attempting to service with nil database connection")
 		return &Service{
-			db: nil,
+			db:     nil,
+			logger: logger,
 		}
 	}
 
 	return &Service{
-		db: db.DB,
+		db:     db.DB,
+		logger: logger,
 	}
 }
 

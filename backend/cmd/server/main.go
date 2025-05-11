@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -13,9 +12,9 @@ import (
 	"github.com/Ajstraight619/pictionary-server/internal/server"
 	"github.com/Ajstraight619/pictionary-server/internal/user"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
-// Health check handler that doesn't depend on any initialization
 func healthCheckHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"status": "healthy",
@@ -23,20 +22,23 @@ func healthCheckHandler(c echo.Context) error {
 }
 
 func main() {
-	// Get config first to ensure environment variables are loaded
 	cfg := config.GetConfig()
+	logger := config.GetLogger()
+	defer logger.Sync()
 
 	// Verify Redis URL
 	redisURL := os.Getenv("REDIS_URL")
 	if redisURL == "" {
-		log.Printf("WARNING: REDIS_URL environment variable is not set! Sessions will not work!")
+		logger.Warn("REDIS_URL environment variable is not set; sessions will not work")
 	} else {
-		log.Printf("REDIS_URL is set to: %s", redisURL[:10]+"...")
+		// log only a prefix for security
+		logger.Info("REDIS_URL is set",
+			zap.String("prefix", redisURL[:10]+"..."),
+		)
 	}
 
-	// Start initializing Echo FIRST to handle health checks immediately
+	// Initialize Echo early for health checks
 	e := app.InitEcho(cfg)
-
 	e.GET("/health", healthCheckHandler)
 	e.GET("/", healthCheckHandler)
 
@@ -44,40 +46,38 @@ func main() {
 		time.Sleep(500 * time.Millisecond)
 
 		// Initialize database
-		log.Println("Initializing database...")
+		logger.Info("Initializing database")
 		if err := db.InitDB(); err != nil {
-			log.Printf("Database initialization failed: %v", err)
-			// Don't exit - just log and continue with limited functionality
+			logger.Error("Database initialization failed", zap.Error(err))
 			return
 		}
-
-		// Verify that DB is not nil
 		if db.DB == nil {
-			log.Printf("Database is nil after initialization - functionality will be limited")
+			logger.Warn("Database is nil after initialization; functionality will be limited")
 			return
 		}
+		logger.Info("Database initialization complete")
 
-		log.Println("Database initialization complete")
+		// Create services and game server
+		userService := user.NewService(logger.Named("user"))
+		gameServer := server.NewGameServer(logger.Named("game"))
 
-		// Create all required services
-		userService := user.NewService()
-
-		// Set up game server
-		gameServer := server.NewGameServer()
-
-		// Register all routes after services are created
+		// Register routes
 		handlers.RegisterRoutes(e, gameServer)
 		handlers.RegisterUserRoutes(e, userService)
 
-		// Setup shutdown handlers
 		app.SetupShutdown(e, gameServer)
 
-		log.Println("All services and routes initialized successfully")
+		logger.Info("All services and routes initialized successfully")
 	}()
 
-	// Start the server - this must be outside the goroutine
-	log.Printf("Starting server on port %s", cfg.Port)
+	// Start the HTTP server
+	logger.Info("Starting server", zap.String("port", cfg.Port))
 	if err := e.Start(":" + cfg.Port); err != nil {
-		log.Printf("Server error: %v", err)
+		// echo returns ErrServerClosed on graceful shutdown; only log real errors
+		if err != http.ErrServerClosed {
+			logger.Error("Server error", zap.Error(err))
+		} else {
+			logger.Info("Server shut down gracefully")
+		}
 	}
 }

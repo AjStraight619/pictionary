@@ -10,6 +10,7 @@ import (
 	"github.com/Ajstraight619/pictionary-server/internal/game"
 	"github.com/Ajstraight619/pictionary-server/internal/shared"
 	"github.com/Ajstraight619/pictionary-server/internal/ws"
+	"go.uber.org/zap"
 )
 
 type GameInstance struct {
@@ -23,14 +24,16 @@ type GameServer struct {
 	cancelFunc context.CancelFunc
 	games      map[string]*GameInstance
 	mu         sync.RWMutex
+	logger     *zap.Logger
 }
 
-func NewGameServer() *GameServer {
+func NewGameServer(logger *zap.Logger) *GameServer {
 	ctx, cancel := context.WithCancel(context.Background())
 	server := &GameServer{
 		ctx:        ctx,
 		cancelFunc: cancel,
 		games:      make(map[string]*GameInstance),
+		logger:     logger,
 	}
 
 	server.StartInactiveGamesCleaner()

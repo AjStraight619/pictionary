@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"net/http"
-
 	"github.com/Ajstraight619/pictionary-server/internal/server"
-	"github.com/Ajstraight619/pictionary-server/internal/user"
+	// "github.com/Ajstraight619/pictionary-server/internal/user" // No longer creating userService here
 	"github.com/labstack/echo/v4"
 )
 
+// RegisterRoutes sets up the game-specific routes.
+// Auth and user routes are handled by RegisterUserRoutes, called from main.go.
 func RegisterRoutes(e *echo.Echo, server *server.GameServer) {
 	e.POST("/game/create", func(c echo.Context) error {
 		return CreateGameHandler(c, server)
@@ -21,16 +21,15 @@ func RegisterRoutes(e *echo.Echo, server *server.GameServer) {
 		return ServeWs(c, server)
 	})
 
-	userService := user.NewService()
-	RegisterAuthRoutes(e, userService)
+	// userService := user.NewService()
+	// RegisterAuthRoutes(e, userService)
 
-	// Root path for Railway health check
-	e.GET("/", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
-	})
+	// Root path and /health are registered in main.go
+	// e.GET("/", func(c echo.Context) error {
+	// 	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	// })
 
-	// Health check endpoint
-	e.GET("/health", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
-	})
+	// e.GET("/health", func(c echo.Context) error {
+	// 	return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
+	// })
 }
