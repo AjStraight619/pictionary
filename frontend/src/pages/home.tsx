@@ -60,6 +60,11 @@ export default function Home() {
     e.preventDefault();
     setError(null);
 
+    if (!user) {
+      setError("Please sign in to create a game.");
+      return;
+    }
+
     // Validate form
     if (username.length < 3 || username.length > 12) {
       setError("Player name must be between 3 and 12 characters.");
@@ -93,6 +98,7 @@ export default function Home() {
 
     try {
       const payload = {
+        userID: user.id,
         username,
         options: gameOptions,
       };
@@ -135,6 +141,11 @@ export default function Home() {
     e.preventDefault();
     setError(null);
 
+    if (!user) {
+      setError("Please sign in to join a game.");
+      return;
+    }
+
     // Validate form
     if (username.length < 3 || username.length > 12) {
       setError("Player name must be between 3 and 12 characters.");
@@ -150,6 +161,7 @@ export default function Home() {
 
     try {
       const payload = {
+        userID: user.id,
         gameID: gameCode,
         username,
       };
