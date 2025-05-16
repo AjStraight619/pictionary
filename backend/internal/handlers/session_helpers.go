@@ -19,12 +19,10 @@ func GetPlayerIDFromSession(c echo.Context, gameID string) (playerID, username s
 		// Session exists, get player info from it
 		playerID = sessionData.PlayerID
 		username = sessionData.Username
-		log.Printf("[AUTH] Retrieved player %s (username: %s) from Redis session", playerID, username)
 
 		// Check if player has access to this game
 		if slices.Contains(sessionData.GameIDs, gameID) {
 			hasAccess = true
-			log.Printf("[AUTH] Player %s has access to game %s via Redis session", playerID, gameID)
 		}
 
 		if !hasAccess {
@@ -98,8 +96,6 @@ func UpdateSessionWithNewPlayer(c echo.Context, playerID, username, gameID strin
 	// If we have an existing session, update it
 	if sessionData != nil {
 		sessionID = session.GetSessionID(c)
-		log.Printf("[AUTH] Updating existing Redis session %s for player %s", sessionID, playerID)
-
 		sessionData.PlayerID = playerID
 		sessionData.Username = username
 
@@ -108,13 +104,11 @@ func UpdateSessionWithNewPlayer(c echo.Context, playerID, username, gameID strin
 
 		if !gameExists {
 			sessionData.GameIDs = append(sessionData.GameIDs, gameID)
-			log.Printf("[AUTH] Added game %s to existing Redis session", gameID)
 		}
 
 		sessionMgr.Update(sessionID, *sessionData)
 	} else {
 		// Create a new session
-		log.Printf("[AUTH] Creating new Redis session for player %s (username: %s)", playerID, username)
 		var err error
 		sessionID, err = sessionMgr.Create(playerID, username)
 		if err != nil {
@@ -130,7 +124,6 @@ func UpdateSessionWithNewPlayer(c echo.Context, playerID, username, gameID strin
 	// Set session cookie
 	if sessionID != "" {
 		session.SetSessionCookie(c, sessionID)
-		log.Printf("[AUTH] Set session cookie for player %s with Redis session ID: %s", playerID, sessionID)
 	}
 }
 
