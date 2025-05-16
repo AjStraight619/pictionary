@@ -11,11 +11,24 @@ type QueryParams = {
 };
 
 type UseCustomWebsocketArgs = {
-  messageTypes?: Array<keyof MessagePayloadMap>;
+  messageTypes?: string[];
   messageHandlers?: MessageHandlers;
-  url?: string;
-  gameId?: string;
   queryParams?: QueryParams;
+};
+
+// Create a static option object to be reused across all instances
+// This prevents each hook instance from creating its own heartbeat
+const sharedWebsocketOptions = {
+  shouldReconnect: () => true,
+  reconnectAttempts: 5,
+  reconnectInterval: (attemptNumber: number) =>
+    Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
+  heartbeat: {
+    message: () => "ping",
+    returnMessage: "pong",
+    interval: 54000,
+    timeout: 59000,
+  },
 };
 
 export const useCustomWebsocket = ({
@@ -34,10 +47,17 @@ export const useCustomWebsocket = ({
     useWebSocket(`${WS_URL}/${id}`, {
       queryParams: augmentedQueryParams,
       share: true,
-      shouldReconnect: () => true,
-      reconnectAttempts: 5,
-      reconnectInterval: (attemptNumber) =>
-        Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
+      filter: (message) => {
+        try {
+          const newMessage = JSON.parse(message.data);
+          // Propagate only valid message types
+          return messageTypes?.includes(newMessage.type) ?? false;
+        } catch {
+          return false; // Ignore invalid JSON
+        }
+      },
+      // We're using the shared options object for heartbeat and reconnection settings
+      ...sharedWebsocketOptions,
       onOpen: () => {
         console.log("WebSocket opened at", new Date().toLocaleTimeString());
         console.log(`Connected to WebSocket at ${WS_URL}/${id}`);
@@ -60,23 +80,6 @@ export const useCustomWebsocket = ({
         console.log("Reconnect stopped at", new Date().toLocaleTimeString());
         //TODO: Trigger a modal here to inform the user that the connection has been lost
         navigate("/");
-      },
-      filter: (message) => {
-        try {
-          const newMessage = JSON.parse(message.data);
-          // Propagate only valid message types
-          return messageTypes?.includes(newMessage.type) ?? false;
-        } catch {
-          return false; // Ignore invalid JSON
-        }
-      },
-      heartbeat: {
-        message: () => {
-          return "ping";
-        },
-        returnMessage: "pong",
-        interval: 54000,
-        timeout: 59000,
       },
     });
 
