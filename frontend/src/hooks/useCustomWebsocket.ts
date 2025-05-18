@@ -16,19 +16,52 @@ type UseCustomWebsocketArgs = {
   queryParams?: QueryParams;
 };
 
-// Create a static option object to be reused across all instances
-// This prevents each hook instance from creating its own heartbeat
+// Singleton heartbeat manager
+// Track active heartbeats by URL to prevent duplicates
+const heartbeatManager = {
+  activeHeartbeats: new Map<string, NodeJS.Timeout>(),
+  connectionCounts: new Map<string, number>(),
+
+  setupHeartbeat(url: string, send: (message: string) => void): () => void {
+    const count = (this.connectionCounts.get(url) || 0) + 1;
+    this.connectionCounts.set(url, count);
+
+    if (!this.activeHeartbeats.has(url)) {
+      console.log(`Setting up heartbeat for ${url}`);
+      const timer = setInterval(() => {
+        console.log(`Sending heartbeat ping to ${url}`);
+        send("ping");
+      }, 54000);
+
+      this.activeHeartbeats.set(url, timer);
+    }
+
+    // Return cleanup function
+    return () => {
+      const currentCount = this.connectionCounts.get(url) || 0;
+      if (currentCount <= 1) {
+        // Last connection using this URL, clear the heartbeat
+        const timer = this.activeHeartbeats.get(url);
+        if (timer) {
+          console.log(`Cleaning up heartbeat for ${url}`);
+          clearInterval(timer);
+          this.activeHeartbeats.delete(url);
+        }
+        this.connectionCounts.delete(url);
+      } else {
+        // Decrement count
+        this.connectionCounts.set(url, currentCount - 1);
+      }
+    };
+  },
+};
+
+// Shared WebSocket options without heartbeat configuration
 const sharedWebsocketOptions = {
   shouldReconnect: () => true,
   reconnectAttempts: 5,
   reconnectInterval: (attemptNumber: number) =>
     Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
-  heartbeat: {
-    message: () => "ping",
-    returnMessage: "pong",
-    interval: 54000,
-    timeout: 59000,
-  },
 };
 
 export const useCustomWebsocket = ({
@@ -43,45 +76,65 @@ export const useCustomWebsocket = ({
   const { id } = useParams();
   const augmentedQueryParams = { ...queryParams, playerID, username };
 
-  const { sendJsonMessage, lastMessage, readyState, getWebSocket } =
-    useWebSocket(`${WS_URL}/${id}`, {
-      queryParams: augmentedQueryParams,
-      share: true,
-      filter: (message) => {
-        try {
-          const newMessage = JSON.parse(message.data);
-          // Propagate only valid message types
-          return messageTypes?.includes(newMessage.type) ?? false;
-        } catch {
-          return false; // Ignore invalid JSON
-        }
-      },
-      // We're using the shared options object for heartbeat and reconnection settings
-      ...sharedWebsocketOptions,
-      onOpen: () => {
-        console.log("WebSocket opened at", new Date().toLocaleTimeString());
-        console.log(`Connected to WebSocket at ${WS_URL}/${id}`);
-        console.log("Player info used for connection:", { playerID, username });
-      },
-      onClose: (event) => {
-        console.log(
-          `WebSocket closed: code ${event.code}, reason: ${
-            event.reason || "none provided"
-          }`
-        );
-        console.log(`Connection was to: ${WS_URL}/${id}`);
-      },
-      onError: (error) => {
-        console.log("WebSocket error:", error);
-        console.log(`Failed connection to: ${WS_URL}/${id}`);
-        console.log("Player info used:", { playerID, username });
-      },
-      onReconnectStop: () => {
-        console.log("Reconnect stopped at", new Date().toLocaleTimeString());
-        //TODO: Trigger a modal here to inform the user that the connection has been lost
-        navigate("/");
-      },
-    });
+  const fullWsUrl = `${WS_URL}/${id}`;
+
+  const {
+    sendMessage,
+    sendJsonMessage,
+    lastMessage,
+    readyState,
+    getWebSocket,
+  } = useWebSocket(fullWsUrl, {
+    queryParams: augmentedQueryParams,
+    share: true,
+    filter: (message) => {
+      try {
+        const newMessage = JSON.parse(message.data);
+        // Propagate only valid message types
+        return messageTypes?.includes(newMessage.type) ?? false;
+      } catch {
+        return false; // Ignore invalid JSON
+      }
+    },
+    // Using shared options without heartbeat
+    ...sharedWebsocketOptions,
+    onOpen: () => {
+      console.log("WebSocket opened at", new Date().toLocaleTimeString());
+      console.log(`Connected to WebSocket at ${fullWsUrl}`);
+      console.log("Player info used for connection:", { playerID, username });
+    },
+    onClose: (event) => {
+      console.log(
+        `WebSocket closed: code ${event.code}, reason: ${
+          event.reason || "none provided"
+        }`
+      );
+      console.log(`Connection was to: ${fullWsUrl}`);
+    },
+    onError: (error) => {
+      console.log("WebSocket error:", error);
+      console.log(`Failed connection to: ${fullWsUrl}`);
+      console.log("Player info used:", { playerID, username });
+    },
+    onReconnectStop: () => {
+      console.log("Reconnect stopped at", new Date().toLocaleTimeString());
+      //TODO: Trigger a modal here to inform the user that the connection has been lost
+      navigate("/");
+    },
+  });
+
+  // Manage heartbeat centrally
+  useEffect(() => {
+    if (readyState !== ReadyState.OPEN) return;
+
+    // Setup heartbeat using our singleton manager
+    const cleanupHeartbeat = heartbeatManager.setupHeartbeat(
+      fullWsUrl,
+      sendMessage
+    );
+
+    return cleanupHeartbeat;
+  }, [fullWsUrl, readyState, sendMessage]);
 
   // Process messages and call appropriate handlers
   useEffect(() => {
