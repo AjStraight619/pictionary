@@ -16,15 +16,16 @@ const GameStateUpdater = () => {
     () => ({
       // When the full game state is sent:
       gameState: (payload) => {
-        console.log("gameState update: ", payload);
+        console.log("🔷 Game state update received:", payload);
         dispatch({ type: "GAME_STATE_UPDATE", payload });
       },
+      playerGuess: (payload) => {
+        dispatch({ type: "PLAYER_GUESS", payload });
+      },
+
       revealedLetters: (payload: (number | string)[]) => {
-        // Turn [95, 95, 109, 95, 114] → ["", "", "m", "", "r"]
         const letters = payload.map((code) => {
-          // normalize to a number
           const n = typeof code === "string" ? +code : code;
-          // if it’s the underscore code, return empty—otherwise char
           return n === 95 ? "" : String.fromCharCode(n);
         });
 
@@ -56,6 +57,11 @@ const GameStateUpdater = () => {
 
       openSelectWordModal: (payload) => {
         dispatch({ type: "SELECT_WORD_MODAL", payload });
+      },
+
+      closeSelectWordModal: () => {
+        console.log("Closing select word modal");
+        dispatch({ type: "CLOSE_SELECT_WORD_MODAL" });
       },
 
       letterRevealed: (payload) => {
@@ -106,9 +112,11 @@ const GameStateUpdater = () => {
       "drawingPlayerChanged",
       "selectedWord",
       "openSelectWordModal",
+      "closeSelectWordModal",
       "scoreUpdated",
       "playerReady",
       "cursorUpdate",
+      "playerGuess",
       "playerJoined",
       "playerLeft",
       "playerRemoved",

@@ -26,10 +26,6 @@ const DrawerCanvas = () => {
   const lastUsedBrushSizeRef = useRef<number>(5);
   const playerInfo = useReadLocalStorage<PlayerInfo>("playerInfo");
 
-  // Initialize canvas history
-
-  // Add logging wrappers for history operations
-
   const { sendJsonMessage } = useCustomWebsocket({
     messageTypes: ["canvas"],
   });
@@ -75,7 +71,6 @@ const DrawerCanvas = () => {
     });
 
     // Save state after adding a shape
-    console.log("🔷 Adding shape, saving state");
     loggedSaveState();
   }, 16);
 
@@ -123,17 +118,14 @@ const DrawerCanvas = () => {
   );
 
   const loggedSaveState = useCallback(() => {
-    console.log("📝 Saving canvas state");
     saveState();
   }, [saveState]);
 
   const loggedUndo = useCallback(() => {
-    console.log("⏪ Undoing last action");
     undo();
   }, [undo]);
 
   const loggedRedo = useCallback(() => {
-    console.log("⏩ Redoing action");
     redo();
   }, [redo]);
 

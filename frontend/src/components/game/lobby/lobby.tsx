@@ -18,7 +18,6 @@ const Lobby = () => {
         {players.map((player) => (
           <PlayerCard
             key={player.ID}
-            playerID={player.ID}
             isHost={player.isHost}
             isDrawing={player.isDrawing}
             name={player.username}

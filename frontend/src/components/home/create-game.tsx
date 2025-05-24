@@ -69,9 +69,6 @@ const CreateGameForm = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // Generate gameId and playerId
-    //const gameId = crypto.randomUUID();
-
     // Prepare the payload
     const payload = {
       username: formState.playerName,

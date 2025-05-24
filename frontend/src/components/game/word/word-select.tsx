@@ -12,7 +12,6 @@ import {
 } from "@/hooks/useGameSelector";
 import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 import type { Word } from "@/types/game";
-import { useState } from "react";
 import { Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useIsCurrentDrawer } from "@/hooks/useIsCurrentDrawer";
@@ -22,9 +21,7 @@ const WordSelect = () => {
   const isSelectingWord = useIsSelectingWord();
   const isCurrentDrawer = useIsCurrentDrawer();
 
-  const [, setOpen] = useState(isSelectingWord);
-
-  const { timeRemaining, stopTimer } = useTimer({
+  const { timeRemaining } = useTimer({
     timerType: "selectWordTimer",
     messageTypes: ["selectWordTimer"],
   });
@@ -32,8 +29,8 @@ const WordSelect = () => {
   const { sendJsonMessage } = useCustomWebsocket({ messageTypes: [] });
 
   const handleSelectWord = (chosenWord: Word) => {
-    stopTimer();
-    setOpen(false);
+    // stopTimer();
+    console.log("Selected word:", chosenWord);
     sendJsonMessage({
       type: "selectWord",
       payload: { word: chosenWord },
@@ -41,7 +38,7 @@ const WordSelect = () => {
   };
 
   return (
-    <Dialog open={isSelectingWord && isCurrentDrawer} onOpenChange={setOpen}>
+    <Dialog open={isSelectingWord && isCurrentDrawer}>
       <DialogContent
         hideCloseButton={true}
         onPointerDownOutside={(e) => e.preventDefault()}

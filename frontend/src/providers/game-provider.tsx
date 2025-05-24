@@ -1,4 +1,5 @@
 import {
+  ChatMessage,
   Cursor,
   GameState,
   GameStatus,
@@ -12,6 +13,7 @@ import React, { createContext, useContext, useReducer } from "react";
 
 type Action =
   | { type: "GAME_STATE_UPDATE"; payload: GameState }
+  | { type: "PLAYER_GUESS"; payload: ChatMessage }
   | { type: "PLAYER_JOINED"; payload: Player }
   | { type: "PLAYER_LEFT"; payload: string }
   | { type: "ADD_REVEALED_LETTER"; payload: Array<string | number> }
@@ -21,6 +23,7 @@ type Action =
       type: "SELECT_WORD_MODAL";
       payload: { isSelectingWord: boolean; selectableWords: Word[] };
     }
+  | { type: "CLOSE_SELECT_WORD_MODAL" }
   | { type: "SCORE_UPDATED"; payload: { playerID: string; score: number } }
   | { type: "PLAYER_READY"; payload: { playerID: string } }
   | {
@@ -50,16 +53,32 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         ...state,
         players: state.players.filter((p) => p.ID !== action.payload),
       };
-    case "ADD_REVEALED_LETTER":
+    case "PLAYER_GUESS":
       return {
         ...state,
-        revealedLetters: action.payload,
+        chatMessages: [...state.chatMessages, action.payload],
+      };
+    case "ADD_REVEALED_LETTER":
+      if (!state.turn) return state;
+      return {
+        ...state,
+        turn: {
+          ...state.turn,
+          revealedLetters: action.payload,
+        },
       };
 
     case "LETTER_REVEALED":
+      if (!state.turn) return state;
       return {
         ...state,
-        revealedLetters: [...state.revealedLetters, action.payload.letter],
+        turn: {
+          ...state.turn,
+          revealedLetters: [
+            ...state.turn.revealedLetters,
+            action.payload.letter,
+          ],
+        },
       };
 
     case "DRAWING_PLAYER_CHANGED":
@@ -89,6 +108,12 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         ...state,
         isSelectingWord: true,
         selectableWords: action.payload.selectableWords,
+      };
+
+    case "CLOSE_SELECT_WORD_MODAL":
+      return {
+        ...state,
+        isSelectingWord: false,
       };
 
     case "SCORE_UPDATED":
@@ -131,9 +156,9 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     options: { roundLimit: 8, turnTimeLimit: 60, selectWordTimeLimit: 30 },
     round: null,
     turn: null,
-    revealedLetters: [],
     selectableWords: [],
     isSelectingWord: false,
+    chatMessages: [],
   });
 
   return (

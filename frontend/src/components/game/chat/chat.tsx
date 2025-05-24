@@ -1,25 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import ChatInput from "./chat-input";
-import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
-
-type ChatMessage = {
-  username: string;
-  guess: string;
-};
+import { useChatMessages } from "@/hooks/useGameSelector";
 
 const Chat = () => {
-  const [chats, setChats] = useState<ChatMessage[]>([]);
-
-  const { lastMessage } = useCustomWebsocket({ messageTypes: ["playerGuess"] });
+  const renderRef = useRef(0);
 
   useEffect(() => {
-    if (lastMessage) {
-      const newChat = JSON.parse(lastMessage.data).payload;
-      setChats((chats) => [...chats, newChat]);
-    }
-  }, [lastMessage]);
+    renderRef.current++;
+    console.log("🔷 Chat rendered", renderRef.current);
+  }, []);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const chats = useChatMessages();
 
   useEffect(() => {
     if (messagesContainerRef.current) {
@@ -37,7 +30,7 @@ const Chat = () => {
       >
         {chats.map((chat, index) => (
           <div
-            key={index}
+            key={`${chat.playerID}-${index}`}
             className="break-words bg-muted/30 rounded-lg p-2 text-sm"
           >
             <span className="font-semibold text-purple-400">

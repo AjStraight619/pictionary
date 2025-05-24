@@ -15,16 +15,22 @@ export type GameOptions = {
   roundLimit: number;
 };
 
+export type ChatMessage = {
+  playerID: string;
+  username: string;
+  guess: string;
+};
+
 export type GameState = {
   id: string;
   players: Player[];
   playerOrder: string[];
+  chatMessages: ChatMessage[];
   options: GameOptions;
   status: GameStatus;
   activeCursor: Cursor | null;
   round: Round | null;
   turn: Turn | null;
-  revealedLetters: Array<string | number>;
   selectableWords: Word[];
   isSelectingWord: boolean;
 };
@@ -36,6 +42,7 @@ export type Player = {
   username: string;
   isDrawing: boolean;
   isGuessCorrect: boolean;
+  isSelectingWord: boolean;
   isHost: boolean;
   score: number;
   color: string;
@@ -62,8 +69,8 @@ export type Round = {
 
 export type Turn = {
   wordToGuess: Word | null;
-  revealedLetters: string[];
   playersGuessedCorrectly?: Map<string, boolean>;
+  revealedLetters: Array<string | number>;
   phase: TurnPhase;
 };
 

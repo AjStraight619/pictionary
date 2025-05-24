@@ -32,6 +32,10 @@ export function useWordToGuess():
   );
 }
 
+export function useChatMessages(): GameState["chatMessages"] {
+  return useGameSelector((state) => state.chatMessages);
+}
+
 export function useCurrentDrawer():
   | NonNullable<GameState["round"]>["currentDrawerID"]
   | null {
@@ -40,8 +44,10 @@ export function useCurrentDrawer():
   );
 }
 
-export function useRevealedLetters(): GameState["revealedLetters"] {
-  return useGameSelector((state) => state.revealedLetters);
+export function useRevealedLetters(): NonNullable<
+  GameState["turn"]
+>["revealedLetters"] {
+  return useGameSelector((state) => state.turn?.revealedLetters || []);
 }
 
 export function useHost(): Player | null {

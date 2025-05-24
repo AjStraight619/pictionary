@@ -93,6 +93,7 @@ export const useCustomWebsocket = ({
         // Propagate only valid message types
         return messageTypes?.includes(newMessage.type) ?? false;
       } catch {
+        console.warn("🔷 Invalid JSON:", message.data);
         return false; // Ignore invalid JSON
       }
     },
@@ -141,6 +142,7 @@ export const useCustomWebsocket = ({
     if (lastMessage && Object.keys(messageHandlers).length > 0) {
       try {
         const parsedMessage = JSON.parse(lastMessage.data);
+        console.log("🔷 Parsed message:", parsedMessage);
         const messageType = parsedMessage.type as keyof MessagePayloadMap;
 
         // If we have a handler for this message type, call it with properly typed payload

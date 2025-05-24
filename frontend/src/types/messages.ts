@@ -1,4 +1,4 @@
-import { Cursor, GameState, Player, Word } from "./game";
+import { ChatMessage, Cursor, GameState, Player, Word } from "./game";
 import { ShapeData } from "./canvas";
 
 /**
@@ -8,7 +8,6 @@ import { ShapeData } from "./canvas";
 export type MessagePayloadMap = {
   // For receiving full game state
   gameState: GameState;
-  "game-state": GameState; // Legacy name
 
   // For requesting game state
   gameStateRequest: { playerID: string };
@@ -32,8 +31,7 @@ export type MessagePayloadMap = {
   };
 
   // Player interactions
-  "player-update": Player;
-  playerGuess: { playerID: string; guess: string; username?: string };
+  playerGuess: ChatMessage;
   playerReady: { playerID: string };
   playerToggleReady: { playerID: string };
   playerJoined: { player: Player };
@@ -47,6 +45,7 @@ export type MessagePayloadMap = {
   selectedWord: { word: Word; isSelectingWord: boolean };
   scoreUpdated: { playerID: string; score: number };
   openSelectWordModal: { isSelectingWord: boolean; selectableWords: Word[] };
+  closeSelectWordModal: null;
 
   // Timer messages
   startTimer: { timerType: string; duration: number };

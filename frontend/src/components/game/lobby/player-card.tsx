@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import Score from "../player/score";
 
 type PlayerCardProps = {
-  playerID: string;
   name: string;
   score: number;
   isHost: boolean;
@@ -14,7 +13,6 @@ type PlayerCardProps = {
 };
 
 const PlayerCard = ({
-  playerID,
   name,
   score,
   isHost,
@@ -23,10 +21,9 @@ const PlayerCard = ({
   isReady,
   isPreGame,
 }: PlayerCardProps) => {
-  const bgColor = color ? `${color}20` : "bg-muted"; // 20 is hex for ~12% opacity
+  const bgColor = color ? `${color}20` : "bg-muted";
   const textColor = color || "text-foreground";
 
-  console.log("playerID: ", playerID);
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -63,7 +60,6 @@ const PlayerCard = ({
 
       {isPreGame && (
         <div className="inline-flex items-center gap-2">
-          {/* {canRemovePlayer && <RemovePlayer playerID={playerID} name={name} />} */}
           {isReady ? (
             <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
           ) : (

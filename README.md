@@ -24,7 +24,7 @@ A real-time multiplayer drawing and guessing game inspired by the classic Pictio
 - **React Router** - Navigation
 - **Websockets** - Real-time communication
 
-### Backend
+### [Backend - Now @github.com/AjStraight619/pictionary-serv](https://github.com/AjStraight619/pictionary-serv)
 - **Go** - Server-side language
 - **Echo** - Web framework
 - **Gorilla Websocket** - WebSocket implementation
