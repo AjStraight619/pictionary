@@ -104,23 +104,6 @@ const GameStateUpdater = () => {
   );
 
   const { sendWSMessage } = useCustomWebsocket({
-    messageTypes: [
-      "gameState",
-      "gameStateRequest",
-      "letterRevealed",
-      "revealedLetters",
-      "drawingPlayerChanged",
-      "selectedWord",
-      "openSelectWordModal",
-      "closeSelectWordModal",
-      "scoreUpdated",
-      "playerReady",
-      "cursorUpdate",
-      "playerGuess",
-      "playerJoined",
-      "playerLeft",
-      "playerRemoved",
-    ],
     messageHandlers,
   });
 

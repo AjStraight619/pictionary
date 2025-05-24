@@ -11,7 +11,7 @@ type QueryParams = {
 };
 
 type UseCustomWebsocketArgs = {
-  messageTypes?: string[];
+  messageTypes?: (keyof MessagePayloadMap)[];
   messageHandlers?: MessageHandlers;
   queryParams?: QueryParams;
 };
@@ -68,7 +68,7 @@ export const useCustomWebsocket = ({
   messageTypes,
   messageHandlers = {},
   queryParams,
-}: UseCustomWebsocketArgs) => {
+}: UseCustomWebsocketArgs = {}) => {
   const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
   const playerID = playerInfo?.playerID as string;
   const username = playerInfo?.username as string;
@@ -77,6 +77,11 @@ export const useCustomWebsocket = ({
   const augmentedQueryParams = { ...queryParams, playerID, username };
 
   const fullWsUrl = `${WS_URL}/${id}`;
+
+  // Compute message types from handlers and/or explicit messageTypes
+  const handlerTypes = messageHandlers ? Object.keys(messageHandlers) : [];
+  const filterTypes = messageTypes ? messageTypes : [];
+  const allTypes = Array.from(new Set([...handlerTypes, ...filterTypes]));
 
   const {
     sendMessage,
@@ -90,8 +95,10 @@ export const useCustomWebsocket = ({
     filter: (message) => {
       try {
         const newMessage = JSON.parse(message.data);
-        // Propagate only valid message types
-        return messageTypes?.includes(newMessage.type) ?? false;
+        // If no types specified, allow all. Otherwise, filter.
+        return allTypes.length === 0
+          ? true
+          : allTypes.includes(newMessage.type);
       } catch {
         console.warn("🔷 Invalid JSON:", message.data);
         return false; // Ignore invalid JSON

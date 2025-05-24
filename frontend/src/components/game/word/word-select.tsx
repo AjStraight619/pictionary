@@ -26,7 +26,7 @@ const WordSelect = () => {
     messageTypes: ["selectWordTimer"],
   });
 
-  const { sendJsonMessage } = useCustomWebsocket({ messageTypes: [] });
+  const { sendJsonMessage } = useCustomWebsocket();
 
   const handleSelectWord = (chosenWord: Word) => {
     // stopTimer();
