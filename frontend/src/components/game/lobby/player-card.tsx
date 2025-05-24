@@ -1,10 +1,12 @@
 import { Check, Crown, Pencil, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Score from "../player/score";
+import { useGame } from "@/providers/game-provider";
+import { PlayerScoreChange } from "../player/player-score-change";
 
 type PlayerCardProps = {
   name: string;
-  score: number;
+  playerId: string;
   isHost: boolean;
   isDrawing: boolean;
   color: string;
@@ -14,7 +16,7 @@ type PlayerCardProps = {
 
 const PlayerCard = ({
   name,
-  score,
+  playerId,
   isHost,
   isDrawing,
   color,
@@ -23,6 +25,13 @@ const PlayerCard = ({
 }: PlayerCardProps) => {
   const bgColor = color ? `${color}20` : "bg-muted";
   const textColor = color || "text-foreground";
+
+  const { dispatch } = useGame();
+
+  // This function resets pointsChange for this player
+  const resetPointsChange = () => {
+    dispatch({ type: "RESET_POINTS_CHANGE", payload: { playerID: playerId } });
+  };
 
   return (
     <motion.div
@@ -38,9 +47,14 @@ const PlayerCard = ({
       {/* Avatar/Initial */}
       <div
         className="h-9 w-9 rounded-full flex items-center justify-center text-white"
-        style={{ backgroundColor: color || "#6366f1" }}
+        style={{ backgroundColor: color || "#6366f1", position: "relative" }}
       >
         {name.charAt(0).toUpperCase()}
+        {/* Score animation overlays avatar */}
+        <PlayerScoreChange
+          playerId={playerId}
+          onAnimationComplete={resetPointsChange}
+        />
       </div>
 
       <div className="flex-1 min-w-0">
@@ -55,7 +69,7 @@ const PlayerCard = ({
             <Pencil className="h-3.5 w-3.5 text-primary flex-shrink-0" />
           )}
         </div>
-        <Score score={score} />
+        <Score playerId={playerId} />
       </div>
 
       {isPreGame && (

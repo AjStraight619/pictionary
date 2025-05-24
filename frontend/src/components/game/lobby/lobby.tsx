@@ -18,10 +18,10 @@ const Lobby = () => {
         {players.map((player) => (
           <PlayerCard
             key={player.ID}
+            playerId={player.ID}
             isHost={player.isHost}
             isDrawing={player.isDrawing}
             name={player.username}
-            score={player.score}
             color={player.color}
             isPreGame={false}
           />

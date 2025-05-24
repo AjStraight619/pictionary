@@ -40,7 +40,7 @@ export type MessagePayloadMap = {
   removePlayer: { playerID: string; hostID: string };
   letterRevealed: LetterRevealPayload;
   // Game flow messages
-  revealedLetters: string[];
+  revealedLetters: { letters: string[] };
   drawingPlayerChanged: Player;
   selectedWord: { word: Word; isSelectingWord: boolean };
   scoreUpdated: { playerID: string; score: number };

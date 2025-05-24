@@ -83,7 +83,7 @@ const PreGameLobby = () => {
               isHost={player.isHost}
               isDrawing={player.isDrawing}
               name={player.username}
-              score={player.score}
+              playerId={player.ID}
               color={player.color}
               isReady={player.ready}
               isPreGame={true}

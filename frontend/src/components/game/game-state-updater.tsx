@@ -23,15 +23,16 @@ const GameStateUpdater = () => {
         dispatch({ type: "PLAYER_GUESS", payload });
       },
 
-      revealedLetters: (payload: (number | string)[]) => {
-        const letters = payload.map((code) => {
+      revealedLetters: (payload) => {
+        console.log("🔷 Revealed letters update received:", payload);
+        const letters = payload.letters.map((code) => {
           const n = typeof code === "string" ? +code : code;
           return n === 95 ? "" : String.fromCharCode(n);
         });
 
         dispatch({
           type: "ADD_REVEALED_LETTER",
-          payload: letters,
+          payload: { letters },
         });
       },
       drawingPlayerChanged: (payload) => {
@@ -47,7 +48,6 @@ const GameStateUpdater = () => {
       },
 
       scoreUpdated: (payload) => {
-        console.log("💰 Score update received:", payload);
         dispatch({ type: "SCORE_UPDATED", payload });
       },
 

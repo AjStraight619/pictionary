@@ -31,7 +31,7 @@ export default function PostGameLobby() {
                 isHost={player.isHost}
                 isDrawing={player.isDrawing}
                 name={player.username}
-                score={player.score}
+                playerId={player.ID}
                 color={player.color}
                 isPreGame={false}
               />

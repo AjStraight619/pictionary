@@ -1,19 +1,10 @@
 import { useEffect, useRef } from "react";
 import ChatInput from "./chat-input";
 import { useChatMessages } from "@/hooks/useGameSelector";
-
+import { PlayerScoreChange } from "../player/player-score-change";
 const Chat = () => {
-  const renderRef = useRef(0);
-
-  useEffect(() => {
-    renderRef.current++;
-    console.log("🔷 Chat rendered", renderRef.current);
-  }, []);
-
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
   const chats = useChatMessages();
-
   useEffect(() => {
     if (messagesContainerRef.current) {
       // Scroll the container to the bottom
@@ -37,6 +28,7 @@ const Chat = () => {
               {chat.username}
             </span>
             <span className="text-muted-foreground">: {chat.guess}</span>
+            {chat.isCorrect && <PlayerScoreChange playerId={chat.playerID} />}
           </div>
         ))}
         {chats.length === 0 && (

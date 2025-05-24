@@ -19,6 +19,7 @@ export type ChatMessage = {
   playerID: string;
   username: string;
   guess: string;
+  isCorrect: boolean;
 };
 
 export type GameState = {
@@ -45,6 +46,7 @@ export type Player = {
   isSelectingWord: boolean;
   isHost: boolean;
   score: number;
+  pointsChange: number;
   color: string;
   ready: boolean;
 };

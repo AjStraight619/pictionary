@@ -1,6 +1,6 @@
 import { useGame } from "@/providers/game-provider";
 import { GameState } from "@/types/game";
-import { Player } from "@/types/lobby";
+import { Player } from "@/types/game";
 import { useMemo } from "react";
 
 export function useGameSelector<T>(selector: (state: GameState) => T): T {
@@ -10,6 +10,12 @@ export function useGameSelector<T>(selector: (state: GameState) => T): T {
 
 export function usePlayers(): GameState["players"] {
   return useGameSelector((state) => state.players);
+}
+
+export function usePlayer(playerId: string): Player | undefined {
+  return useGameSelector((state) =>
+    state.players.find((player) => player.ID === playerId)
+  );
 }
 
 export function useGameStatus(): GameState["status"] {
@@ -61,6 +67,12 @@ export function useCurrentDrawerFromPlayers(): string | null {
     const current = state.players.find((p) => p.isDrawing);
     return current ? current.ID : null;
   });
+}
+
+export function usePlayerScore(playerId: string): number | undefined {
+  return useGameSelector(
+    (state) => state.players.find((p) => p.ID === playerId)?.score
+  );
 }
 
 export function useActiveCursor(): GameState["activeCursor"] {

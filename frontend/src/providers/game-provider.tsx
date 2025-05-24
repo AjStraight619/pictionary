@@ -16,7 +16,10 @@ type Action =
   | { type: "PLAYER_GUESS"; payload: ChatMessage }
   | { type: "PLAYER_JOINED"; payload: Player }
   | { type: "PLAYER_LEFT"; payload: string }
-  | { type: "ADD_REVEALED_LETTER"; payload: Array<string | number> }
+  | {
+      type: "ADD_REVEALED_LETTER";
+      payload: { letters: Array<string | number> };
+    }
   | { type: "DRAWING_PLAYER_CHANGED"; payload: Player }
   | { type: "SELECTED_WORD"; payload: { word: Word; isSelectingWord: boolean } }
   | {
@@ -31,7 +34,8 @@ type Action =
       payload: { playerID: string; cursor: Cursor | null };
     }
   | { type: "TOAST"; payload: ToastEvent }
-  | { type: "LETTER_REVEALED"; payload: { position: number; letter: string } };
+  | { type: "LETTER_REVEALED"; payload: { position: number; letter: string } }
+  | { type: "RESET_POINTS_CHANGE"; payload: { playerID: string } };
 
 function setSelectedWord(turn: Turn, word: Word): Turn {
   return {
@@ -64,7 +68,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         ...state,
         turn: {
           ...state.turn,
-          revealedLetters: action.payload,
+          revealedLetters: action.payload.letters,
         },
       };
 
@@ -123,6 +127,14 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           p.ID === action.payload.playerID
             ? { ...p, score: action.payload.score }
             : p
+        ),
+      };
+
+    case "RESET_POINTS_CHANGE":
+      return {
+        ...state,
+        players: state.players.map((p) =>
+          p.ID === action.payload.playerID ? { ...p, pointsChange: 0 } : p
         ),
       };
 
