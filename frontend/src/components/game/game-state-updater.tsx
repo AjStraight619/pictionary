@@ -39,6 +39,10 @@ const GameStateUpdater = () => {
         dispatch({ type: "DRAWING_PLAYER_CHANGED", payload });
       },
 
+      gameEventDialog: (payload) => {
+        dispatch({ type: "SHOW_EVENT_DIALOG", payload });
+      },
+
       cursorUpdate: (payload) => {
         dispatch({ type: "CURSOR_UPDATE", payload });
       },
@@ -51,7 +55,8 @@ const GameStateUpdater = () => {
         dispatch({ type: "SCORE_UPDATED", payload });
       },
 
-      playerReady: (payload) => {
+      playerToggleReady: (payload) => {
+        console.log("Player ready event received:", payload);
         dispatch({ type: "PLAYER_READY", payload });
       },
 

@@ -30,6 +30,7 @@ export type MessagePayloadMap = {
     coordinates?: [number, number][];
   };
 
+  gameEventDialog: { eventType: string; delay: number };
   // Player interactions
   playerGuess: ChatMessage;
   playerReady: { playerID: string };
@@ -39,6 +40,8 @@ export type MessagePayloadMap = {
   playerRemoved: { player: Player };
   removePlayer: { playerID: string; hostID: string };
   letterRevealed: LetterRevealPayload;
+  selectWord: { word: Word };
+  cursorUpdate: { playerID: string; cursor: Cursor | null };
   // Game flow messages
   revealedLetters: { letters: string[] };
   drawingPlayerChanged: Player;
@@ -51,7 +54,6 @@ export type MessagePayloadMap = {
   startTimer: { timerType: string; duration: number };
   stopTimer: { timerType: string };
   startGameCountdown: { duration: number };
-  cursorUpdate: { playerID: string; cursor: Cursor | null };
 
   // Game control messages
   startGame: { force?: boolean };

@@ -22,6 +22,12 @@ export type ChatMessage = {
   isCorrect: boolean;
 };
 
+export type GameEventDialog = {
+  open: boolean;
+  eventType: string;
+  delay: number;
+};
+
 export type GameState = {
   id: string;
   players: Player[];
@@ -32,6 +38,7 @@ export type GameState = {
   activeCursor: Cursor | null;
   round: Round | null;
   turn: Turn | null;
+  eventDialog: GameEventDialog | null;
   selectableWords: Word[];
   isSelectingWord: boolean;
 };

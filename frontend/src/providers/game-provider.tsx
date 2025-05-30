@@ -35,6 +35,7 @@ type Action =
     }
   | { type: "TOAST"; payload: ToastEvent }
   | { type: "LETTER_REVEALED"; payload: { position: number; letter: string } }
+  | { type: "SHOW_EVENT_DIALOG"; payload: { eventType: string; delay: number } }
   | { type: "RESET_POINTS_CHANGE"; payload: { playerID: string } };
 
 function setSelectedWord(turn: Turn, word: Word): Turn {
@@ -114,6 +115,15 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         selectableWords: action.payload.selectableWords,
       };
 
+    case "SHOW_EVENT_DIALOG":
+      return {
+        ...state,
+        eventDialog: {
+          open: true,
+          ...action.payload,
+        },
+      };
+
     case "CLOSE_SELECT_WORD_MODAL":
       return {
         ...state,
@@ -171,6 +181,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     selectableWords: [],
     isSelectingWord: false,
     chatMessages: [],
+    eventDialog: null,
   });
 
   return (

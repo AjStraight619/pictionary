@@ -14,14 +14,13 @@ import WordSelect from "@/components/game/word/word-select";
 import GameStateUpdater from "@/components/game/game-state-updater";
 import GameHeader from "@/components/game/game_info/game-header";
 
-export default function Test() {
+export default function Game() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "players">("chat");
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 0
   );
 
-  // Track window size for responsive adjustments
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -31,7 +30,6 @@ export default function Test() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Automatically close sidebar on larger screens
   useEffect(() => {
     if (windowWidth >= 768 && sidebarOpen) {
       setSidebarOpen(false);
@@ -103,7 +101,7 @@ export default function Test() {
                   value="players"
                   className="h-full m-0 data-[state=active]:flex flex-col"
                 >
-                  <Lobby />
+                  <Lobby isPreGame={false} />
                 </TabsContent>
               </div>
               <div className="border-t p-3">
@@ -151,7 +149,11 @@ export default function Test() {
                     </Button>
                   </div>
                   <div className="flex-1 overflow-auto">
-                    {activeTab === "chat" ? <Chat /> : <Lobby />}
+                    {activeTab === "chat" ? (
+                      <Chat />
+                    ) : (
+                      <Lobby isPreGame={false} />
+                    )}
                   </div>
                   <div className="p-4 border-t">
                     <PreGameLobby />

@@ -2,9 +2,13 @@ import { useEffect, useRef } from "react";
 import ChatInput from "./chat-input";
 import { useChatMessages } from "@/hooks/useGameSelector";
 import { PlayerScoreChange } from "../player/player-score-change";
+import { useGameStatus } from "@/hooks/useGameSelector";
+import { GameStatus } from "@/types/game";
+
 const Chat = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const chats = useChatMessages();
+  const gameStatus = useGameStatus();
   useEffect(() => {
     if (messagesContainerRef.current) {
       // Scroll the container to the bottom
@@ -31,7 +35,7 @@ const Chat = () => {
             {chat.isCorrect && <PlayerScoreChange playerId={chat.playerID} />}
           </div>
         ))}
-        {chats.length === 0 && (
+        {chats.length === 0 && gameStatus === GameStatus.InProgress && (
           <div className="text-center text-muted-foreground text-sm py-8">
             No messages yet. Start guessing!
           </div>

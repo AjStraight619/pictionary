@@ -41,32 +41,7 @@ A real-time multiplayer drawing and guessing game inspired by the classic Pictio
 - 📱 **Responsive design** with 4:3 drawing canvas ratio
 - 🎨 **Drawing tools** including pencil, shapes, and colors
 
-## Project Structure
 
-```
-pictionary/
-├── frontend/           # React frontend application
-│   ├── src/
-│   │   ├── components/ # UI components
-│   │   ├── hooks/      # Custom React hooks
-│   │   ├── pages/      # Main page components
-│   │   ├── types/      # TypeScript type definitions
-│   │   └── utils/      # Utility functions
-├── mobile/             # Mobile application (early development)
-│   ├── components/     # Mobile UI components
-│   ├── hooks/          # Mobile-specific hooks
-│   ├── screens/        # Mobile screens
-│   └── types/          # Mobile type definitions 
-└── backend/            # Go backend server
-    ├── cmd/            # Application entry points
-    ├── internal/       # Internal packages
-    │   ├── game/       # Game logic
-    │   ├── handlers/   # HTTP handlers
-    │   ├── messaging/  # WebSocket messaging
-    │   ├── server/     # Server setup
-    │   └── ws/         # WebSocket implementation
-    └── scripts/        # Utility scripts
-```
 
 
 ### Prerequisites
@@ -95,11 +70,9 @@ go run cmd/server/main.go
 - Basic game loop (lobby, word selection, drawing, scoring)
 - Canvas tools (pencil, shapes, colors)
 - Responsive UI design
+- Letter reveal logic
 
 ### In Progress
-- Letter reveal logic
-- Authentication system
-- Improved word selection and categories
 - Spectator mode
 - Game statistics and leaderboards
 - Mobile version (early development stage)

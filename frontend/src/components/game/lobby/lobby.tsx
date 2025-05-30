@@ -1,20 +1,16 @@
 import PlayerCard from "./player-card";
 import { usePlayers } from "@/hooks/useGameSelector";
-import { useGameStatus } from "@/hooks/useGameSelector";
-import { GameStatus } from "@/types/game";
 
-const Lobby = () => {
+const Lobby = ({ isPreGame }: { isPreGame: boolean }) => {
   const players = usePlayers();
-  const gameStatus = useGameStatus();
 
   return (
     <div className="h-full p-4 overflow-y-auto">
-      <h3 className="text-sm font-medium mb-3">
-        {gameStatus === GameStatus.InProgress
-          ? "Game in Progress"
-          : "Waiting for Players"}
-      </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div
+        className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${
+          isPreGame ? "grid-cols-1" : "grid-cols-2"
+        }`}
+      >
         {players.map((player) => (
           <PlayerCard
             key={player.ID}
@@ -23,7 +19,7 @@ const Lobby = () => {
             isDrawing={player.isDrawing}
             name={player.username}
             color={player.color}
-            isPreGame={false}
+            isPreGame={isPreGame}
           />
         ))}
         {players.length === 0 && (

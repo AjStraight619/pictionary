@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import PlayerCard from "./player-card";
+import Lobby from "./lobby";
 import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 
 const PreGameLobby = () => {
@@ -55,9 +55,7 @@ const PreGameLobby = () => {
 
   const toggleReady = () => {
     if (playerInfo?.playerID) {
-      sendWSMessage("playerToggleReady", {
-        playerID: playerInfo.playerID,
-      });
+      sendWSMessage("playerToggleReady");
     }
   };
 
@@ -72,24 +70,8 @@ const PreGameLobby = () => {
       >
         <DialogTitle>Players</DialogTitle>
         <DialogDescription>Waiting for players to join...</DialogDescription>
-        <div
-          className={`grid gap-2 ${
-            players.length > 4 ? "grid-cols-2" : "grid-cols-1"
-          } auto-rows-auto w-full`}
-        >
-          {players.map((player) => (
-            <PlayerCard
-              key={player.ID}
-              isHost={player.isHost}
-              isDrawing={player.isDrawing}
-              name={player.username}
-              playerId={player.ID}
-              color={player.color}
-              isReady={player.ready}
-              isPreGame={true}
-            />
-          ))}
-        </div>
+
+        <Lobby isPreGame={true} />
         <DialogFooter className="flex flex-col sm:flex-row gap-2">
           <ReadyButton
             isReady={players.find((p) => p.ID === playerInfo?.playerID)?.ready}

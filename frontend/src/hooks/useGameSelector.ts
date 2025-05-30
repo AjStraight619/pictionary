@@ -22,6 +22,10 @@ export function useGameStatus(): GameState["status"] {
   return useGameSelector((state) => state.status);
 }
 
+export function useGameEventDialog(): GameState["eventDialog"] {
+  return useGameSelector((state) => state.eventDialog);
+}
+
 export function useCurrentRound(): GameState["round"] {
   return useGameSelector((state) => state.round);
 }
