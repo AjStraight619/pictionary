@@ -17,15 +17,15 @@ A real-time multiplayer drawing and guessing game inspired by the classic Pictio
 
 ### Frontend
 - **React** - UI framework
-- **TypeScript** - Type-safe JavaScript
+- **TypeScript**
 - **Fabric.js** - Canvas manipulation library
 - **TailwindCSS** - Utility-first CSS framework
 - **Framer Motion** - Animations
 - **React Router** - Navigation
-- **Websockets** - Real-time communication
+- **Websockets** - Custom websocket hook
 
 ### [Backend - Now @github.com/AjStraight619/pictionary-serv](https://github.com/AjStraight619/pictionary-serv)
-- **Go** - Server-side language
+- **Go** 
 - **Echo** - Web framework
 - **Gorilla Websocket** - WebSocket implementation
 - **Context** - For cancellation and cleanup
