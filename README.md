@@ -45,8 +45,31 @@ A real-time multiplayer drawing and guessing game inspired by the classic Pictio
 
 
 ### Prerequisites
-- Node.js 16+ for frontend
-- Go 1.20+ for backend
+- Node.js 20+ for frontend
+- Go with automatic toolchain downloads enabled (backend specifies Go 1.23.8)
+- Docker running locally
+
+### Quick local development
+
+From the project root:
+
+```bash
+bash start.sh
+```
+
+This starts PostgreSQL and Redis in Docker, seeds words into a fresh database,
+and launches the backend and frontend at http://localhost:5173. First launch
+downloads any missing dependencies. Ports 5432, 6379, 8080, and 5173 must be free.
+Backend logs are in `.dev/backend.log`. Ctrl+C stops the app; database containers
+and local data remain available for the next run. To stop the databases too:
+
+```bash
+docker stop pictionary-dev-postgres pictionary-dev-redis
+```
+
+Use a regular browser window and an incognito window for separate players.
+The backend source must be present in `backend/` (it is ignored by this repo).
+Restart the command after backend code changes; frontend changes reload automatically.
 
 ### Running the Frontend
 ```bash
