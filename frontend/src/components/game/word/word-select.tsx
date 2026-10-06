@@ -41,15 +41,15 @@ const WordSelect = () => {
         className="sm:max-w-md"
       >
         <DialogTitle className="flex items-center justify-between">
-          <span className="text-gradient-pictionary">
+          <span className="text-foreground">
             Select a word to draw
           </span>
-          <div className="flex items-center gap-2 px-3 py-1 bg-indigo-950/50 border border-indigo-500/50 rounded-full">
-            <Clock className="h-4 w-4 text-yellow-400" />
-            <div className="text-yellow-300">{timeRemaining}</div>
+          <div className="flex items-center gap-2 px-3 py-1 bg-muted border border-border rounded-full">
+            <Clock className="h-4 w-4 text-[hsl(var(--sketch-clay))]" />
+            <div className="text-primary">{timeRemaining}</div>
           </div>
         </DialogTitle>
-        <DialogDescription className="text-yellow-100">
+        <DialogDescription className="text-muted-foreground">
           Choose one of these words to draw for other players to guess
         </DialogDescription>
         <div className="grid grid-cols-1 gap-3 pt-2">
@@ -62,7 +62,7 @@ const WordSelect = () => {
             >
               <Button
                 onClick={() => handleSelectWord(word)}
-                className="w-full h-12 text-lg font-bold text-black bg-gradient-to-r from-yellow-400 to-pink-500 hover:from-yellow-500 hover:to-pink-600 shadow-[0_0_10px_rgba(255,214,0,0.3)] hover:shadow-[0_0_15px_rgba(255,214,0,0.5)] transition-all duration-300"
+                className="w-full h-12 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {word.word.toLowerCase()}
               </Button>

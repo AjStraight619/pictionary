@@ -74,8 +74,9 @@ export default function SignUpForm() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-4">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex flex-col justify-center items-center min-h-screen gap-8 p-6">
+      <p className="text-lg font-semibold tracking-tight">Pictionary Pals <span aria-hidden="true" className="text-primary">/</span></p>
+      <Card className="w-full max-w-md rounded-2xl shadow-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
             Create an account

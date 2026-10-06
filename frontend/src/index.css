@@ -4,115 +4,44 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+  color-scheme: light;
+  --background: 42 33% 96%;
+  --foreground: 150 7% 19%;
+  --card: 40 40% 99%;
+  --card-foreground: 150 7% 19%;
+  --popover: 40 40% 99%;
+  --popover-foreground: 150 7% 19%;
+  --primary: 211 38% 40%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 20% 91%;
+  --secondary-foreground: 150 7% 19%;
+  --muted: 40 20% 92%;
+  --muted-foreground: 150 5% 40%;
+  --accent: 40 20% 91%;
+  --accent-foreground: 150 7% 19%;
+  --border: 40 15% 82%;
+  --input: 40 15% 74%;
+  --ring: 211 38% 40%;
+  --destructive: 8 58% 40%;
+  --destructive-foreground: 0 0% 100%;
+  --sketch-blue: 211 38% 48%;
+  --sketch-clay: 17 42% 49%;
+  --sketch-sage: 143 20% 42%;
+
     --radius: 0.5rem;
-    
-    /* Pictionary theme colors */
-    --pictionary-yellow: 47 95% 53%;  /* #FACC15 */
-    --pictionary-pink: 330 84% 60%;   /* #EC4899 */
-    --pictionary-purple: 269 97% 65%; /* #A855F7 */
+    --chart-1: 211 38% 48%;
+    --chart-2: 143 20% 42%;
+    --chart-3: 17 42% 49%;
+    --chart-4: 40 35% 48%;
+    --chart-5: 260 18% 48%;
   }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
-}
-@layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
   body {
-    @apply text-foreground;
-    background-color: #000;
-    background-image: url("https://www.transparenttextures.com/patterns/otis-redding.png");
-    background-repeat: repeat;
-    background-size: auto;
+    @apply bg-background text-foreground;
+    background-image: radial-gradient(hsl(40 15% 50% / 0.09) 0.6px, transparent 0.6px);
+    background-size: 6px 6px;
   }
 }
 
-@keyframes float {
-  0% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-5px) rotate(1deg);
-  }
-  100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-}
-
-.animate-float {
-  animation: float 20s ease-in-out infinite;
-}
-
-/* Utility classes for Pictionary gradients */
-.text-gradient-pictionary {
-  color: transparent;
-  background-clip: text;
-  background-image: linear-gradient(to right, #FACC15, #EC4899, #A855F7);
-}
-
-.gradient-border {
-  position: relative;
-}
-
-.gradient-border::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 2px;
-  background: linear-gradient(to right, #FACC15, #EC4899, #A855F7);
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box, 
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
+.sketchbook input,
+.sketchbook select { min-height: 44px; }

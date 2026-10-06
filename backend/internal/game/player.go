@@ -12,14 +12,14 @@ import (
 )
 
 var defaultColors = []string{
-	"#FF0000",
-	"#00FF00",
-	"#0000FF",
-	"#FFFF00",
-	"#FF00FF",
-	"#00FFFF",
-	"#FFA500",
-	"#800080",
+	"#40658D",
+	"#9B573E",
+	"#4F725A",
+	"#876D35",
+	"#795D83",
+	"#3F7375",
+	"#96606E",
+	"#626976",
 }
 
 func (g *Game) NewPlayer(id, username string, isHost bool) *shared.Player {
@@ -47,7 +47,7 @@ func (g *Game) AddPlayer(player *shared.Player) {
 		player.Color = g.AvailableColors[0]
 		g.AvailableColors = g.AvailableColors[1:]
 	} else {
-		player.Color = "#FFFFFF"
+		player.Color = "#40658D"
 	}
 	g.Players[player.ID] = player
 	g.PlayerOrder = append(g.PlayerOrder, player.ID)
@@ -151,7 +151,7 @@ func (g *Game) getPlayerColor(playerID string) string {
 	if player, exists := g.Players[playerID]; exists {
 		return player.Color
 	}
-	return "#FFFFFF"
+	return "#40658D"
 }
 
 func (g *Game) CheckForHost() bool {

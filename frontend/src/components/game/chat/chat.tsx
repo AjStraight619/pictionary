@@ -28,7 +28,7 @@ const Chat = () => {
             key={`${chat.playerID}-${index}`}
             className="break-words bg-muted/30 rounded-lg p-2 text-sm"
           >
-            <span className="font-semibold text-purple-400">
+            <span className="font-semibold text-primary">
               {chat.username}
             </span>
             <span className="text-muted-foreground">: {chat.guess}</span>

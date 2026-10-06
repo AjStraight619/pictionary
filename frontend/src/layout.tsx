@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 const Layout = () => {
   return (
-    <main>
+    <main className="sketchbook min-h-screen">
       <Outlet />
       <Toaster />
     </main>
