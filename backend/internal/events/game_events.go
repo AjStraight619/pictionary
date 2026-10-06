@@ -7,8 +7,9 @@ import (
 )
 
 type GameEvent struct {
-	Type    string          `json:"type"`
-	Payload json.RawMessage `json:"payload"`
+	PlayerID string          `json:"-"`
+	Type     string          `json:"type"`
+	Payload  json.RawMessage `json:"payload"`
 }
 
 type StartTimerPayload struct {

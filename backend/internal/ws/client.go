@@ -24,10 +24,6 @@ const (
 	maxMessageSize = 20480
 )
 
-var (
-	newline = []byte{'\n'}
-)
-
 type Client struct {
 	Hub      *Hub
 	Send     chan []byte
@@ -52,7 +48,10 @@ func NewClient(hub *Hub, conn *websocket.Conn, playerID string) *Client {
 func (c *Client) Read() {
 	defer func() {
 		log.Printf("Client.Read: unregistering and closing connection for player %s", c.PlayerID)
-		c.Hub.Unregister <- c
+		select {
+		case c.Hub.Unregister <- c:
+		case <-c.Hub.ctx.Done():
+		}
 		c.cancel()
 		c.Conn.Close()
 	}()
@@ -65,6 +64,7 @@ func (c *Client) Read() {
 
 	recognizedEvents := map[string]bool{
 		e.GameState:         true,
+		"gameStateRequest":  true,
 		e.PlayerGuess:       true,
 		e.StartTimer:        true,
 		e.StopTimer:         true,
@@ -86,6 +86,22 @@ func (c *Client) Read() {
 		if err := json.Unmarshal(message, &gameEvent); err == nil && gameEvent.Type != "" {
 			// Only handle if it's a recognized event
 			if recognizedEvents[gameEvent.Type] {
+				if gameEvent.Type == "gameStateRequest" {
+					gameEvent.Type = e.GameState
+				}
+				// Identity is assigned by the authenticated connection, not the payload.
+				gameEvent.PlayerID = c.PlayerID
+				var payload map[string]json.RawMessage
+				_ = json.Unmarshal(gameEvent.Payload, &payload)
+				if payload == nil {
+					payload = make(map[string]json.RawMessage)
+				}
+				if gameEvent.Type != e.RemovePlayer {
+					payload["playerID"], _ = json.Marshal(c.PlayerID)
+				} else {
+					payload["hostID"], _ = json.Marshal(c.PlayerID)
+				}
+				gameEvent.Payload, _ = json.Marshal(payload)
 				select {
 				case <-c.ctx.Done():
 					log.Printf("Client.Read: context cancelled for player %s", c.PlayerID)
@@ -93,14 +109,12 @@ func (c *Client) Read() {
 				case c.Hub.GameEvents <- gameEvent:
 					log.Printf("Client.Read: Dispatched game event %s for player %s", gameEvent.Type, c.PlayerID)
 					continue // Skip broadcasting; it is handled internally.
-				default:
-					log.Printf("Client.Read: GameEvents channel full, discarding event for player %s", c.PlayerID)
 				}
 			}
 		}
 
 		// ! Broadcast messages to all clients that do not change the internal game state.
-		c.Hub.Broadcast <- message
+		c.Hub.BroadcastMessage(message)
 	}
 
 }
@@ -133,16 +147,6 @@ func (c *Client) Write() {
 				log.Printf("Client.Write: Write error for player %s: %v", c.PlayerID, err)
 				return
 			}
-			// Drain queued messages.
-			n := len(c.Send)
-			for range n {
-				w.Write(newline)
-				additional := <-c.Send
-				if _, err := w.Write(additional); err != nil {
-					log.Printf("Client.Write: error writing queued message for player %s: %v", c.PlayerID, err)
-					return
-				}
-			}
 			if err := w.Close(); err != nil {
 				log.Printf("Client.Write: writer close error for player %s: %v", c.PlayerID, err)
 				return
@@ -158,7 +162,11 @@ func (c *Client) Write() {
 }
 
 func (c *Client) SendMessage(data []byte) error {
-	return c.Conn.WriteMessage(websocket.TextMessage, data)
+	if err := c.ctx.Err(); err != nil {
+		return err
+	}
+	c.Hub.SendToPlayer(c.PlayerID, data)
+	return nil
 }
 
 func (c *Client) Close() error {

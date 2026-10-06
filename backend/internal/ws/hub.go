@@ -8,7 +8,14 @@ import (
 	e "github.com/Ajstraight619/pictionary-server/internal/events"
 )
 
+type delivery struct {
+	playerID string
+	exclude  bool
+	message  []byte
+}
+
 type Hub struct {
+	deliveries   chan delivery
 	ctx          context.Context
 	Broadcast    chan []byte
 	GameEvents   chan e.GameEvent
@@ -26,6 +33,7 @@ type Hubs struct {
 func NewHub(ctx context.Context) *Hub {
 	return &Hub{
 		ctx:        ctx,
+		deliveries: make(chan delivery),
 		Broadcast:  make(chan []byte),
 		GameEvents: make(chan e.GameEvent, 10),
 		Clients:    make(map[*Client]bool),
@@ -74,14 +82,15 @@ func (h *Hub) Run() {
 					go h.OnDisconnect(client.PlayerID)
 				}
 			}
+		case request := <-h.deliveries:
+			for client := range h.Clients {
+				if (client.PlayerID == request.playerID) != request.exclude {
+					h.enqueue(client, request.message)
+				}
+			}
 		case message := <-h.Broadcast:
 			for client := range h.Clients {
-				select {
-				case client.Send <- message:
-				default:
-					close(client.Send)
-					delete(h.Clients, client)
-				}
+				h.enqueue(client, message)
 			}
 		case <-h.ctx.Done():
 			log.Printf("Hub is shutting down...")
@@ -90,24 +99,36 @@ func (h *Hub) Run() {
 	}
 }
 
-func (h *Hub) BroadcastMessage(message []byte) {
-	h.Broadcast <- message
-}
-
-func (h *Hub) SendToOthers(playerID string, message []byte) {
-	for client := range h.Clients {
-		if client.PlayerID != playerID {
-			client.Send <- message
+// Only Run owns Clients and closes outgoing queues.
+func (h *Hub) enqueue(client *Client, message []byte) {
+	select {
+	case client.Send <- message:
+	default:
+		delete(h.Clients, client)
+		close(client.Send)
+		client.Conn.Close()
+		if h.OnDisconnect != nil {
+			go h.OnDisconnect(client.PlayerID)
 		}
 	}
 }
 
+func (h *Hub) BroadcastMessage(message []byte) {
+	select {
+	case h.Broadcast <- message:
+	case <-h.ctx.Done():
+	}
+}
+func (h *Hub) SendToOthers(playerID string, message []byte) {
+	select {
+	case h.deliveries <- delivery{playerID: playerID, exclude: true, message: message}:
+	case <-h.ctx.Done():
+	}
+}
 func (h *Hub) SendToPlayer(playerID string, message []byte) {
-	for client := range h.Clients {
-		if client.PlayerID == playerID {
-			client.Send <- message
-			break
-		}
+	select {
+	case h.deliveries <- delivery{playerID: playerID, message: message}:
+	case <-h.ctx.Done():
 	}
 }
 
@@ -116,76 +137,10 @@ func (h *Hub) GameEventChannel() <-chan e.GameEvent {
 }
 
 func (h *Hub) cleanup() {
-	log.Println("Hub cleanup starting...")
-
-	// Close all client connections
 	for client := range h.Clients {
-		// Safe close of client send channel
-		safeCloseClientChannel(client)
+		close(client.Send)
 		client.Conn.Close()
 		delete(h.Clients, client)
 	}
-
-	// Safely close Broadcast channel
-	safeCloseChannel(h.Broadcast, "Broadcast")
-
-	// Safely close GameEvents channel
-	safeCloseChannel(h.GameEvents, "GameEvents")
-
-	log.Println("Hub cleanup completed")
-}
-
-// Helper function to safely close a client's send channel
-func safeCloseClientChannel(client *Client) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("Recovered from panic closing client channel: %v", r)
-		}
-	}()
-
-	select {
-	case _, ok := <-client.Send:
-		if ok {
-			close(client.Send)
-		}
-	default:
-		close(client.Send)
-	}
-}
-
-func safeCloseChannel(ch any, name string) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("Recovered from panic closing %s channel: %v", name, r)
-		}
-	}()
-
-	switch c := ch.(type) {
-	case chan []byte:
-		select {
-		case _, ok := <-c:
-			if ok {
-				close(c)
-				log.Printf("%s channel closed successfully", name)
-			} else {
-				log.Printf("%s channel was already closed", name)
-			}
-		default:
-			close(c)
-			log.Printf("%s channel closed successfully", name)
-		}
-	case chan e.GameEvent:
-		select {
-		case _, ok := <-c:
-			if ok {
-				close(c)
-				log.Printf("%s channel closed successfully", name)
-			} else {
-				log.Printf("%s channel was already closed", name)
-			}
-		default:
-			close(c)
-			log.Printf("%s channel closed successfully", name)
-		}
-	}
+	// Input channels have multiple producers. Cancellation stops sends; do not close them.
 }
