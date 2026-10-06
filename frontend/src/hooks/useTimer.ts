@@ -17,21 +17,32 @@ export const useTimer = ({
     defaultTime
   );
 
-  const { lastMessage, sendJsonMessage } = useCustomWebsocket({
-    messageTypes: messageTypes,
+  const [isStarting, setIsStarting] = useState(false);
+  const { lastMessage, sendJsonMessage, readyState } = useCustomWebsocket({
+    messageTypes: [...messageTypes, "gameState"],
   });
 
   useEffect(() => {
     if (lastMessage) {
       const parsedData = JSON.parse(lastMessage.data);
       const payload = parsedData.payload;
-      if (payload && typeof payload.timeRemaining === "number") {
+      if (parsedData.type === "gameState") {
+        setTimeRemaining(payload.timers?.[timerType] ?? null);
+        setIsStarting(false);
+      } else if (payload && (typeof payload.timeRemaining === "number" || payload.timeRemaining === null)) {
         setTimeRemaining(payload.timeRemaining);
+        setIsStarting(false);
       }
     }
-  }, [lastMessage]);
+  }, [lastMessage, timerType]);
+
+  useEffect(() => {
+    if (readyState !== 1) setIsStarting(false);
+  }, [readyState]);
 
   const startTimer = () => {
+    if (readyState !== 1 || isStarting) return;
+    setIsStarting(true);
     sendJsonMessage({
       type: "startTimer",
       payload: {
@@ -49,6 +60,8 @@ export const useTimer = ({
   };
 
   return {
+    isStarting,
+    isConnected: readyState === 1,
     timeRemaining,
     setTimeRemaining,
     startTimer,

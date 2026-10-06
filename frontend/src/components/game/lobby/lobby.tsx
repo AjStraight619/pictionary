@@ -19,6 +19,7 @@ const Lobby = ({ isPreGame }: { isPreGame: boolean }) => {
             isDrawing={player.isDrawing}
             name={player.username}
             color={player.color}
+            isReady={player.ready}
             isPreGame={isPreGame}
           />
         ))}

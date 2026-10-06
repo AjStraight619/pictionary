@@ -1,36 +1,15 @@
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { useRevealedLetters } from "@/hooks/useGameSelector";
 import { Word as TWord } from "@/types/game";
 import { useIsCurrentDrawer } from "@/hooks/useIsCurrentDrawer";
-
-// Animation variants
-const letterVariants = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-};
-
-// Letter reveal animation
-const revealVariants = {
-  initial: { scale: 1.5, opacity: 0 },
-  animate: { scale: 1, opacity: 1 },
-  exit: { scale: 0.8, opacity: 0 },
-};
 
 type WordProps = {
   word: TWord;
 };
 
-// Helper function to convert character code to string
-const charFromCode = (code: number | string): string => {
-  if (typeof code === "number") {
-    // Convert number to character
-    return String.fromCharCode(code);
-  }
-  return code;
-};
-
-const isHidden = (letter: string | number): boolean => {
-  return letter === "_" || letter === 95;
+const charFromCode = (code: number | string | undefined): string => {
+  if (code == null || code === "_" || code === 95) return "";
+  return typeof code === "number" ? String.fromCodePoint(code) : code;
 };
 
 const Word = ({ word }: WordProps) => {
@@ -38,52 +17,45 @@ const Word = ({ word }: WordProps) => {
   const isCurrentDrawer = useIsCurrentDrawer();
 
   return (
-    <div className="flex space-x-1">
-      {word.word.split("").map((letter, index) => (
-        <motion.div
-          key={`${letter}-${index}`}
-          variants={letterVariants}
-          className="relative"
-        >
+    <div className="flex gap-1" data-word-display>
+      {Array.from(word.word).map((letter, index) => {
+        const visibleLetter = isCurrentDrawer
+          ? letter
+          : charFromCode(revealedLetters[index]);
+        const isSpace = letter === " ";
+
+        return (
           <div
-            className="flex flex-col items-center justify-center m-0 p-0"
-            style={{
-              height: "2em",
-              position: "relative",
-            }}
+            key={`${word.id}-${index}`}
+            className="relative shrink-0"
+            style={{ width: isSpace ? "0.4em" : "0.8em", height: "1.5em" }}
           >
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={isCurrentDrawer ? letter : revealedLetters[index]}
-                variants={
-                  !isHidden(revealedLetters[index]) && !isCurrentDrawer
-                    ? revealVariants
-                    : letterVariants
-                }
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className={`leading-none m-0 p-0 ${
-                  !isHidden(revealedLetters[index]) && !isCurrentDrawer
-                    ? "text-yellow-300 font-bold"
-                    : ""
-                }`}
-                style={{ position: "absolute", top: 0 }}
-              >
-                {isCurrentDrawer ? (
-                  <>{letter.toLowerCase()}</>
-                ) : (
-                  <>
-                    {charFromCode(revealedLetters[index])?.toLowerCase() ||
-                      "\u00A0"}
-                  </>
+            {!isSpace && (
+              <>
+                <span
+                  aria-hidden="true"
+                  data-word-underline
+                  className="absolute inset-x-0 bottom-0 border-b-2 border-current"
+                />
+                {visibleLetter && (
+                  <motion.span
+                    key={visibleLetter}
+                    data-word-letter
+                    initial={{ opacity: 0, y: isCurrentDrawer ? 0 : -24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className={`absolute inset-x-0 bottom-1 text-center leading-none ${
+                      isCurrentDrawer ? "" : "text-primary font-bold"
+                    }`}
+                  >
+                    {visibleLetter.toLowerCase()}
+                  </motion.span>
                 )}
-              </motion.span>
-            </AnimatePresence>
-            {letter !== " " && <span className="leading-none m-0 p-0">_</span>}
+              </>
+            )}
           </div>
-        </motion.div>
-      ))}
+        );
+      })}
     </div>
   );
 };

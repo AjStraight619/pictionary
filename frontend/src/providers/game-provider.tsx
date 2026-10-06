@@ -28,7 +28,6 @@ type Action =
     }
   | { type: "CLOSE_SELECT_WORD_MODAL" }
   | { type: "SCORE_UPDATED"; payload: { playerID: string; score: number } }
-  | { type: "PLAYER_READY"; payload: { playerID: string } }
   | {
       type: "CURSOR_UPDATE";
       payload: { playerID: string; cursor: Cursor | null };
@@ -145,14 +144,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         ...state,
         players: state.players.map((p) =>
           p.ID === action.payload.playerID ? { ...p, pointsChange: 0 } : p
-        ),
-      };
-
-    case "PLAYER_READY":
-      return {
-        ...state,
-        players: state.players.map((p) =>
-          p.ID === action.payload.playerID ? { ...p, isReady: true } : p
         ),
       };
 

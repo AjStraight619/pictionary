@@ -43,7 +43,7 @@ export type MessagePayloadMap = {
   selectWord: { word: Word };
   cursorUpdate: { playerID: string; cursor: Cursor | null };
   // Game flow messages
-  revealedLetters: { letters: string[] };
+  revealedLetters: { letters: Array<string | number> };
   drawingPlayerChanged: Player;
   selectedWord: { word: Word; isSelectingWord: boolean };
   scoreUpdated: { playerID: string; score: number };
@@ -53,7 +53,7 @@ export type MessagePayloadMap = {
   // Timer messages
   startTimer: { timerType: string; duration: number };
   stopTimer: { timerType: string };
-  startGameCountdown: { duration: number };
+  startGameCountdown: { timeRemaining: number | null };
 
   // Game control messages
   startGame: { force?: boolean };

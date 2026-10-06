@@ -29,6 +29,7 @@ export type GameEventDialog = {
 };
 
 export type GameState = {
+  timers?: Record<string, number>;
   id: string;
   players: Player[];
   playerOrder: string[];

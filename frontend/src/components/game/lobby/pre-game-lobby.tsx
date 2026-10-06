@@ -25,7 +25,7 @@ const PreGameLobby = () => {
   const host = useHost();
   const playerInfo = useReadLocalStorage<PlayerInfo | null>("playerInfo");
 
-  const { stopTimer, startTimer, timeRemaining, setTimeRemaining } = useTimer({
+  const { stopTimer, startTimer, timeRemaining, setTimeRemaining, isStarting, isConnected } = useTimer({
     timerType: "startGameCountdown",
     messageTypes: ["startGameCountdown"],
   });
@@ -54,7 +54,7 @@ const PreGameLobby = () => {
   };
 
   const toggleReady = () => {
-    if (playerInfo?.playerID) {
+    if (isConnected && playerInfo?.playerID) {
       sendWSMessage("playerToggleReady");
     }
   };
@@ -76,6 +76,7 @@ const PreGameLobby = () => {
           <ReadyButton
             isReady={players.find((p) => p.ID === playerInfo?.playerID)?.ready}
             onToggle={toggleReady}
+            disabled={!isConnected}
           />
 
           <div className="flex ml-auto gap-2 items-center">
@@ -90,6 +91,8 @@ const PreGameLobby = () => {
 
             <GameControlButton
               isHost={!!isHost}
+              isStarting={isStarting}
+              isConnected={isConnected}
               gameStarting={gameStarting}
               timeRemaining={timeRemaining}
               playersCount={players.length}
@@ -105,6 +108,7 @@ const PreGameLobby = () => {
 
 // Component type definitions
 type ReadyButtonProps = {
+  disabled: boolean;
   isReady?: boolean;
   onToggle: () => void;
 };
@@ -117,6 +121,8 @@ type CopyLinkButtonProps = {
 };
 
 type GameControlButtonProps = {
+  isStarting: boolean;
+  isConnected: boolean;
   isHost: boolean;
   gameStarting: boolean;
   timeRemaining: number | null;
@@ -125,8 +131,8 @@ type GameControlButtonProps = {
   onCancel: () => void;
 };
 
-const ReadyButton = ({ isReady, onToggle }: ReadyButtonProps) => (
-  <Button onClick={onToggle} variant={isReady ? "outline" : "default"}>
+const ReadyButton = ({ isReady, onToggle, disabled }: ReadyButtonProps) => (
+  <Button onClick={onToggle} disabled={disabled} aria-pressed={!!isReady} variant={isReady ? "outline" : "default"}>
     {isReady ? "Cancel Ready" : "Ready"}
   </Button>
 );
@@ -143,6 +149,8 @@ const CopyLinkButton = ({
 );
 
 const GameControlButton = ({
+  isStarting,
+  isConnected,
   isHost,
   gameStarting,
   timeRemaining,
@@ -156,20 +164,20 @@ const GameControlButton = ({
     if (gameStarting) {
       return (
         <Button onClick={onCancel} variant="destructive">
-          Cancel {timeRemaining || ""}
+          Cancel {timeRemaining ?? ""}
         </Button>
       );
     }
 
     return (
-      <Button onClick={onStart} disabled={notEnoughPlayers}>
-        Start Game
+      <Button onClick={onStart} disabled={notEnoughPlayers || isStarting || !isConnected}>
+        {isStarting ? "Starting…" : "Start Game"}
       </Button>
     );
   }
 
   if (gameStarting) {
-    return <p className="text-sm">Game starting {timeRemaining || ""}</p>;
+    return <p className="text-sm">Game starting {timeRemaining ?? ""}</p>;
   }
 
   return <p className="text-sm">Waiting for leader to start...</p>;

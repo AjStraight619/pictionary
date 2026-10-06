@@ -23,8 +23,8 @@ const PlayerCard = ({
   isReady,
   isPreGame,
 }: PlayerCardProps) => {
-  const bgColor = color ? `${color}20` : "bg-muted";
-  const textColor = color || "text-foreground";
+  const bgColor = color ? `${color}12` : "hsl(var(--muted))";
+  const textColor = "hsl(var(--foreground))";
 
   const { dispatch } = useGame();
 
@@ -35,6 +35,7 @@ const PlayerCard = ({
 
   return (
     <motion.div
+      data-player-id={playerId}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className={`rounded-lg border p-3 flex items-center gap-3 ${
@@ -47,7 +48,7 @@ const PlayerCard = ({
       {/* Avatar/Initial */}
       <div
         className="h-9 w-9 rounded-full flex items-center justify-center text-white"
-        style={{ backgroundColor: color || "#6366f1", position: "relative" }}
+        style={{ backgroundColor: color || "hsl(var(--primary))", position: "relative" }}
       >
         {name.charAt(0).toUpperCase()}
         {/* Score animation overlays avatar */}
@@ -63,7 +64,7 @@ const PlayerCard = ({
             {name}
           </p>
           {isHost && (
-            <Crown className="h-3.5 w-3.5 text-yellow-400 flex-shrink-0" />
+            <Crown className="h-3.5 w-3.5 text-[hsl(var(--sketch-clay))] flex-shrink-0" />
           )}
           {isDrawing && (
             <Pencil className="h-3.5 w-3.5 text-primary flex-shrink-0" />
@@ -73,12 +74,13 @@ const PlayerCard = ({
       </div>
 
       {isPreGame && (
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-2 text-xs" aria-label={`${name}: ${isReady ? "Ready" : "Not ready"}`}>
           {isReady ? (
-            <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+            <Check className="h-4 w-4 text-[hsl(var(--sketch-sage))] flex-shrink-0" />
           ) : (
-            <X className="h-4 w-4 text-red-500 flex-shrink-0" />
+            <X className="h-4 w-4 text-destructive flex-shrink-0" />
           )}
+          <span>{isReady ? "Ready" : "Not ready"}</span>
         </div>
       )}
     </motion.div>

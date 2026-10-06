@@ -1,3 +1,4 @@
+import { ReadyState } from "react-use-websocket";
 import { useEffect, useMemo } from "react";
 import { useCustomWebsocket } from "@/hooks/useCustomWebsocket";
 import { useGame } from "@/providers/game-provider";
@@ -25,10 +26,9 @@ const GameStateUpdater = () => {
 
       revealedLetters: (payload) => {
         console.log("🔷 Revealed letters update received:", payload);
-        const letters = payload.letters.map((code) => {
-          const n = typeof code === "string" ? +code : code;
-          return n === 95 ? "" : String.fromCharCode(n);
-        });
+        const letters = payload.letters.map((code) =>
+          typeof code === "number" ? String.fromCodePoint(code) : code
+        );
 
         dispatch({
           type: "ADD_REVEALED_LETTER",
@@ -53,11 +53,6 @@ const GameStateUpdater = () => {
 
       scoreUpdated: (payload) => {
         dispatch({ type: "SCORE_UPDATED", payload });
-      },
-
-      playerToggleReady: (payload) => {
-        console.log("Player ready event received:", payload);
-        dispatch({ type: "PLAYER_READY", payload });
       },
 
       openSelectWordModal: (payload) => {
@@ -108,9 +103,15 @@ const GameStateUpdater = () => {
     [dispatch, playerInfo?.playerID, navigate]
   );
 
-  const { sendWSMessage } = useCustomWebsocket({
+  const { sendWSMessage, readyState } = useCustomWebsocket({
     messageHandlers,
   });
+
+  useEffect(() => {
+    if (readyState === ReadyState.OPEN && playerInfo?.playerID) {
+      sendWSMessage("gameStateRequest", { playerID: playerInfo.playerID });
+    }
+  }, [readyState, playerInfo?.playerID, sendWSMessage]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
