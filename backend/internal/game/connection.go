@@ -62,7 +62,6 @@ func (g *Game) HandleDisconnect(playerID string) {
 	g.Mu.Unlock()
 
 	// Broadcast disconnection message
-	g.Messenger.BroadcastMessage([]byte("Player temporarily disconnected: " + playerID))
 	g.BroadcastGameState()
 
 	// Start timer to remove the player permanently if they don't reconnect
@@ -83,7 +82,6 @@ func (g *Game) HandleDisconnect(playerID string) {
 		g.Mu.Unlock()
 
 		// Broadcast final removal
-		g.Messenger.BroadcastMessage([]byte("Player permanently removed: " + playerID))
 		g.BroadcastGameState()
 	})
 
@@ -107,7 +105,6 @@ func (g *Game) HandleReconnect(playerID string) bool {
 		g.Mu.Unlock()
 
 		// Notify that this player was removed and cannot rejoin
-		g.Messenger.BroadcastMessage([]byte("Removed player attempted to reconnect: " + playerID))
 		return false
 	}
 
@@ -131,7 +128,6 @@ func (g *Game) HandleReconnect(playerID string) bool {
 	g.Mu.Unlock()
 
 	// Broadcast reconnection message
-	g.Messenger.BroadcastMessage([]byte("Player reconnected: " + playerID))
 	g.BroadcastGameState()
 
 	return true

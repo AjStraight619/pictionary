@@ -1,5 +1,16 @@
 package game_test
 
+import (
+	"context"
+	"encoding/json"
+	"testing"
+	"time"
+
+	events "github.com/Ajstraight619/pictionary-server/internal/events"
+	game "github.com/Ajstraight619/pictionary-server/internal/game"
+	"github.com/Ajstraight619/pictionary-server/internal/shared"
+)
+
 //
 // import (
 // 	"net/http"
@@ -190,3 +201,146 @@ package game_test
 // 	// (In a full integration test, you'd have additional logic in your Game
 // 	// or Hub to process and broadcast responses to such events.)
 // }
+
+// Timer and reveal regressions exercise production code, not a copy of its logic.
+
+func TestTimerImmediateTickAndExactExpiry(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	finished := make(chan struct{})
+	start := time.Now()
+	ticks := game.NewTimer(ctx, "test", 1).StartCountdown(func() { close(finished) }, nil)
+	select {
+	case value := <-ticks:
+		if value != 1 {
+			t.Fatalf("initial tick=%d", value)
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("no immediate tick")
+	}
+	select {
+	case value := <-ticks:
+		if value != 0 {
+			t.Fatalf("final tick=%d", value)
+		}
+	case <-time.After(1500 * time.Millisecond):
+		t.Fatal("timer waited an extra tick")
+	}
+	select {
+	case <-finished:
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("completion lagged behind zero")
+	}
+	if time.Since(start) < 900*time.Millisecond {
+		t.Fatal("timer ended early")
+	}
+}
+
+func TestTimerCancelledBeforeStart(t *testing.T) {
+	timer := game.NewTimer(context.Background(), "test", 5)
+	timer.Cancel()
+	cancelled := make(chan struct{})
+	ticks := timer.StartCountdown(func() { t.Error("cancelled timer completed") }, func() { close(cancelled) })
+	select {
+	case _, ok := <-ticks:
+		if ok {
+			t.Fatal("cancelled timer emitted a tick")
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("cancel did not close timer")
+	}
+	<-cancelled
+}
+
+type revealMessenger struct{ messages chan []byte }
+
+func (m *revealMessenger) BroadcastMessage(b []byte)                 { m.messages <- b }
+func (m *revealMessenger) SendToPlayer(_ string, b []byte)           { m.messages <- b }
+func (m *revealMessenger) SendToOthers(_ string, b []byte)           { m.messages <- b }
+func (m *revealMessenger) GameEventChannel() <-chan events.GameEvent { return nil }
+
+func TestLetterRevealUsesWordLengthAndElapsedTime(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	m := &revealMessenger{messages: make(chan []byte, 32)}
+	g := game.NewGame(ctx, "test", shared.GameOptions{TurnTimeLimit: 40}, m, nil)
+	g.CurrentTurn = game.NewTurn("drawer")
+	g.CurrentTurn.WordToGuess = &shared.Word{Word: "abcdefghij"}
+	g.CurrentTurn.Start(g, "drawer")
+	// 10 letters -> at most 7 revealed, evenly spread over 40 seconds.
+	for _, step := range []struct{ remaining, want int }{{35, 0}, {34, 1}, {20, 3}, {1, 6}, {0, 7}} {
+		g.CurrentTurn.BroadcastRevealedLetter(g, step.remaining)
+		count := 0
+		for _, r := range g.CurrentTurn.RevealedLetters {
+			if r != '_' {
+				count++
+			}
+		}
+		if count != step.want {
+			t.Fatalf("remaining=%d: got %d reveals, want %d", step.remaining, count, step.want)
+		}
+	}
+	found := false
+	for len(m.messages) > 0 {
+		var message struct {
+			Type    string          `json:"type"`
+			Payload json.RawMessage `json:"payload"`
+		}
+		if err := json.Unmarshal(<-m.messages, &message); err != nil {
+			t.Fatal(err)
+		}
+		if message.Type == "revealedLetters" {
+			var payload struct {
+				Letters []int `json:"letters"`
+			}
+			if err := json.Unmarshal(message.Payload, &payload); err != nil {
+				t.Fatal(err)
+			}
+			if len(payload.Letters) != 10 {
+				t.Fatal("reveal payload does not match frontend contract")
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("no letter updates published")
+	}
+}
+
+func TestWordSelectionDurationJSON(t *testing.T) {
+	var options shared.GameOptions
+	if err := json.Unmarshal([]byte(`{"selectWordTimeLimit":25}`), &options); err != nil {
+		t.Fatal(err)
+	}
+	if options.WordSelectTimeLimit != 25 {
+		t.Fatalf("word selection duration = %d, want 25", options.WordSelectTimeLimit)
+	}
+}
+
+func TestReadyToggleBroadcastsAuthoritativeState(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	m := &revealMessenger{messages: make(chan []byte, 32)}
+	g := game.NewGame(ctx, "ready-test", shared.GameOptions{}, m, nil)
+	g.Players["player"] = &shared.Player{ID: "player"}
+	g.PlayerOrder = []string{"player"}
+	g.InitGameEvents()
+	for _, want := range []bool{true, false} {
+		g.GameEvents[events.PlayerToggleReady](json.RawMessage(`{"playerID":"player"}`))
+		var message struct {
+			Type    string         `json:"type"`
+			Payload game.GameState `json:"payload"`
+		}
+		select {
+		case raw := <-m.messages:
+			if err := json.Unmarshal(raw, &message); err != nil {
+				t.Fatal(err)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("ready change did not broadcast")
+		}
+		if message.Type != "gameState" || len(message.Payload.Players) != 1 || message.Payload.Players[0].Ready != want {
+			t.Fatalf("unexpected ready snapshot: %+v", message)
+		}
+	}
+}

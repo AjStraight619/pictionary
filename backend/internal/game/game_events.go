@@ -39,10 +39,18 @@ func (g *Game) InitGameEvents() {
 		}
 
 		if pt.TimerType == "startGameCountdown" {
-			g.CancelTimer(pt.TimerType)
 			g.Mu.Lock()
-			g.Status = NotStarted
+			timer := g.timers[pt.TimerType]
+			if g.Status != NotStarted || timer == nil {
+				g.Mu.Unlock()
+				return
+			}
+			delete(g.timers, pt.TimerType)
 			g.Mu.Unlock()
+			timer.Cancel()
+			if b, err := utils.CreateMessage("startGameCountdown", map[string]any{"timeRemaining": nil}); err == nil {
+				g.Messenger.BroadcastMessage(b)
+			}
 		}
 	})
 
@@ -53,24 +61,7 @@ func (g *Game) InitGameEvents() {
 			return
 		}
 
-		g.CancelTimer("selectWordTimer")
-		g.setIsSelectingWord(false)
-		g.setWord(&pt.Word)
-
-		selectWordPayload := map[string]any{
-			"word":            g.CurrentTurn.WordToGuess,
-			"isSelectingWord": false,
-		}
-
-		b, err := utils.CreateMessage("selectedWord", selectWordPayload)
-		if err != nil {
-			log.Println("error marshalling selectedWord message:", err)
-			return
-		}
-		currentDrawer := g.Round.GetCurrentDrawer(g.Players, g.PlayerOrder)
-		g.Messenger.SendToPlayer(currentDrawer.ID, b)
-		g.BroadcastGameState()
-		g.FlowSignal <- TurnStarted
+		g.completeWordSelection(pt.Word)
 	})
 
 	g.RegisterGameEvent(e.GameState, func(payload json.RawMessage) {
@@ -105,44 +96,20 @@ func (g *Game) InitGameEvents() {
 
 	g.RegisterGameEvent(e.PlayerReady, func(payload json.RawMessage) {
 		var pt e.PlayerReadyPayload
-
 		if err := json.Unmarshal(payload, &pt); err != nil {
 			log.Println("Error unmarshalling PlayerReady payload:", err)
 			return
 		}
-
-		player := g.GetPlayerByID(pt.PlayerID)
-		if player == nil {
-			log.Printf("Player with ID %s not found", pt.PlayerID)
-			return
-		}
-
-		player.Ready = true
-		log.Printf("Player %s (%s) is now ready", player.Username, player.ID)
-
-		g.BroadcastGameState()
-
+		g.updatePlayerReady(pt.PlayerID, false)
 	})
 
 	g.RegisterGameEvent(e.PlayerToggleReady, func(payload json.RawMessage) {
 		var pt e.PlayerToggleReadyPayload
-
 		if err := json.Unmarshal(payload, &pt); err != nil {
 			log.Println("Error unmarshalling PlayerToggleReady payload:", err)
 			return
 		}
-
-		player := g.GetPlayerByID(pt.PlayerID)
-		if player == nil {
-			log.Printf("Player with ID %s not found", pt.PlayerID)
-			return
-		}
-
-		player.Ready = !player.Ready
-		log.Printf("Player %s (%s) ready state toggled to: %v", player.Username, player.ID, player.Ready)
-
-		g.BroadcastGameState()
-
+		g.updatePlayerReady(pt.PlayerID, true)
 	})
 
 	g.RegisterGameEvent(e.CursorUpdate, func(payload json.RawMessage) {
@@ -181,11 +148,46 @@ func (g *Game) handleExternalEvent(event e.GameEvent) {
 	handler, exists := g.GameEvents[event.Type]
 	g.Mu.RUnlock()
 
+	if event.Type == e.StartTimer || event.Type == e.StopTimer {
+		g.Mu.RLock()
+		player := g.Players[event.PlayerID]
+		permitted := player != nil && player.IsHost
+		g.Mu.RUnlock()
+		if !permitted {
+			return
+		}
+	}
+	if event.Type == e.SelectWord {
+		g.Mu.RLock()
+		permitted := g.CurrentTurn.CurrentDrawerID == event.PlayerID
+		g.Mu.RUnlock()
+		if !permitted {
+			return
+		}
+	}
+
 	if exists {
 		log.Printf("Dispatching custom handler for event type: %s", event.Type)
-		go handler(event.Payload)
+		handler(event.Payload)
 		return
 	} else {
 		log.Printf("No handler registered for game event: %s", event.Type)
 	}
+}
+
+// Ready changes and snapshots share the same lock so all clients see a consistent value.
+func (g *Game) updatePlayerReady(playerID string, toggle bool) {
+	g.Mu.Lock()
+	player := g.Players[playerID]
+	if player == nil || g.Status != NotStarted {
+		g.Mu.Unlock()
+		return
+	}
+	if toggle {
+		player.Ready = !player.Ready
+	} else {
+		player.Ready = true
+	}
+	g.Mu.Unlock()
+	g.BroadcastGameState()
 }

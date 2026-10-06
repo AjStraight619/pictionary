@@ -58,6 +58,9 @@ func (t *Turn) Start(g *Game, playerID string) {
 	t.RevealedLetters = make([]rune, len(letters))
 	for i := range t.RevealedLetters {
 		t.RevealedLetters[i] = '_'
+		if letters[i] == ' ' {
+			t.RevealedLetters[i] = ' '
+		}
 	}
 	// prepare indices for reveal (skip spaces)
 	t.unrevealedIndices = make([]int, 0, len(letters))
@@ -70,6 +73,7 @@ func (t *Turn) Start(g *Game, playerID string) {
 	rand.Shuffle(len(t.unrevealedIndices), func(i, j int) {
 		t.unrevealedIndices[i], t.unrevealedIndices[j] = t.unrevealedIndices[j], t.unrevealedIndices[i]
 	})
+	t.revealedCount = 0
 	// reset counter
 	// set drawer and start timer
 	t.CurrentDrawerID = playerID
@@ -80,43 +84,32 @@ func (t *Turn) Start(g *Game, playerID string) {
 
 func (t *Turn) BroadcastRevealedLetter(g *Game, timeRemaining int) {
 	g.Mu.Lock()
-	defer g.Mu.Unlock()
-
-	if t.WordToGuess == nil {
+	if g.CurrentTurn != t || t.WordToGuess == nil || g.Options.TurnTimeLimit <= 0 {
+		g.Mu.Unlock()
 		return
 	}
-
 	letters := []rune(t.WordToGuess.Word)
-	totalLetters := len(letters)
-	turnLimit := g.Options.TurnTimeLimit
-
-	// don't reveal short words
+	totalLetters := len(t.unrevealedIndices)
 	if totalLetters <= 3 {
+		g.Mu.Unlock()
 		return
 	}
-
-	elapsed := turnLimit - timeRemaining
-	maxReveal := int(float64(totalLetters) * 0.7)
-	if maxReveal <= 0 {
-		return
-	}
-
-	// determine how many letters should be revealed by now (linear)
-	allowed := min(elapsed*maxReveal/turnLimit, maxReveal)
-
-	// reveal any new letters up to allowed
-	for t.revealedCount < allowed && t.revealedCount < len(t.unrevealedIndices) {
+	elapsed := max(0, g.Options.TurnTimeLimit-timeRemaining)
+	maxReveal := totalLetters * 7 / 10
+	allowed := min(elapsed*maxReveal/g.Options.TurnTimeLimit, maxReveal)
+	previous := t.revealedCount
+	for t.revealedCount < allowed {
 		idx := t.unrevealedIndices[t.revealedCount]
 		t.RevealedLetters[idx] = letters[idx]
 		t.revealedCount++
 	}
-
-	// only broadcast when new letters were revealed
-	if t.revealedCount > 0 {
-		if msg, err := utils.CreateMessage("revealedLetters", t.RevealedLetters); err == nil {
-			g.Messenger.SendToOthers(t.CurrentDrawerID, msg)
-		} else {
-			log.Println("error marshalling revealedLetters message:", err)
+	revealed := append([]rune(nil), t.RevealedLetters...)
+	changed := t.revealedCount > previous
+	drawerID := t.CurrentDrawerID
+	g.Mu.Unlock()
+	if changed {
+		if msg, err := utils.CreateMessage("revealedLetters", map[string]any{"letters": revealed}); err == nil {
+			g.Messenger.SendToOthers(drawerID, msg)
 		}
 	}
 }

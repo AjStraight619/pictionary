@@ -7,7 +7,7 @@ import (
 
 type GameOptions struct {
 	TurnTimeLimit       int `json:"turnTimeLimit"`
-	WordSelectTimeLimit int `json:"wordSelectTimeLimit"`
+	WordSelectTimeLimit int `json:"selectWordTimeLimit"`
 	RoundLimit          int `json:"roundLimit"`
 	MaxPlayers          int `json:"maxPlayers"`
 }

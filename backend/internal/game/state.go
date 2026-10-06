@@ -16,6 +16,8 @@ const (
 )
 
 type GameState struct {
+	Timers          map[string]int     `json:"timers"`
+	SelectableWords []shared.Word      `json:"selectableWords"`
 	ID              string             `json:"id"`
 	Players         []*shared.Player   `json:"players"`
 	PlayerOrder     []string           `json:"playerOrder"`
@@ -34,18 +36,34 @@ func (g *Game) GetGameState() GameState {
 	orderedPlayers := make([]*shared.Player, 0, len(g.PlayerOrder))
 	for _, id := range g.PlayerOrder {
 		if player, exists := g.Players[id]; exists {
-			orderedPlayers = append(orderedPlayers, player)
+			copy := *player
+			orderedPlayers = append(orderedPlayers, &copy)
 		}
 	}
+	timers := make(map[string]int)
+	for name, timer := range g.timers {
+		timers[name] = timer.Remaining()
+	}
+	turn := *g.CurrentTurn
+	turn.RevealedLetters = append([]rune(nil), turn.RevealedLetters...)
+	turn.SelectableWords = append([]shared.Word(nil), turn.SelectableWords...)
+	turn.PlayersGuessedCorrectly = make(map[string]bool)
+	for id, value := range g.CurrentTurn.PlayersGuessedCorrectly {
+		turn.PlayersGuessedCorrectly[id] = value
+	}
+	round := *g.Round
+	round.PlayersDrawn = append([]string(nil), round.PlayersDrawn...)
 	return GameState{
+		Timers:          timers,
+		SelectableWords: turn.SelectableWords,
 		ID:              g.ID,
 		Players:         orderedPlayers,
-		PlayerOrder:     g.PlayerOrder,
+		PlayerOrder:     append([]string(nil), g.PlayerOrder...),
 		CurrentDrawerID: g.Round.CurrentDrawerID,
 		Options:         g.Options,
 		Status:          g.Status,
-		Round:           g.Round,
-		Turn:            g.CurrentTurn,
+		Round:           &round,
+		Turn:            &turn,
 		IsSelectingWord: g.CurrentTurn.IsSelectingWord,
 	}
 }

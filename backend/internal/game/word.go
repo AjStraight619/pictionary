@@ -3,7 +3,6 @@ package game
 import (
 	"log"
 	"math/rand"
-	"time"
 
 	"github.com/Ajstraight619/pictionary-server/internal/db"
 	"github.com/Ajstraight619/pictionary-server/internal/shared"
@@ -80,34 +79,49 @@ func (g *Game) clearSelectableWords() {
 }
 
 func (g *Game) handleTimerExpiration() {
-	if len(g.CurrentTurn.SelectableWords) > 0 {
-		g.Mu.Lock()
-		randomIndex := rand.Intn(len(g.CurrentTurn.SelectableWords))
-		randomWord := g.CurrentTurn.SelectableWords[randomIndex]
-		log.Printf("Timer finished. Automatically selecting word: %s", randomWord.Word)
+	g.Mu.RLock()
+	turn := g.CurrentTurn
+	if !turn.IsSelectingWord || len(turn.SelectableWords) == 0 {
+		g.Mu.RUnlock()
+		return
+	}
+	word := turn.SelectableWords[rand.Intn(len(turn.SelectableWords))]
+	g.Mu.RUnlock()
+	g.completeWordSelection(word)
+}
+
+// Manual selection and expiry compete for the same state transition.
+func (g *Game) completeWordSelection(word shared.Word) {
+	g.Mu.Lock()
+	turn := g.CurrentTurn
+	if !turn.IsSelectingWord {
 		g.Mu.Unlock()
-
-		g.setWord(&randomWord)
-		g.setIsSelectingWord(false)
-		g.clearSelectableWords()
-
-		selectWordPayload := map[string]interface{}{
-			"word":            g.CurrentTurn.WordToGuess,
-			"isSelectingWord": false,
+		return
+	}
+	var selected *shared.Word
+	for _, choice := range turn.SelectableWords {
+		if choice.Id == word.Id {
+			copy := choice
+			selected = &copy
+			break
 		}
-
-		b, err := utils.CreateMessage("selectedWord", selectWordPayload)
-		if err != nil {
-			log.Println("error marshalling selectedWord message:", err)
-			return
-		}
-		currentDrawer := g.Round.GetCurrentDrawer(g.Players, g.PlayerOrder)
-		g.Messenger.SendToPlayer(currentDrawer.ID, b)
-		g.BroadcastGameState()
-		time.AfterFunc(1*time.Second, func() {
-			g.FlowSignal <- TurnStarted
-		})
-	} else {
-		log.Println("Timer finished but no selectable words available.")
+	}
+	if selected == nil {
+		g.Mu.Unlock()
+		return
+	}
+	turn.WordToGuess = selected
+	turn.IsSelectingWord = false
+	turn.SelectableWords = nil
+	drawerID := turn.CurrentDrawerID
+	g.Mu.Unlock()
+	g.CancelTimer("selectWordTimer")
+	if b, err := utils.CreateMessage("selectedWord", map[string]any{"word": selected, "isSelectingWord": false}); err == nil {
+		g.Messenger.SendToPlayer(drawerID, b)
+	}
+	g.BroadcastGameState()
+	select {
+	case g.FlowSignal <- TurnStarted:
+	case <-g.ctx.Done():
 	}
 }
