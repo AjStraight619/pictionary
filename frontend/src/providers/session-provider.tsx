@@ -18,7 +18,7 @@ type SessionContextType = {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: unknown;
-  refresh: () => Promise<unknown>;
+  refresh: () => Promise<User | null>;
   logout: () => void;
 };
 
@@ -71,7 +71,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!userQuery.data,
     isLoading,
     error: userQuery.error || logoutMutation.error,
-    refresh: userQuery.refetch,
+    refresh: async () => {
+      const result = await userQuery.refetch();
+      if (result.error) throw result.error;
+      return result.data ?? null;
+    },
     logout: () => logoutMutation.mutate(),
   };
 

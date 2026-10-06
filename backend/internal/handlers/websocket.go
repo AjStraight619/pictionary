@@ -38,8 +38,11 @@ func ServeWs(c echo.Context, server *server.GameServer) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Hub not found"})
 	}
 
-	// Get player info from session or query params
-	playerID, username, _ := GetPlayerIDFromSession(c, gameID)
+	// The session must grant access to this room.
+	playerID, username, hasAccess := GetPlayerIDFromSession(c, gameID)
+	if !hasAccess {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "Join this game before connecting"})
+	}
 
 	if playerID == "" || username == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "PlayerID and Username are required"})

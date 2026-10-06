@@ -55,7 +55,10 @@ export default function SignInForm() {
       await res.json();
 
       // Refresh the session data
-      await refresh();
+      const account = await refresh();
+      if (!account) {
+        throw new Error("Sign-in could not establish a session. Please try again.");
+      }
 
       // Redirect to where they were trying to go, or to home
       navigate(from, { replace: true });

@@ -32,11 +32,20 @@ var (
 
 // SessionData holds the data stored in a session
 type SessionData struct {
+	UserID    string    `json:"user_id,omitempty"` // Account identity; never overwritten by game membership.
 	PlayerID  string    `json:"player_id"`
 	Username  string    `json:"username"`
 	GameIDs   []string  `json:"game_ids,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	LastSeen  time.Time `json:"last_seen"`
+}
+
+// AccountID supports sessions created before account identity was stored separately.
+func (s *SessionData) AccountID() string {
+	if s.UserID != "" {
+		return s.UserID
+	}
+	return s.PlayerID
 }
 
 // Manager handles sessions using Redis
@@ -73,12 +82,22 @@ func NewManager(ctx context.Context, redisURL string) (*Manager, error) {
 
 // Create creates a new session
 func (m *Manager) Create(playerID, username string) (string, error) {
+	return m.create(playerID, username, "")
+}
+
+// CreateAuthenticated keeps account identity separate from the current game player.
+func (m *Manager) CreateAuthenticated(userID, username string) (string, error) {
+	return m.create(userID, username, userID)
+}
+
+func (m *Manager) create(playerID, username, userID string) (string, error) {
 	if m.client == nil {
 		return "", ErrRedisNotConnected
 	}
 
 	sessionID := uuid.New().String()
 	data := SessionData{
+		UserID:    userID,
 		PlayerID:  playerID,
 		Username:  username,
 		GameIDs:   []string{},

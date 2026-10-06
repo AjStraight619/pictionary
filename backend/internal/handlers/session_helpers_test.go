@@ -2,10 +2,17 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/Ajstraight619/pictionary-server/internal/db"
+	"github.com/Ajstraight619/pictionary-server/internal/ws"
+	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/Ajstraight619/pictionary-server/internal/game"
 	"github.com/Ajstraight619/pictionary-server/internal/session"
@@ -154,7 +161,7 @@ func TestGetPlayerIDFromSession(t *testing.T) {
 	assert.True(t, hasAccess)
 }
 
-func TestGetPlayerIDFromSessionFallback(t *testing.T) {
+func TestGetPlayerIDFromSessionRejectsQueryIdentity(t *testing.T) {
 	e, _, _, g, cleanup := setupTestEnvironment(t)
 	defer cleanup()
 
@@ -166,9 +173,9 @@ func TestGetPlayerIDFromSessionFallback(t *testing.T) {
 	// Call the function
 	playerID, username, hasAccess := GetPlayerIDFromSession(c, g.ID)
 
-	// Verify fallback to query params
-	assert.Equal(t, "query-player", playerID)
-	assert.Equal(t, "QueryUser", username)
+	// Query parameters cannot authenticate a player.
+	assert.Empty(t, playerID)
+	assert.Empty(t, username)
 	assert.False(t, hasAccess)
 }
 
@@ -354,4 +361,98 @@ func TestFullSessionFlow(t *testing.T) {
 	// Try to reconnect
 	_, isReconnecting := MockHandleReconnection(c2, g, retrievedPlayerID, retrievedUsername, gameID)
 	assert.True(t, isReconnecting)
+}
+
+type accountLookup struct{ id string }
+
+func (a accountLookup) Create(string, string, string) (*db.User, error) {
+	return nil, fmt.Errorf("unused")
+}
+func (a accountLookup) Authenticate(string, string) (*db.User, error) {
+	return nil, fmt.Errorf("unused")
+}
+func (a accountLookup) GetByID(id string) (*db.User, error) {
+	if id != a.id {
+		return nil, fmt.Errorf("not an account ID: %s", id)
+	}
+	return &db.User{ID: id, Username: "Account"}, nil
+}
+
+func TestAccountProfileSurvivesGameMembership(t *testing.T) {
+	for _, legacy := range []bool{false, true} {
+		t.Run(fmt.Sprintf("legacy=%v", legacy), func(t *testing.T) {
+			e, _, manager, _, cleanup := setupTestEnvironment(t)
+			defer cleanup()
+			var id string
+			var err error
+			if legacy {
+				id, err = manager.Create("account-id", "Account")
+			} else {
+				id, err = manager.CreateAuthenticated("account-id", "Account")
+			}
+			require.NoError(t, err)
+			for _, room := range []string{"create-room", "join-room"} {
+				data, err := manager.Get(id)
+				require.NoError(t, err)
+				c, _ := createRequestWithSession(t, e, "/game", id)
+				c.Set("session_manager", manager)
+				c.Set("session_id", id)
+				c.Set("session_data", data)
+				UpdateSessionWithNewPlayer(c, "player-"+room, "Nickname", room)
+				// A refresh loads the updated session from Redis, not the cached login result.
+				data, err = manager.Get(id)
+				require.NoError(t, err)
+				require.Equal(t, "account-id", data.UserID)
+				require.Equal(t, "player-"+room, data.PlayerID)
+				c, rec := createRequestWithSession(t, e, "/auth/profile", id)
+				c.Set("session_data", data)
+				require.NoError(t, NewAuthHandler(accountLookup{id: "account-id"}).GetProfile(c))
+				require.Equal(t, http.StatusOK, rec.Code)
+				require.Contains(t, rec.Body.String(), "account-id")
+			}
+		})
+	}
+}
+
+// Valid credentials must not produce a successful login without a stored session.
+type loginAccount struct{ accountLookup }
+
+func (a loginAccount) Authenticate(string, string) (*db.User, error) {
+	return &db.User{ID: a.id, Username: "Account"}, nil
+}
+func TestLoginRequiresSessionStorage(t *testing.T) {
+	e, _, _, _, cleanup := setupTestEnvironment(t)
+	defer cleanup()
+	req := httptest.NewRequest(http.MethodPost, "/auth/login", strings.NewReader(`{"email":"test@example.test","password":"password"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	require.NoError(t, NewAuthHandler(loginAccount{accountLookup{id: "account"}}).Login(e.NewContext(req, rec)))
+	require.Equal(t, http.StatusServiceUnavailable, rec.Code)
+	require.Empty(t, rec.Result().Cookies())
+}
+
+func TestWebSocketWritesOneJSONDocumentPerMessage(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		client := ws.NewClient(ws.NewHub(ctx), conn, "player")
+		client.Send <- []byte(`{"type":"selectedWord","payload":{}}`)
+		client.Send <- []byte(`{"type":"gameState","payload":{}}`)
+		client.Write()
+	}))
+	defer server.Close()
+	conn, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(server.URL, "http"), nil)
+	require.NoError(t, err)
+	defer conn.Close()
+	require.NoError(t, conn.SetReadDeadline(time.Now().Add(time.Second)))
+	for i := 0; i < 2; i++ {
+		_, message, err := conn.ReadMessage()
+		require.NoError(t, err)
+		require.True(t, json.Valid(message), "queued messages must not be concatenated: %s", message)
+	}
+	cancel()
 }

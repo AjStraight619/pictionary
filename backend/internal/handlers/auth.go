@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"log"
@@ -9,6 +10,7 @@ import (
 	"github.com/Ajstraight619/pictionary-server/internal/db"
 	"github.com/Ajstraight619/pictionary-server/internal/session"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type UserService interface {
@@ -57,6 +59,11 @@ func (h *AuthHandler) Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "All fields required"})
 	}
 
+	// Do not report a signed-in registration if sessions are unavailable.
+	if session.GetSessionManager(c) == nil {
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Sign-in is temporarily unavailable"})
+	}
+
 	// Create user
 	user, err := h.userService.Create(req.Email, req.Username, req.Password)
 	if err != nil {
@@ -66,7 +73,10 @@ func (h *AuthHandler) Register(c echo.Context) error {
 	// Create session for the new user
 	sessionMgr := session.GetSessionManager(c)
 	if sessionMgr != nil {
-		sessionID, _ := sessionMgr.Create(user.ID, user.Username)
+		sessionID, err := sessionMgr.CreateAuthenticated(user.ID, user.Username)
+		if err != nil {
+			return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Account created, but sign-in failed. Please try signing in again."})
+		}
 		session.SetSessionCookie(c, sessionID)
 	}
 
@@ -105,14 +115,13 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	// Create session
 	sessionMgr := session.GetSessionManager(c)
 	if sessionMgr != nil {
-		sessionID, err := sessionMgr.Create(user.ID, user.Username)
+		sessionID, err := sessionMgr.CreateAuthenticated(user.ID, user.Username)
 		if err != nil {
 			log.Printf("[AUTH] Failed to create session: %v", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Session creation failed"})
 		}
 
-		log.Printf("[AUTH] Login successful for %s (ID: %s). Setting cookie with session ID: %s",
-			user.Username, user.ID, sessionID)
+		log.Printf("[AUTH] Login successful for user %s", user.ID)
 
 		// Log request details for debugging
 		log.Printf("[DEBUG] Login request headers - Origin: %s, Host: %s, User-Agent: %s",
@@ -122,7 +131,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 
 		session.SetSessionCookie(c, sessionID)
 	} else {
-		log.Printf("[AUTH] Warning: Session manager is nil, cannot create session")
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Sign-in is temporarily unavailable"})
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
@@ -139,9 +148,12 @@ func (h *AuthHandler) GetProfile(c echo.Context) error {
 	}
 
 	// Get user from database
-	user, err := h.userService.GetByID(sessionData.PlayerID)
+	user, err := h.userService.GetByID(sessionData.AccountID())
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Please sign in again"})
+		}
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Unable to load account"})
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{

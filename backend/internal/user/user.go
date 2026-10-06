@@ -67,7 +67,7 @@ func (s *Service) GetByID(id string) (*db.User, error) {
 	var user db.User
 	if err := s.db.Where("id = ?", id).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
+			return nil, gorm.ErrRecordNotFound
 		}
 		log.Printf("Error retrieving user: %v", err)
 		return nil, err
@@ -80,7 +80,7 @@ func (s *Service) GetByEmail(email string) (*db.User, error) {
 	var user db.User
 	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
+			return nil, gorm.ErrRecordNotFound
 		}
 		log.Printf("Error retrieving user: %v", err)
 		return nil, err
@@ -93,7 +93,7 @@ func (s *Service) GetByUsername(username string) (*db.User, error) {
 	var user db.User
 	if err := s.db.Where("username = ?", username).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
+			return nil, gorm.ErrRecordNotFound
 		}
 		log.Printf("Error retrieving user: %v", err)
 		return nil, err

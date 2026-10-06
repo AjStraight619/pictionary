@@ -121,7 +121,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 	}
 
 	// Update profile using service method
-	if err := h.userService.UpdateProfile(sessionData.PlayerID, req.Username, req.ProfilePicture); err != nil {
+	if err := h.userService.UpdateProfile(sessionData.AccountID(), req.Username, req.ProfilePicture); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
@@ -151,7 +151,7 @@ func (h *UserHandler) ChangePassword(c echo.Context) error {
 	}
 
 	// Change password using service method
-	if err := h.userService.ChangePassword(sessionData.PlayerID, req.CurrentPassword, req.NewPassword); err != nil {
+	if err := h.userService.ChangePassword(sessionData.AccountID(), req.CurrentPassword, req.NewPassword); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 

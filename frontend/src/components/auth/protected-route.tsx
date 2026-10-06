@@ -10,14 +10,27 @@ export function ProtectedRoute({
   authRequired = false,
   guestOnly = false,
 }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useSession();
+  const { isAuthenticated, isLoading, error, refresh } = useSession();
   const location = useLocation();
 
   // Wait for auth check to complete
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"></div>
+      <div role="status" className="flex justify-center items-center min-h-screen">
+        <div aria-hidden="true" className="animate-spin motion-reduce:animate-none rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <span className="sr-only">Loading your session…</span>
+      </div>
+    );
+  }
+
+  if (error && !isAuthenticated) {
+    return (
+      <div role="alert" className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <h1 className="text-xl font-semibold">Couldn’t load your session</h1>
+        <p className="text-muted-foreground">Check your connection and try again.</p>
+        <button className="rounded-md bg-primary px-4 py-2 text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring" onClick={() => void refresh().catch(() => undefined)}>
+          Try again
+        </button>
       </div>
     );
   }

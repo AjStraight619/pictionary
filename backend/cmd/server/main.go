@@ -64,6 +64,7 @@ func main() {
 		// Register routes
 		handlers.RegisterRoutes(e, gameServer)
 		handlers.RegisterUserRoutes(e, userService)
+		handlers.RegisterAuthRoutes(e, userService)
 
 		app.SetupShutdown(e, gameServer)
 

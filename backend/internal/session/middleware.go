@@ -41,6 +41,7 @@ func Middleware(manager *Manager) echo.MiddlewareFunc {
 					ClearSessionCookie(c)
 				} else {
 					log.Printf("[SESSION] Error retrieving session from Redis: %v", err)
+					return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "Session service temporarily unavailable"})
 				}
 				return next(c)
 			}

@@ -11,8 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// GetPlayerIDFromSession tries to get playerID and username from session
-// or falls back to query parameters
+// GetPlayerIDFromSession resolves game identity exclusively from the server session.
 func GetPlayerIDFromSession(c echo.Context, gameID string) (playerID, username string, hasAccess bool) {
 	sessionData := session.GetSessionData(c)
 	if sessionData != nil {
@@ -28,15 +27,6 @@ func GetPlayerIDFromSession(c echo.Context, gameID string) (playerID, username s
 		if !hasAccess {
 			log.Printf("[AUTH] Player %s tried to access game %s without permission", playerID, gameID)
 		}
-	} else {
-		log.Printf("[AUTH] No session found, falling back to query params for authentication")
-	}
-
-	// Fallback to query params if session not found
-	if playerID == "" {
-		playerID = c.QueryParam("playerID")
-		username = c.QueryParam("username")
-		log.Printf("[AUTH] Using query params for auth: playerID=%s, username=%s", playerID, username)
 	}
 
 	return playerID, username, hasAccess
@@ -96,6 +86,10 @@ func UpdateSessionWithNewPlayer(c echo.Context, playerID, username, gameID strin
 	// If we have an existing session, update it
 	if sessionData != nil {
 		sessionID = session.GetSessionID(c)
+		// Preserve legacy account identity before changing the game-player ID.
+		if sessionData.UserID == "" && len(sessionData.GameIDs) == 0 {
+			sessionData.UserID = sessionData.PlayerID
+		}
 		sessionData.PlayerID = playerID
 		sessionData.Username = username
 

@@ -1,5 +1,6 @@
 import type React from "react";
 import { useState } from "react";
+import { useSession } from "@/providers/session-provider";
 import { API_URL } from "@/utils/config";
 import { useNavigate } from "react-router";
 import { handleError, handleApiError } from "@/utils/error";
@@ -21,6 +22,7 @@ export default function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const navigate = useNavigate();
+  const { refresh } = useSession();
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -53,8 +55,10 @@ export default function SignUpForm() {
         throw await handleApiError(res);
       }
 
-      const data = await res.json();
-      console.log(data);
+      await res.json();
+      if (!(await refresh())) {
+        throw new Error("Account created. Please sign in to continue.");
+      }
 
       // Redirect to sign in page after successful registration
       navigate("/");
